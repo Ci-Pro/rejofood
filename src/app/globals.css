@@ -1,0 +1,219 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * RejoFood palette — deliberately distinct from the food-delivery category.
+ *
+ * Audit (why these colors):
+ *   - GoFood / GrabFood / LineMan / Uber Eats → green
+ *   - ShopeeFood / Swiggy / Just Eat / Talabat / HungerStation / Rappi → orange
+ *   - Zomato / iFood / DoorDash / PedidosYa / HungerStation → red
+ *   - Foodpanda → pink, Deliveroo → teal, Glovo → yellow
+ *
+ * The combination below — Deep Aubergine + Saffron — is essentially unused
+ * by any major food-delivery brand and reads as warm + premium + appetizing.
+ */
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-jakarta);
+  --font-display: var(--font-fraunces);
+  --font-mono: var(--font-geist-mono);
+
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+
+  /* RejoFood role accents — shared by RoleRail + dashboards */
+  --color-saffron: var(--saffron);
+  --color-saffron-foreground: var(--saffron-foreground);
+  --color-lavender: var(--lavender);
+  --color-lavender-foreground: var(--lavender-foreground);
+  --color-mint: var(--mint);
+  --color-mint-foreground: var(--mint-foreground);
+  --color-rose: var(--rose);
+  --color-rose-foreground: var(--rose-foreground);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 10px);
+}
+
+:root {
+  --radius: 0.875rem;
+
+  /* Surfaces */
+  --background: oklch(0.985 0.008 75);     /* warm ivory */
+  --foreground: oklch(0.20 0.04 290);      /* deep plum-ink */
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.20 0.04 290);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.20 0.04 290);
+
+  /* Brand: Aubergine */
+  --primary: oklch(0.28 0.09 296);         /* deep aubergine #2D1B4E */
+  --primary-foreground: oklch(0.985 0.008 75);
+
+  /* Secondary: muted lavender */
+  --secondary: oklch(0.92 0.025 290);
+  --secondary-foreground: oklch(0.30 0.08 296);
+
+  --muted: oklch(0.96 0.012 290);
+  --muted-foreground: oklch(0.50 0.04 290);
+
+  /* Accent: Saffron */
+  --accent: oklch(0.78 0.16 68);           /* saffron #FF9F1C */
+  --accent-foreground: oklch(0.22 0.04 290);
+
+  --destructive: oklch(0.55 0.20 12);      /* rose berry */
+  --border: oklch(0.90 0.02 285);
+  --input: oklch(0.92 0.015 285);
+  --ring: oklch(0.55 0.10 296);
+
+  /* Role accents */
+  --saffron: oklch(0.78 0.16 68);
+  --saffron-foreground: oklch(0.22 0.04 290);
+  --lavender: oklch(0.55 0.10 295);
+  --lavender-foreground: oklch(0.98 0.008 75);
+  --mint: oklch(0.62 0.10 150);
+  --mint-foreground: oklch(0.18 0.04 150);
+  --rose: oklch(0.58 0.18 5);
+  --rose-foreground: oklch(0.98 0.008 75);
+
+  /* Charts (subtle, role-aligned) */
+  --chart-1: oklch(0.28 0.09 296);         /* aubergine */
+  --chart-2: oklch(0.78 0.16 68);          /* saffron */
+  --chart-3: oklch(0.55 0.10 295);         /* lavender */
+  --chart-4: oklch(0.62 0.10 150);         /* mint */
+  --chart-5: oklch(0.58 0.18 5);           /* rose */
+
+  --sidebar: oklch(0.97 0.01 285);
+  --sidebar-foreground: oklch(0.22 0.04 290);
+  --sidebar-primary: oklch(0.28 0.09 296);
+  --sidebar-primary-foreground: oklch(0.985 0.008 75);
+  --sidebar-accent: oklch(0.92 0.025 290);
+  --sidebar-accent-foreground: oklch(0.22 0.04 290);
+  --sidebar-border: oklch(0.90 0.02 285);
+  --sidebar-ring: oklch(0.55 0.10 296);
+}
+
+.dark {
+  --background: oklch(0.16 0.03 290);
+  --foreground: oklch(0.97 0.008 75);
+  --card: oklch(0.20 0.04 290);
+  --card-foreground: oklch(0.97 0.008 75);
+  --popover: oklch(0.20 0.04 290);
+  --popover-foreground: oklch(0.97 0.008 75);
+
+  --primary: oklch(0.78 0.16 68);
+  --primary-foreground: oklch(0.20 0.04 290);
+
+  --secondary: oklch(0.28 0.06 290);
+  --secondary-foreground: oklch(0.97 0.008 75);
+  --muted: oklch(0.24 0.04 290);
+  --muted-foreground: oklch(0.72 0.02 285);
+  --accent: oklch(0.78 0.16 68);
+  --accent-foreground: oklch(0.20 0.04 290);
+  --destructive: oklch(0.65 0.20 12);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.78 0.16 68);
+
+  --sidebar: oklch(0.20 0.04 290);
+  --sidebar-foreground: oklch(0.97 0.008 75);
+  --sidebar-primary: oklch(0.78 0.16 68);
+  --sidebar-primary-foreground: oklch(0.20 0.04 290);
+  --sidebar-accent: oklch(0.28 0.06 290);
+  --sidebar-accent-foreground: oklch(0.97 0.008 75);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.78 0.16 68);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "ss01", "cv11";
+  }
+  /* Display font hook for headings */
+  .font-display {
+    font-family: var(--font-display), var(--font-sans), serif;
+  }
+}
+
+@layer utilities {
+  /* Subtle grain — gives the warm-ivory surface a premium, non-flat feel */
+  .bg-grain {
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.18  0 0 0 0 0.10  0 0 0 0 0.30  0 0 0 0.05 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  }
+
+  /* Frosted-glass card used on the auth shell */
+  .glass-card {
+    background: color-mix(in oklch, var(--card) 78%, transparent);
+    backdrop-filter: blur(14px) saturate(1.1);
+    -webkit-backdrop-filter: blur(14px) saturate(1.1);
+  }
+
+  /* Role accent helpers (used on RoleRail + dashboard chips) */
+  .accent-saffron { --role: var(--saffron); --role-fg: var(--saffron-foreground); }
+  .accent-lavender { --role: var(--lavender); --role-fg: var(--lavender-foreground); }
+  .accent-mint { --role: var(--mint); --role-fg: var(--mint-foreground); }
+  .accent-rose { --role: var(--rose); --role-fg: var(--rose-foreground); }
+
+  .text-role { color: var(--role); }
+  .bg-role { background-color: var(--role); }
+  .bg-role-soft { background-color: color-mix(in oklch, var(--role) 14%, transparent); }
+  .border-role { border-color: color-mix(in oklch, var(--role) 40%, transparent); }
+  .ring-role { box-shadow: 0 0 0 1px color-mix(in oklch, var(--role) 50%, transparent); }
+
+  /* Custom slim scrollbar for the long lists */
+  .scroll-slim::-webkit-scrollbar { width: 6px; height: 6px; }
+  .scroll-slim::-webkit-scrollbar-thumb { background: color-mix(in oklch, var(--primary) 25%, transparent); border-radius: 999px; }
+  .scroll-slim::-webkit-scrollbar-track { background: transparent; }
+
+  /* Brand mark: the saffron dot has a soft animated pulse */
+  @keyframes rejo-pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.15); opacity: 0.85; }
+  }
+  .rejo-dot {
+    animation: rejo-pulse 2.4s ease-in-out infinite;
+  }
+}

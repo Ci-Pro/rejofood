@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#3D2364"/>
+      <stop offset="55%" stop-color="#2D1B4E"/>
+      <stop offset="100%" stop-color="#1C0E33"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.85" cy="0.18" r="0.6">
+      <stop offset="0%" stop-color="#FF9F1C" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#FF9F1C" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <rect width="512" height="512" rx="112" fill="url(#glow)"/>
+  <!-- R letter -->
+  <text x="256" y="356" font-family="Fraunces, Georgia, serif" font-size="320" font-weight="700"
+        text-anchor="middle" fill="#FBF7F0">R</text>
+  <!-- Saffron dot -->
+  <circle cx="402" cy="120" r="34" fill="#FF9F1C"/>
+  <circle cx="402" cy="120" r="34" fill="none" stroke="#FBF7F0" stroke-width="8"/>
+</svg>

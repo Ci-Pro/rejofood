@@ -1,0 +1,38 @@
+{
+  "name": "RejoFood",
+  "short_name": "RejoFood",
+  "description": "Pesan, Masak, Antar, Atur — ekosistem jasa antar makanan lokal yang terintegrasi.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FBF7F0",
+  "theme_color": "#2D1B4E",
+  "lang": "id",
+  "categories": ["food", "lifestyle", "shopping"],
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Masuk sebagai Pelanggan",
+      "short_name": "Pelanggan",
+      "url": "/?role=customer"
+    },
+    {
+      "name": "Masuk sebagai Merchant",
+      "short_name": "Merchant",
+      "url": "/?role=merchant"
+    },
+    {
+      "name": "Masuk sebagai Driver",
+      "short_name": "Driver",
+      "url": "/?role=driver"
+    }
+  ]
+}
