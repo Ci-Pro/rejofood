@@ -3,13 +3,13 @@
  * Body: { email, password, fullName, phone?, role, restaurantName?, vehicleType? }
  *
  * SECURITY: Role ADMIN tidak boleh dibuat lewat self-register.
- * Admin hanya bisa dibuat oleh admin lain via invite system (lihat lib/auth/context.ts → requireAdmin).
- * Setiap percobaan registrasi dengan role ADMIN akan ditolak dengan 403, terlepas dari UI.
+ * Setiap percobaan registrasi dengan role ADMIN akan ditolak dengan 403 dan dicatat di AuditLog.
  */
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { hashPassword } from "@/lib/auth/password";
 import { generateToken, setSessionCookie } from "@/lib/auth/session";
+import { logAction, getRequestMeta } from "@/lib/auth/audit";
 import { Role } from "@prisma/client";
 import type { SafeUser } from "@/types/auth";
 
@@ -18,6 +18,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MIN_PASSWORD = 6;
 
 export async function POST(req: Request) {
+  const meta = getRequestMeta(req);
   try {
     const body = await req.json().catch(() => null);
     if (!body) return NextResponse.json({ error: "Body tidak valid." }, { status: 400 });
@@ -42,8 +43,17 @@ export async function POST(req: Request) {
     }
 
     // 🔒 SECURITY: self-registration sebagai ADMIN dilarang keras.
-    // Celah ini sebelumnya memungkinkan siapa saja menjadi admin hanya dengan POST { role: 'ADMIN' }.
     if (role === Role.ADMIN) {
+      await logAction({
+        actorEmail: email,
+        category: "auth",
+        action: "auth.register.denied",
+        description: `Percobaan self-register sebagai ADMIN ditolak untuk email ${email}.`,
+        outcome: "denied",
+        ipAddress: meta.ipAddress,
+        userAgent: meta.userAgent,
+        metadata: { attemptedRole: "ADMIN" },
+      });
       return NextResponse.json(
         { error: "Role Admin tidak dapat didaftarkan sendiri. Hubungi admin eksisting." },
         { status: 403 },
@@ -52,6 +62,15 @@ export async function POST(req: Request) {
 
     const existing = await db.user.findUnique({ where: { email } });
     if (existing) {
+      await logAction({
+        actorEmail: email,
+        category: "auth",
+        action: "auth.register.failed",
+        description: `Registrasi gagal: email ${email} sudah terdaftar.`,
+        outcome: "failure",
+        ipAddress: meta.ipAddress,
+        userAgent: meta.userAgent,
+      });
       return NextResponse.json({ error: "Email sudah terdaftar." }, { status: 409 });
     }
 
@@ -71,8 +90,6 @@ export async function POST(req: Request) {
         const vehicleType = (body.vehicleType as string) || "motorcycle";
         await tx.driver.create({ data: { userId: u.id, vehicleType } });
       }
-      // Role.ADMIN sengaja tidak ditangani di sini karena sudah ditolak di atas.
-      // Jika suatu hari dibutuhkan invite flow, buat endpoint terpisah yang diawasi requireAdmin().
       return u;
     });
 
@@ -86,6 +103,21 @@ export async function POST(req: Request) {
       },
     });
     await setSessionCookie(token);
+
+    await logAction({
+      actorId: user.id,
+      actorEmail: user.email,
+      actorRole: user.role,
+      category: "auth",
+      action: "auth.register.success",
+      description: `Registrasi berhasil: ${user.email} sebagai ${user.role}.`,
+      targetId: user.id,
+      targetType: "user",
+      outcome: "success",
+      ipAddress: meta.ipAddress,
+      userAgent: meta.userAgent,
+      metadata: { role: user.role },
+    });
 
     const safe: SafeUser = {
       id: user.id,

@@ -4,17 +4,14 @@
  *
  * Flow:
  *  1. Verifikasi email + password (factor 1)
- *  2. Jika role === ADMIN:
- *     - Jika twoFactorEnabled=false → return { needsSetup: true, challengeToken }
- *       (admin baru pertama login wajib setup 2FA)
- *     - Jika twoFactorEnabled=true → return { needsTwoFactor: true, challengeToken }
- *       (admin lama wajib verifikasi TOTP)
+ *  2. Jika role === ADMIN → 2FA wajib (setup first-time atau verify)
  *  3. Role lain → langsung set session cookie
  *
  * SECURITY:
- *  - Rate limit berlaku per (IP, email). TOTP attempts di-rate-limit terpisah di challenge.
- *  - Saat env `REJO_DEMO_MODE !== 'true'`, email demo admin ditolak meski password benar.
- *  - Role mismatch tidak dihitung sebagai failure (UX, bukan serangan).
+ *  - Rate limit: 5 percobaan / 15 menit per (IP, email) → lockout 30 menit
+ *  - Saat env `REJO_DEMO_MODE !== 'true'`, email demo admin ditolak meski password benar
+ *  - Role mismatch tidak dihitung sebagai failure (UX, bukan serangan)
+ *  - Semua event login tercatat di AuditLog: success, failed, locked_out, role_mismatch, demo_blocked
  */
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
@@ -28,10 +25,11 @@ import {
 } from "@/lib/auth/rate-limiter";
 import { createChallenge } from "@/lib/auth/challenge-store";
 import { generateSecret } from "@/lib/auth/totp";
+import { logAction, getRequestMeta } from "@/lib/auth/audit";
 import { Role } from "@prisma/client";
 import type { SafeUser } from "@/types/auth";
 
-const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 7; // 7 days
+const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 7;
 
 const DEMO_BLOCKED_EMAILS = new Set(["admin@rejofood.id"]);
 
@@ -47,6 +45,7 @@ function formatDuration(seconds: number): string {
 }
 
 export async function POST(req: Request) {
+  const meta = getRequestMeta(req);
   try {
     const body = await req.json().catch(() => null);
     if (!body || typeof body.email !== "string" || typeof body.password !== "string") {
@@ -59,6 +58,16 @@ export async function POST(req: Request) {
     // 🔒 RATE LIMIT — cek sebelum memproses
     const rl = checkRateLimit(ip, email);
     if (!rl.ok) {
+      await logAction({
+        actorEmail: email,
+        category: "auth",
+        action: "auth.login.locked_out",
+        description: `Login ditolak karena rate limit. Coba lagi dalam ${formatDuration(rl.retryAfterSeconds)}.`,
+        outcome: "denied",
+        ipAddress: meta.ipAddress,
+        userAgent: meta.userAgent,
+        metadata: { retryAfterSeconds: rl.retryAfterSeconds, lockedUntil: rl.lockedUntil },
+      });
       return NextResponse.json(
         {
           error: `Terlalu banyak percobaan gagal. Coba lagi dalam ${formatDuration(rl.retryAfterSeconds)}.`,
@@ -73,6 +82,16 @@ export async function POST(req: Request) {
     // 🔒 SECURITY: blokir email demo admin di production.
     if (!isDemoMode() && DEMO_BLOCKED_EMAILS.has(email)) {
       const after = recordFailure(ip, email);
+      await logAction({
+        actorEmail: email,
+        category: "auth",
+        action: "auth.login.demo_blocked",
+        description: "Login ditolak: akun demo admin dinonaktifkan di production.",
+        outcome: "denied",
+        ipAddress: meta.ipAddress,
+        userAgent: meta.userAgent,
+        metadata: { remainingAttempts: after.remaining },
+      });
       return NextResponse.json(
         {
           error: "Email atau password salah.",
@@ -87,6 +106,22 @@ export async function POST(req: Request) {
     if (!user || !user.isActive) {
       const after = recordFailure(ip, email);
       const isLocked = after.lockedUntil !== null;
+      await logAction({
+        actorEmail: email,
+        category: "auth",
+        action: "auth.login.failed",
+        description: isLocked
+          ? `Login gagal (akun tidak ditemukan/nonaktif) → lockout terpicu.`
+          : `Login gagal: akun tidak ditemukan atau nonaktif.`,
+        outcome: isLocked ? "denied" : "failure",
+        ipAddress: meta.ipAddress,
+        userAgent: meta.userAgent,
+        metadata: {
+          reason: user ? "inactive" : "not_found",
+          remainingAttempts: after.remaining,
+          ...(isLocked && { lockedUntil: after.lockedUntil }),
+        },
+      });
       return NextResponse.json(
         {
           error: isLocked
@@ -104,6 +139,24 @@ export async function POST(req: Request) {
     if (!verifyPassword(body.password, user.passwordHash)) {
       const after = recordFailure(ip, email);
       const isLocked = after.lockedUntil !== null;
+      await logAction({
+        actorId: user.id,
+        actorEmail: user.email,
+        actorRole: user.role,
+        category: "auth",
+        action: "auth.login.failed",
+        description: isLocked
+          ? `Login gagal (password salah) → lockout terpicu untuk ${user.email}.`
+          : `Login gagal: password salah untuk ${user.email}.`,
+        outcome: isLocked ? "denied" : "failure",
+        ipAddress: meta.ipAddress,
+        userAgent: meta.userAgent,
+        metadata: {
+          reason: "wrong_password",
+          remainingAttempts: after.remaining,
+          ...(isLocked && { lockedUntil: after.lockedUntil }),
+        },
+      });
       return NextResponse.json(
         {
           error: isLocked
@@ -119,6 +172,18 @@ export async function POST(req: Request) {
     }
 
     if (body.expectedRole && user.role !== (body.expectedRole as Role)) {
+      await logAction({
+        actorId: user.id,
+        actorEmail: user.email,
+        actorRole: user.role,
+        category: "auth",
+        action: "auth.login.role_mismatch",
+        description: `Login ditolak: akun ${user.email} adalah ${user.role}, bukan ${body.expectedRole}.`,
+        outcome: "denied",
+        ipAddress: meta.ipAddress,
+        userAgent: meta.userAgent,
+        metadata: { expectedRole: body.expectedRole, actualRole: user.role },
+      });
       return NextResponse.json(
         {
           error: `Akun ini bukan role ${body.expectedRole}. Silakan pilih role yang sesuai.`,
@@ -131,7 +196,7 @@ export async function POST(req: Request) {
     // ✅ Password verified — factor 1 complete. Reset rate limit bucket.
     recordSuccess(ip, email);
 
-    // 🔒 2FA: WAJIB untuk ADMIN. Untuk role lain, optional (TODO di masa depan).
+    // 🔒 2FA: WAJIB untuk ADMIN.
     if (user.role === "ADMIN") {
       if (!user.twoFactorEnabled || !user.twoFactorSecret) {
         // First-time admin — needs to set up 2FA before they can complete login.
@@ -141,6 +206,17 @@ export async function POST(req: Request) {
           email: user.email,
           type: "setup",
           pendingSecret,
+        });
+        await logAction({
+          actorId: user.id,
+          actorEmail: user.email,
+          actorRole: user.role,
+          category: "auth",
+          action: "auth.2fa.setup_requested",
+          description: `Admin ${user.email} login pertama: diminta setup 2FA.`,
+          outcome: "success",
+          ipAddress: meta.ipAddress,
+          userAgent: meta.userAgent,
         });
         return NextResponse.json({
           needsSetup: true,
@@ -154,6 +230,17 @@ export async function POST(req: Request) {
         userId: user.id,
         email: user.email,
         type: "verify",
+      });
+      await logAction({
+        actorId: user.id,
+        actorEmail: user.email,
+        actorRole: user.role,
+        category: "auth",
+        action: "auth.2fa.challenge_sent",
+        description: `Admin ${user.email} password OK, menunggu verifikasi TOTP.`,
+        outcome: "success",
+        ipAddress: meta.ipAddress,
+        userAgent: meta.userAgent,
       });
       return NextResponse.json({
         needsTwoFactor: true,
@@ -176,6 +263,19 @@ export async function POST(req: Request) {
       },
     });
     await setSessionCookie(token);
+
+    await logAction({
+      actorId: user.id,
+      actorEmail: user.email,
+      actorRole: user.role,
+      category: "auth",
+      action: "auth.login.success",
+      description: `Login berhasil sebagai ${user.role}: ${user.email}.`,
+      outcome: "success",
+      ipAddress: meta.ipAddress,
+      userAgent: meta.userAgent,
+      metadata: { sessionId: token.slice(0, 8) + "…" },
+    });
 
     const safe: SafeUser = {
       id: user.id,

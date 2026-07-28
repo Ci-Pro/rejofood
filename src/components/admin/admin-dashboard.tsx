@@ -7,6 +7,7 @@ import {
   PlaceholderSection,
   DashboardHeader,
 } from "@/components/shared/dashboard-primitives";
+import { AuditLogViewer } from "./audit-log-viewer";
 import { Users, Store, Bike, Activity } from "lucide-react";
 
 export function AdminDashboard() {
@@ -40,6 +41,10 @@ export function AdminDashboard() {
           icon={Activity}
           accent="rose"
         />
+      </div>
+
+      <div className="mt-6">
+        <AuditLogViewer />
       </div>
     </AppShell>
   );

@@ -104,3 +104,39 @@ enum Role {
   DRIVER
   ADMIN
 }
+
+/// Jejak forensik: siapa melakukan apa, kapan, dari mana.
+/// Setiap aksi sensitif (login, 2FA, role change, user ban, dll.) wajib dicatat.
+/// Tabel ini append-only — tidak ada UPDATE/DELETE dari aplikasi (hanya DBA untuk retensi).
+model AuditLog {
+  id          String   @id @default(cuid())
+  /// ID user yang melakukan aksi. null = aksi anonim (login attempt untuk email tidak dikenal).
+  actorId     String?
+  /// Email yang dipakai saat aksi (berguna jika actorId null, atau untuk cross-reference).
+  actorEmail  String?
+  /// Role user saat aksi dilakukan. null = belum terauth (pre-login).
+  actorRole   Role?
+  /// Kategori aksi: "auth", "admin", "merchant", "driver", "order", dll.
+  category    String
+  /// Nama aksi spesifik: "login.success", "login.failed", "2fa.setup", "user.ban", dll.
+  action      String
+  /// ID objek yang dimanipulasi (user ID, order ID, dll). null jika tidak relevan.
+  targetId    String?
+  /// Tipe objek target: "user", "order", "merchant", dll.
+  targetType  String?
+  /// Deskripsi human-readable, contoh: "Login berhasil sebagai ADMIN".
+  description String
+  /// Snapshot metadata tambahan dalam JSON string (IP, user-agent, before/after state, dll).
+  metadata    String?
+  /// Hasil aksi: "success" | "failure" | "denied".
+  outcome     String   @default("success")
+  /// IP pelaku.
+  ipAddress   String?
+  /// User-Agent pelaku (browser/device).
+  userAgent   String?
+  createdAt   DateTime @default(now())
+
+  @@index([actorId])
+  @@index([category, action])
+  @@index([createdAt])
+}

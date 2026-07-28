@@ -137,3 +137,67 @@ Stage Summary:
   - Admin recovery flow (admin lain bisa reset 2FA admin tertentu)
   - Tampilkan notifikasi email/push setiap login admin baru
   - Session TTL differentiated per role (admin 2 jam, lainnya 7 hari)
+
+---
+Task ID: sec-4
+Agent: main
+Task: AuditLog — jejak forensik semua aksi sensitif
+
+Work Log:
+- Tambah model `AuditLog` ke Prisma schema dengan field: id, actorId, actorEmail, actorRole, category, action, targetId, targetType, description, metadata (JSON), outcome, ipAddress, userAgent, createdAt
+- Indexes: actorId, (category, action), createdAt — untuk query forensik cepat
+- Run `db:push` + `db:generate` (perlu restart dev server agar client ter-regenerate)
+- Buat `src/lib/auth/audit.ts`:
+  - `logAction(input)` — best-effort insert (error ditelan, tidak block aksi utama)
+  - `getRequestMeta(req)` — ekstrak IP + User-Agent dari Request
+  - `listAuditLogs(query)` — query dengan filter (category, action, outcome, email, from, to) + cursor pagination (limit max 200)
+  - `listAuditCategories()` — daftar kategori unik untuk dropdown filter
+  - Konvensi action naming: `<category>.<verb>[.outcome]` (contoh: "auth.login.success")
+  - Outcome values: "success" | "failure" | "denied"
+- Integrate audit logging ke 5 endpoint auth:
+  - `/api/auth/login`: login.failed, login.success, login.locked_out, login.role_mismatch, login.demo_blocked, 2fa.setup_requested, 2fa.challenge_sent
+  - `/api/auth/logout`: logout (hanya jika user terauth)
+  - `/api/auth/register`: register.success, register.failed, register.denied (admin self-register attempt)
+  - `/api/auth/2fa/enable`: 2fa.setup_success, 2fa.setup_failed, 2fa.setup_exhausted
+  - `/api/auth/2fa/verify`: 2fa.verify_success, 2fa.verify_failed, 2fa.verify_exhausted
+- Buat 2 API routes baru:
+  - `/api/audit/logs` GET — admin-only (via `requireAdmin()`), filter + cursor pagination
+  - `/api/audit/categories` GET — admin-only, daftar kategori unik
+- Buat komponen `AuditLogViewer` di admin dashboard:
+  - List audit log items dengan expandable details (ID, target, IP, user-agent, metadata JSON)
+  - Filter: email (partial), category dropdown, outcome dropdown
+  - Outcome badge: success (mint) / failure (saffron) / denied (rose)
+  - Role badge per actor
+  - Cursor pagination via "Muat lebih banyak" button
+  - Refresh button
+  - Max height 28rem dengan scroll-slim custom scrollbar
+- Update `AdminDashboard` untuk include `AuditLogViewer` di bawah placeholder sections
+- Integration test `scripts/test-audit-log.ts` — 19 assertions lulus:
+  - Trigger 6 events: failed login, role mismatch, customer login, logout, register denied, admin 2FA verify
+  - Verify all 7 expected action types tercatat: login.failed, login.role_mismatch, login.success, logout, register.denied, 2fa.challenge_sent, 2fa.verify_success
+  - Test filter category=auth + outcome=denied → returns 2 items (role_mismatch + register.denied)
+  - Test forbidden: GET /api/audit/logs tanpa admin cookie → 403
+  - Test /api/audit/categories → contains "auth"
+- Verifikasi browser:
+  - Login admin full flow (password + TOTP)
+  - Dashboard menampilkan AuditLogViewer dengan 9 events
+  - Setiap event menampilkan: action, outcome badge, description, timestamp, email, role badge, IP
+  - Filter dropdown berfungsi (terverifikasi via integration test)
+  - Expand entry untuk lihat detail (ID, target, IP, UA, metadata)
+  - Screenshot: `download/rejofood-admin-audit-log.png`
+
+Stage Summary:
+- Setiap aksi sensitif sekarang meninggalkan jejak permanen: siapa (actor), apa (action), kapan (createdAt), dari mana (IP + UA), dengan outcome apa
+- 11 action types tercatat otomatis dari 5 endpoint auth (tanpa intervensi manual)
+- AuditLog append-only dari sisi aplikasi — tidak ada UPDATE/DELETE route, hanya DBA yang bisa purge
+- Best-effort: jika insert gagal (DB down), aksi utama tetap berjalan — audit log tidak pernah block user
+- Admin-only access: GET /api/audit/logs memakai `requireAdmin()` → 403 untuk non-admin
+- Cursor pagination: efisien untuk tabel besar (tidak load semua row)
+- Filter kombinasi: category + outcome + email + date range → query forensik fleksibel
+- Production TODO:
+  - Tambahkan audit logging ke endpoint admin lain (user.ban, merchant.verify, dll. saat dibangun)
+  - Retention policy: auto-purge log > 90 hari via cron
+  - Streaming alert: kirim notifikasi Telegram/Slack untuk event kritis (login.failed > 5x, register.denied)
+  - Export CSV/JSON untuk compliance audit
+  - Index optimization untuk tabel besar (millions of rows)
+  - Pindah ke append-only S3/CloudWatch untuk immutability guarantee

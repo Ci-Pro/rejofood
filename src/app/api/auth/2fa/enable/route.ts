@@ -16,11 +16,13 @@ import { generateToken as generateSessionToken, setSessionCookie } from "@/lib/a
 import { getChallenge, recordChallengeAttempt, consumeChallenge } from "@/lib/auth/challenge-store";
 import { verifyToken } from "@/lib/auth/totp";
 import { getClientIp } from "@/lib/auth/rate-limiter";
+import { logAction, getRequestMeta } from "@/lib/auth/audit";
 import type { SafeUser } from "@/types/auth";
 
 const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 7;
 
 export async function POST(req: Request) {
+  const meta = getRequestMeta(req);
   try {
     const body = await req.json().catch(() => null);
     if (!body?.challengeToken || typeof body.code !== "string") {
@@ -29,6 +31,15 @@ export async function POST(req: Request) {
 
     const challenge = getChallenge(body.challengeToken);
     if (!challenge || challenge.type !== "setup" || !challenge.pendingSecret) {
+      await logAction({
+        actorEmail: challenge?.email,
+        category: "auth",
+        action: "auth.2fa.setup_failed",
+        description: "Setup 2FA gagal: challenge tidak valid atau kedaluwarsa.",
+        outcome: "failure",
+        ipAddress: meta.ipAddress,
+        userAgent: meta.userAgent,
+      });
       return NextResponse.json(
         { error: "Challenge tidak valid atau kedaluwarsa. Silakan login ulang." },
         { status: 401 },
@@ -38,6 +49,16 @@ export async function POST(req: Request) {
     // Rate limit per-challenge (max 5 percobaan)
     const attempt = recordChallengeAttempt(body.challengeToken);
     if (!attempt.ok) {
+      await logAction({
+        actorId: challenge.userId,
+        actorEmail: challenge.email,
+        category: "auth",
+        action: "auth.2fa.setup_exhausted",
+        description: "Setup 2FA gagal 5x untuk " + challenge.email + ". Challenge di-destroy.",
+        outcome: "denied",
+        ipAddress: meta.ipAddress,
+        userAgent: meta.userAgent,
+      });
       return NextResponse.json(
         { error: "Terlalu banyak percobaan. Silakan login ulang.", code: "CHALLENGE_EXHAUSTED" },
         { status: 429 },
@@ -46,6 +67,17 @@ export async function POST(req: Request) {
 
     const valid = verifyToken(body.code, challenge.pendingSecret);
     if (!valid) {
+      await logAction({
+        actorId: challenge.userId,
+        actorEmail: challenge.email,
+        category: "auth",
+        action: "auth.2fa.setup_failed",
+        description: `Verifikasi TOTP gagal saat setup untuk ${challenge.email}. Sisa: ${attempt.remaining - 1}.`,
+        outcome: "failure",
+        ipAddress: meta.ipAddress,
+        userAgent: meta.userAgent,
+        metadata: { remainingAttempts: attempt.remaining - 1 },
+      });
       return NextResponse.json(
         {
           error: "Kode TOTP salah. Periksa jam di perangkat Anda.",
@@ -84,6 +116,20 @@ export async function POST(req: Request) {
       },
     });
     await setSessionCookie(token);
+
+    await logAction({
+      actorId: user.id,
+      actorEmail: user.email,
+      actorRole: user.role,
+      category: "auth",
+      action: "auth.2fa.setup_success",
+      description: `2FA berhasil diaktifkan untuk admin ${user.email}. Login selesai.`,
+      targetId: user.id,
+      targetType: "user",
+      outcome: "success",
+      ipAddress: meta.ipAddress,
+      userAgent: meta.userAgent,
+    });
 
     const safe: SafeUser = {
       id: user.id,
