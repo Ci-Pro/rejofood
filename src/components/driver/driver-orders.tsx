@@ -3,12 +3,13 @@
 import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Package, RefreshCw, MapPin, Store, User, Phone, CheckCircle2, Bike,
+  Package, RefreshCw, MapPin, Store, User, Phone, CheckCircle2, Bike, Wifi, WifiOff,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useOrderSocket } from "@/hooks/use-order-socket";
 
 interface OrderItem {
   id: string;
@@ -74,9 +75,19 @@ export function DriverOrders() {
     }
   }, []);
 
+  // 🔔 Realtime: refetch saat READY order masuk atau status berubah
+  const { isConnected: socketConnected } = useOrderSocket({
+    onEvent: (event) => {
+      if (event === "order:status" || event === "order:created") {
+        fetchOrders();
+      }
+    },
+  });
+
   useEffect(() => {
     fetchOrders();
-    const interval = setInterval(fetchOrders, 8000);
+    // Fallback polling
+    const interval = setInterval(fetchOrders, 30000);
     return () => clearInterval(interval);
   }, [fetchOrders]);
 
@@ -257,7 +268,19 @@ export function DriverOrders() {
           </span>
           <div>
             <h3 className="font-display text-lg font-700 text-foreground">Pesanan siap dijemput</h3>
-            <p className="text-xs text-muted-foreground">{available.length} tersedia · auto-refresh 8s</p>
+            <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              {socketConnected ? (
+                <>
+                  <Wifi className="h-3 w-3 text-mint" />
+                  Real-time aktif · {available.length} tersedia
+                </>
+              ) : (
+                <>
+                  <WifiOff className="h-3 w-3" />
+                  Fallback 30s · {available.length} tersedia
+                </>
+              )}
+            </p>
           </div>
         </header>
 

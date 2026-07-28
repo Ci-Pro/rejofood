@@ -3,12 +3,13 @@
 import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Bell, RefreshCw, Check, X, ChefHat, PackageCheck, Phone, MapPin, Clock,
+  Bell, RefreshCw, Check, X, ChefHat, PackageCheck, Phone, MapPin, Clock, Wifi, WifiOff,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useOrderSocket } from "@/hooks/use-order-socket";
 
 interface OrderItem {
   id: string;
@@ -97,9 +98,19 @@ export function OrderQueue() {
     }
   }, []);
 
+  // 🔔 Realtime: refetch saat event masuk
+  const { isConnected: socketConnected } = useOrderSocket({
+    onEvent: (event) => {
+      if (event === "order:created" || event === "order:status") {
+        fetchOrders();
+      }
+    },
+  });
+
   useEffect(() => {
     fetchOrders();
-    const interval = setInterval(fetchOrders, 8000);
+    // Fallback polling — slower (30s) karena socket utama
+    const interval = setInterval(fetchOrders, 30000);
     return () => clearInterval(interval);
   }, [fetchOrders]);
 
@@ -141,7 +152,19 @@ export function OrderQueue() {
           </span>
           <div>
             <h3 className="font-display text-lg font-700 text-foreground">Antrian pesanan</h3>
-            <p className="text-xs text-muted-foreground">{orders.length} pesanan · auto-refresh 8s</p>
+            <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              {socketConnected ? (
+                <>
+                  <Wifi className="h-3 w-3 text-mint" />
+                  Real-time aktif · {orders.length} pesanan
+                </>
+              ) : (
+                <>
+                  <WifiOff className="h-3 w-3 text-muted-foreground" />
+                  Fallback polling 30s · {orders.length} pesanan
+                </>
+              )}
+            </p>
           </div>
         </div>
         <Button variant="outline" size="sm" onClick={fetchOrders} disabled={loading} className="h-8">

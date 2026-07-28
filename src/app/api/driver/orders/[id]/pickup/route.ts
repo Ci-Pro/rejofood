@@ -9,6 +9,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireRole } from "@/lib/auth/context";
 import { logAction, getRequestMeta } from "@/lib/auth/audit";
+import { emitOrderStatusChange } from "@/lib/realtime/realtime-client";
 
 export async function POST(
   req: Request,
@@ -51,7 +52,11 @@ export async function POST(
 
   const updated = await db.order.findUnique({
     where: { id },
-    include: { items: true, merchant: { select: { restaurantName: true } } },
+    include: {
+      items: true,
+      merchant: { select: { restaurantName: true, userId: true } },
+      customer: { select: { userId: true } },
+    },
   });
 
   await logAction({
@@ -72,6 +77,18 @@ export async function POST(
       to: "PICKED_UP",
       driverId: driver.id,
     },
+  });
+
+  // 🔔 Realtime: notify customer + merchant + admin
+  await emitOrderStatusChange({
+    orderId: updated!.id,
+    code: updated!.code,
+    from: "READY",
+    to: "PICKED_UP",
+    customerUserId: updated!.customer.userId,
+    merchantUserId: updated!.merchant.userId,
+    driverUserId: driver.userId,
+    actorRole: "DRIVER",
   });
 
   return NextResponse.json({

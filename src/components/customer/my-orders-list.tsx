@@ -2,10 +2,11 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Package, RefreshCw, ChevronRight, X } from "lucide-react";
+import { Package, RefreshCw, ChevronRight, Wifi, WifiOff, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { useOrderSocket } from "@/hooks/use-order-socket";
 
 interface OrderItem {
   id: string;
@@ -93,10 +94,20 @@ export function MyOrdersList() {
     }
   }, []);
 
+  // 🔔 Realtime: refetch saat event masuk, fallback polling 30s (longer, karena socket utama)
+  const { isConnected: socketConnected } = useOrderSocket({
+    onEvent: (event, data) => {
+      // Refetch untuk semua order events (status change, new order)
+      if (event === "order:status" || event === "order:created") {
+        fetchOrders();
+      }
+    },
+  });
+
   useEffect(() => {
     fetchOrders();
-    // Poll setiap 10 detik untuk update status real-time
-    const interval = setInterval(fetchOrders, 10000);
+    // Fallback polling — slower now (30s) karena socket utama
+    const interval = setInterval(fetchOrders, 30000);
     return () => clearInterval(interval);
   }, [fetchOrders]);
 
@@ -109,7 +120,19 @@ export function MyOrdersList() {
           </span>
           <div>
             <h3 className="font-display text-lg font-700 text-foreground">Pesanan saya</h3>
-            <p className="text-xs text-muted-foreground">{orders.length} pesanan · auto-refresh 10s</p>
+            <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              {socketConnected ? (
+                <>
+                  <Wifi className="h-3 w-3 text-mint" />
+                  Real-time aktif · {orders.length} pesanan
+                </>
+              ) : (
+                <>
+                  <WifiOff className="h-3 w-3 text-muted-foreground" />
+                  Fallback polling 30s · {orders.length} pesanan
+                </>
+              )}
+            </p>
           </div>
         </div>
         <Button variant="outline" size="sm" onClick={fetchOrders} disabled={loading} className="h-8">

@@ -12,6 +12,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireRole } from "@/lib/auth/context";
 import { logAction, getRequestMeta } from "@/lib/auth/audit";
+import { emitOrderStatusChange } from "@/lib/realtime/realtime-client";
 import { OrderStatus } from "@prisma/client";
 
 const ALLOWED_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
@@ -101,6 +102,29 @@ export async function PATCH(
       ...(body.reason && { reason: String(body.reason).slice(0, 200) }),
     },
   });
+
+  // 🔔 Realtime: notify customer + admin (+drivers if READY)
+  // Fetch customer userId + merchant userId for room targeting
+  const orderWithUsers = await db.order.findUnique({
+    where: { id: order.id },
+    select: {
+      customer: { select: { userId: true } },
+      merchant: { select: { userId: true } },
+      driver: { select: { userId: true } },
+    },
+  });
+  if (orderWithUsers) {
+    await emitOrderStatusChange({
+      orderId: order.id,
+      code: order.code,
+      from: order.status,
+      to: newStatus,
+      customerUserId: orderWithUsers.customer.userId,
+      merchantUserId: orderWithUsers.merchant.userId,
+      driverUserId: orderWithUsers.driver?.userId ?? null,
+      actorRole: "MERCHANT",
+    });
+  }
 
   return NextResponse.json({
     order: {

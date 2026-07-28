@@ -420,3 +420,66 @@ Stage Summary:
   - Push notification (PWA) saat status berubah
   - Order history pagination
   - Driver geolocation tracking real-time
+
+---
+Task ID: feat-3
+Agent: main
+Task: Phase 3 (partial) — WebSocket real-time untuk order updates
+
+Work Log:
+- Buat mini-service `mini-services/realtime/` (Socket.IO server di port 3001):
+  - package.json dengan dependency socket.io
+  - index.ts: HTTP server dengan /health + /emit endpoints + socket.io
+  - Auth middleware: verify rejo_session cookie via internal fetch ke /api/auth/session
+  - Room-based targeting: role:admin, role:merchant, role:driver, user:{userId}
+  - Internal /emit endpoint dengan Bearer token auth (constant-time compare)
+  - Graceful shutdown handlers (SIGTERM, SIGINT)
+  - Auto-restart via `bun --hot`
+- Update .env: tambah REJO_REALTIME_SECRET + REJO_REALTIME_URL
+- Buat `src/lib/realtime/realtime-client.ts`:
+  - emitRealtime(event) — best-effort fetch ke mini-service dengan 3s timeout
+  - emitOrderCreated(params) — helper untuk order:created event
+  - emitOrderStatusChange(params) — helper untuk order:status event
+  - Room targeting: customer + merchant + admin (+driver role jika READY)
+- Install socket.io-client di Next.js project
+- Update 4 API routes untuk emit realtime events:
+  - POST /api/orders: emitOrderCreated → notify merchant + admin
+  - PATCH /api/merchant/orders/[id]/status: emitOrderStatusChange → customer + admin (+drivers if READY)
+  - POST /api/driver/orders/[id]/pickup: emitOrderStatusChange READY → PICKED_UP → customer + merchant + admin
+  - POST /api/driver/orders/[id]/deliver: emitOrderStatusChange PICKED_UP → DELIVERED → customer + merchant + admin
+- Buat hook `src/hooks/use-order-socket.ts`:
+  - useOrderSocket({ onEvent, autoToast }) — singleton socket instance + ref counting
+  - useRealtimeTick(events?) — convenience: returns tick yang increment saat event
+  - Auto-toast untuk user feedback (order:created, order:status dengan label Indonesian)
+  - Local dev: direct URL localhost:3001; production: /?XTransformPort=3001 via Caddy
+- Update 4 UI components untuk pakai socket + fallback polling 30s (sebelumnya 8-10s):
+  - MyOrdersList (customer): useOrderSocket + WiFi/WifiOff indicator
+  - OrderQueue (merchant): same pattern + indicator
+  - DriverOrders (driver): same pattern
+  - OrderMonitor (admin): same pattern
+  - Semua tampilkan "Real-time aktif" atau "Fallback 30s" di subtitle
+- Verifikasi:
+  - Lint: 0 error
+  - Integration test order-flow: 37/37 assertions masih lulus (realtime emit tidak break flow)
+  - Realtime service health check OK
+  - /emit endpoint: 401 tanpa auth, 200 dengan Bearer token
+  - Browser E2E: login customer → lihat "Real-time aktif" indicator → buat order → login merchant → lihat order di queue + realtime indicator
+  - 2 screenshot tersimpan di download/
+
+Stage Summary:
+- WebSocket real-time aktif untuk order events (create + status changes)
+- 4 dashboards (customer/merchant/driver/admin) langsung update saat event masuk — tidak perlu refresh manual
+- Fallback polling 30s jika socket disconnect (sebelumnya 8-10s, sekarang 30s karena socket utama)
+- UI feedback: WiFi icon + "Real-time aktif" atau "Fallback 30s" subtitle per dashboard
+- Auto-toast untuk user feedback (contoh: "Pesanan diterima restoran", "Driver dalam perjalanan", "Pesanan telah sampai")
+- Room-based targeting: event hanya dikirim ke user yang relevan (customer + merchant + admin), bukan broadcast
+- Special case: status READY → broadcast ke semua driver (race untuk pickup)
+- Auth: socket verify session cookie saat connect, unauthorized disconnect
+- Internal emit: Bearer token (constant-time compare), 3s timeout (jangan block request utama)
+- Production TODO:
+  - WebSocket connection sticky session di load balancer
+  - Redis adapter untuk multi-instance socket.io (sekarang single instance)
+  - Reconnect dengan exponential backoff + jitter
+  - PWA push notification (untuk offline user)
+  - Typing indicator untuk chat (kalau ada chat feature nanti)
+  - Real-time driver geolocation tracking

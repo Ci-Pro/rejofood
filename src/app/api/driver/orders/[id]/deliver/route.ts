@@ -8,6 +8,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireRole } from "@/lib/auth/context";
 import { logAction, getRequestMeta } from "@/lib/auth/audit";
+import { emitOrderStatusChange } from "@/lib/realtime/realtime-client";
 
 export async function POST(
   req: Request,
@@ -40,6 +41,10 @@ export async function POST(
   const updated = await db.order.update({
     where: { id },
     data: { status: "DELIVERED", deliveredAt: new Date() },
+    include: {
+      customer: { select: { userId: true } },
+      merchant: { select: { userId: true } },
+    },
   });
 
   await logAction({
@@ -55,6 +60,18 @@ export async function POST(
     ipAddress: meta.ipAddress,
     userAgent: meta.userAgent,
     metadata: { code: order.code, from: "PICKED_UP", to: "DELIVERED" },
+  });
+
+  // 🔔 Realtime: notify customer + merchant + admin
+  await emitOrderStatusChange({
+    orderId: order.id,
+    code: order.code,
+    from: "PICKED_UP",
+    to: "DELIVERED",
+    customerUserId: updated.customer.userId,
+    merchantUserId: updated.merchant.userId,
+    driverUserId: driver.userId,
+    actorRole: "DRIVER",
   });
 
   return NextResponse.json({

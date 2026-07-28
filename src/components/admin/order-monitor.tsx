@@ -3,11 +3,12 @@
 import { useEffect, useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import {
-  ScrollText, RefreshCw, ChevronRight,
+  ScrollText, RefreshCw, ChevronRight, Wifi, WifiOff,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { useOrderSocket } from "@/hooks/use-order-socket";
 
 interface AdminOrder {
   id: string;
@@ -80,9 +81,19 @@ export function OrderMonitor() {
     }
   }, [filterStatus]);
 
+  // 🔔 Realtime: refetch saat event masuk
+  const { isConnected: socketConnected } = useOrderSocket({
+    onEvent: (event) => {
+      if (event === "order:created" || event === "order:status") {
+        fetchOrders();
+      }
+    },
+  });
+
   useEffect(() => {
     fetchOrders();
-    const interval = setInterval(fetchOrders, 10000);
+    // Fallback polling
+    const interval = setInterval(fetchOrders, 30000);
     return () => clearInterval(interval);
   }, [fetchOrders]);
 
@@ -95,7 +106,19 @@ export function OrderMonitor() {
           </span>
           <div>
             <h3 className="font-display text-lg font-700 text-foreground">Monitor pesanan</h3>
-            <p className="text-xs text-muted-foreground">{total} total · {orders.length} ditampilkan</p>
+            <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              {socketConnected ? (
+                <>
+                  <Wifi className="h-3 w-3 text-mint" />
+                  Real-time aktif · {total} total
+                </>
+              ) : (
+                <>
+                  <WifiOff className="h-3 w-3" />
+                  Fallback 30s · {total} total
+                </>
+              )}
+            </p>
           </div>
         </div>
         <Button

@@ -16,6 +16,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireRole } from "@/lib/auth/context";
 import { logAction, getRequestMeta } from "@/lib/auth/audit";
+import { emitOrderCreated } from "@/lib/realtime/realtime-client";
 import { OrderStatus } from "@prisma/client";
 
 const DELIVERY_FEE = 10000;
@@ -145,6 +146,17 @@ export async function POST(req: Request) {
       total,
       itemCount: orderItems.length,
     },
+  });
+
+  // 🔔 Realtime: notify merchant + admin
+  await emitOrderCreated({
+    orderId: order.id,
+    code: order.code,
+    merchantUserId: merchant.userId,
+    customerName: me.fullName,
+    total,
+    status: "PENDING",
+    itemCount: orderItems.reduce((s, i) => s + i.quantity, 0),
   });
 
   return NextResponse.json({
