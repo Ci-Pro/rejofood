@@ -73,10 +73,36 @@ model Merchant {
   restaurantName String
   description    String?
   logoUrl        String?
+  /// Alamat restoran untuk display + driver pickup
+  address        String?
+  /// Kategori masakan: "Indonesia", "Chinese", "Western", "Vegan", dll.
+  cuisine        String?
   rating         Float    @default(0)
   isOpen         Boolean  @default(false)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+
+  menuItems      MenuItem[]
+}
+
+/// Item menu milik merchant. Item boleh unavailable tanpa hapus (untuk stok habis sementara).
+model MenuItem {
+  id          String   @id @default(cuid())
+  merchantId  String
+  merchant    Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  price       Int      // dalam Rupiah, integer agar tidak floating-point error
+  imageUrl    String?
+  /// Kategori bebas string: "Makanan", "Minuman", "Dessert", "Snack", dll.
+  category    String   @default("Lainnya")
+  isAvailable Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([merchantId])
+  @@index([merchantId, isAvailable])
+  @@index([category])
 }
 
 model Driver {

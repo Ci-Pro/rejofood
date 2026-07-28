@@ -266,3 +266,67 @@ Stage Summary:
   - Concurrent session limit per user (max 1 untuk admin, max 3 untuk customer)
   - Session fingerprinting (bind ke IP/UA, logout jika berubah drastis)
   - Refresh token mechanism untuk extend admin session tanpa re-login (jika diinginkan)
+
+---
+Task ID: feat-1
+Agent: main
+Task: Restaurant & Menu pipeline — fondasi seluruh flow RejoFood
+
+Work Log:
+- Update Prisma schema:
+  - Tambah field ke Merchant: `address String?`, `cuisine String?`
+  - Tambah model `MenuItem`: id, merchantId, name, description, price (Int rupiah), imageUrl, category, isAvailable, createdAt, updatedAt
+  - Indexes: merchantId, (merchantId, isAvailable), category
+- Run `db:push` + `db:generate` + restart dev server
+- Buat seed script `scripts/seed-restaurants.ts`:
+  - 5 demo restaurants: Warung Rejo Pangan (Indonesia), Padang Sederhana, Dimsum House (Chinese), Kopi Tutup (Cafe, TUTUP), Bumi Vegan
+  - 27 menu items total dengan kategori: Makanan, Minuman, Dessert, Snack
+  - Idempotent — safe dijalankan ulang
+- Buat 6 API routes:
+  - `GET /api/restaurants` — public list dengan search (q), filter (cuisine, openOnly), cursor pagination, sort by (isOpen, rating, name), include menuCount
+  - `GET /api/restaurants/[id]` — public detail + semua menu items yang available, grouped by category di client
+  - `GET /api/merchant/menu` — merchant-only list own menu items (semua, termasuk unavailable) + merchant info
+  - `POST /api/merchant/menu` — merchant-only create new menu item dengan validation (name ≥ 2, price 0-10jt)
+  - `PATCH /api/merchant/menu/[itemId]` — merchant-only partial update (semua field opsional)
+  - `DELETE /api/merchant/menu/[itemId]` — merchant-only permanent delete (untuk stok habis sementara, pakai PATCH isAvailable=false)
+  - `PATCH /api/merchant/profile` — merchant-only update restaurantName, description, address, cuisine, logoUrl, isOpen
+  - Semua mutation catat ke AuditLog: merchant.menu.create/update/delete, merchant.profile.update
+- Buat komponen Customer:
+  - `RestaurantGrid` — search bar (debounced 200ms), filter "Buka saja" toggle, grid 3-kolom responsive, kartu dengan avatar berwarna (hash nama), badge BUKA/TUTUP, cuisine badge color-coded, rating bintang, address, menu count, hover lift effect
+  - `RestaurantDetailDialog` — drawer dari kanan (spring animation), header gradient aubergine dengan avatar + rating + address + cuisine, body menu grouped by category, tombol "Tambah" per item (toast placeholder untuk cart), footer "Cart & checkout segera hadir"
+- Update `CustomerDashboard` — ganti placeholder dengan header "Restoran terdekat" + `RestaurantGrid`
+- Buat komponen Merchant:
+  - `ProfileEditor` — header card dengan restaurantName, rating, address, description; switch BUKA/TUTUP (optimistic update); tombol Edit → inline form (restaurantName, cuisine, address, description); tombol Simpan dengan loading state
+  - `MenuManager` — table-like list grouped by category; per item: tombol Sembunyikan/Tampilkan (toggle isAvailable), Edit, Hapus (with AlertDialog confirmation); tombol Tambah + Refresh; create/edit dialog dengan form lengkap; optimistic update untuk toggle availability dengan rollback on error
+  - Type bridge `menu-manager-bridge.ts` untuk share `MerchantInfo` antara ProfileEditor + MenuManager via parent state (lifted up)
+- Update `MerchantDashboard` — ganti placeholder dengan ProfileEditor + MenuManager
+- Verifikasi curl:
+  - GET /api/restaurants → 5 restaurants with menuCount
+  - GET /api/restaurants/[id] → detail + menu items grouped by category
+  - GET /api/merchant/menu tanpa cookie → 403 (auth guard bekerja)
+  - POST /api/merchant/menu → 201 created with id
+  - PATCH /api/merchant/menu/[id] → update price + isAvailable
+  - DELETE /api/merchant/menu/[id] → ok
+  - PATCH /api/merchant/profile → toggle isOpen
+- Verifikasi browser:
+  - Customer: login → lihat 5 restaurants → search "padang" filter → filter "Buka saja" → klik restoran → drawer detail muncul dengan menu grouped by category → klik "Tambah" → toast placeholder muncul
+  - Merchant: login → lihat ProfileEditor + MenuManager → klik "Tambah" → dialog form → isi + submit → menu baru muncul di list
+- Screenshot:
+  - `download/rejofood-customer-restaurants.png` (grid view)
+  - `download/rejofood-customer-restaurant-detail.png` (drawer detail)
+  - `download/rejofood-merchant-dashboard.png` (profile + menu manager)
+
+Stage Summary:
+- Customer kini bisa browse 5 restoran dengan search, filter, dan detail view menu
+- Merchant kini bisa kelola profil (toggle BUKA/TUTUP, edit info) + CRUD menu items lengkap
+- Audit trail otomatis: 4 event type baru (menu.create/update/delete, profile.update) — semua aksi merchant tercatat dengan target + changes metadata
+- Validation server-side: name ≥ 2 char, price 0-10jt, partial update support
+- UI/UX: search debounce, optimistic update untuk toggle, color-coded cuisine badge, hash-based avatar, spring animation drawer, loading skeletons
+- Phase 2 TODO:
+  - Cart & checkout (sekarang placeholder toast)
+  - Order pipeline: customer place order → merchant accept → driver pickup → delivery
+  - Order status tracking real-time (WebSocket)
+  - Image upload untuk menu (sekarang imageUrl string manual)
+  - Restaurant rating update dari customer review
+  - Driver dashboard: available orders list
+  - Admin: pending merchant verification, ban user, view all orders
