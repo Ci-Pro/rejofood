@@ -2,11 +2,16 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Package, RefreshCw, ChevronRight, Wifi, WifiOff, X } from "lucide-react";
+import { Package, RefreshCw, ChevronRight, Wifi, WifiOff, X, Ban, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { useOrderSocket } from "@/hooks/use-order-socket";
+import { toast } from "sonner";
 
 interface OrderItem {
   id: string;
@@ -75,6 +80,10 @@ export function MyOrdersList() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<Order | null>(null);
+  // Cancel dialog state
+  const [cancelTarget, setCancelTarget] = useState<Order | null>(null);
+  const [cancelReason, setCancelReason] = useState("");
+  const [cancelling, setCancelling] = useState(false);
 
   const fetchOrders = useCallback(async () => {
     setLoading(true);
@@ -110,6 +119,38 @@ export function MyOrdersList() {
     const interval = setInterval(fetchOrders, 30000);
     return () => clearInterval(interval);
   }, [fetchOrders]);
+
+  function openCancelDialog(order: Order) {
+    setCancelTarget(order);
+    setCancelReason("");
+  }
+
+  async function confirmCancel() {
+    if (!cancelTarget) return;
+    setCancelling(true);
+    try {
+      const res = await fetch(`/api/orders/${cancelTarget.id}/cancel`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ reason: cancelReason.trim() || undefined }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data?.error || "Gagal membatalkan order.");
+        return;
+      }
+      toast.success(`Order ${cancelTarget.code} dibatalkan.`);
+      setCancelTarget(null);
+      setCancelReason("");
+      // Close detail drawer if open
+      if (selected?.id === cancelTarget.id) setSelected(null);
+      await fetchOrders();
+    } catch {
+      toast.error("Koneksi bermasalah.");
+    } finally {
+      setCancelling(false);
+    }
+  }
 
   return (
     <section className="rounded-2xl border border-border bg-card p-5 sm:p-6">
@@ -161,34 +202,51 @@ export function MyOrdersList() {
         </div>
       ) : (
         <div className="space-y-2">
-          {orders.map((o, idx) => (
-            <motion.button
-              key={o.id}
-              type="button"
-              onClick={() => setSelected(o)}
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: idx * 0.03 }}
-              className="accent-saffron flex w-full items-center gap-3 rounded-xl border border-border bg-background/60 p-3 text-left hover:border-role/40"
-            >
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <code className="text-xs font-700 text-foreground">{o.code}</code>
-                  <Badge variant="outline" className={cn("h-4 px-1.5 text-[0.6rem] font-700", statusBadgeClass(o.status))}>
-                    {statusLabel(o.status)}
-                  </Badge>
+          {orders.map((o, idx) => {
+            const canCancel = ["PENDING", "ACCEPTED", "PREPARING"].includes(o.status);
+            return (
+              <motion.div
+                key={o.id}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: idx * 0.03 }}
+                className="accent-saffron flex items-center gap-3 rounded-xl border border-border bg-background/60 p-3 hover:border-role/40"
+              >
+                <button
+                  type="button"
+                  onClick={() => setSelected(o)}
+                  className="min-w-0 flex-1 text-left"
+                  aria-label={`Lihat detail ${o.code}`}
+                >
+                  <div className="flex items-center gap-2">
+                    <code className="text-xs font-700 text-foreground">{o.code}</code>
+                    <Badge variant="outline" className={cn("h-4 px-1.5 text-[0.6rem] font-700", statusBadgeClass(o.status))}>
+                      {statusLabel(o.status)}
+                    </Badge>
+                  </div>
+                  <p className="mt-0.5 truncate text-sm font-600 text-foreground">{o.merchant.restaurantName}</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {o.itemCount} item · {formatTime(o.createdAt)}
+                  </p>
+                </button>
+                <div className="shrink-0 text-right">
+                  <p className="font-display text-sm font-700 text-saffron">{formatRupiah(o.total)}</p>
+                  {canCancel ? (
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); openCancelDialog(o); }}
+                      className="mt-0.5 inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-[0.65rem] font-700 text-destructive hover:border-destructive/40 hover:bg-destructive/10"
+                    >
+                      <Ban className="h-2.5 w-2.5" />
+                      Batalkan
+                    </button>
+                  ) : (
+                    <ChevronRight className="ml-auto h-3.5 w-3.5 text-muted-foreground" />
+                  )}
                 </div>
-                <p className="mt-0.5 truncate text-sm font-600 text-foreground">{o.merchant.restaurantName}</p>
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  {o.itemCount} item · {formatTime(o.createdAt)}
-                </p>
-              </div>
-              <div className="shrink-0 text-right">
-                <p className="font-display text-sm font-700 text-saffron">{formatRupiah(o.total)}</p>
-                <ChevronRight className="ml-auto h-3.5 w-3.5 text-muted-foreground" />
-              </div>
-            </motion.button>
-          ))}
+              </motion.div>
+            );
+          })}
         </div>
       )}
 
@@ -317,11 +375,98 @@ export function MyOrdersList() {
                     <span className="font-display tabular-nums">{formatRupiah(selected.total)}</span>
                   </div>
                 </div>
+
+                {/* Cancel button in detail drawer */}
+                {["PENDING", "ACCEPTED", "PREPARING"].includes(selected.status) && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => openCancelDialog(selected)}
+                    className="h-9 w-full text-destructive hover:bg-destructive/10"
+                  >
+                    <Ban className="h-4 w-4" />
+                    Batalkan pesanan
+                  </Button>
+                )}
+                {selected.status === "CANCELLED" && selected.notes && (
+                  <div className="rounded-xl border border-rose/30 bg-rose/5 p-3 text-xs text-rose">
+                    <p className="font-700">Alasan pembatalan:</p>
+                    <p className="mt-0.5">{selected.notes.split("[CANCELLED oleh customer:")[1]?.replace("]", "") ?? selected.notes}</p>
+                  </div>
+                )}
               </div>
             </motion.div>
           </>
         )}
       </AnimatePresence>
+
+      {/* Cancel dialog */}
+      <Dialog open={!!cancelTarget} onOpenChange={(open) => !open && !cancelling && setCancelTarget(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Ban className="h-5 w-5 text-destructive" />
+              Batalkan pesanan {cancelTarget?.code}?
+            </DialogTitle>
+            <DialogDescription>
+              Pesanan ke <span className="font-700 text-foreground">{cancelTarget?.merchant.restaurantName}</span> akan dibatalkan.
+              {cancelTarget?.status === "PREPARING" && (
+                <span className="mt-2 block rounded-lg bg-saffron/10 p-2 text-xs text-saffron">
+                  ⚠️ Restoran sudah mulai memproses pesanan ini. Pembatalan sekarang mungkin
+                  menyebabkan kerugian untuk merchant.
+                </span>
+              )}
+              {cancelTarget?.status === "ACCEPTED" && (
+                <span className="mt-2 block text-xs text-muted-foreground">
+                  Pesanan sudah diterima restoran. Pembatalan tetap bisa dilakukan.
+                </span>
+              )}
+              {cancelTarget?.status === "PENDING" && (
+                <span className="mt-2 block text-xs text-muted-foreground">
+                  Pesanan belum diterima restoran. Pembatalan aman dilakukan.
+                </span>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-1.5 py-2">
+            <label className="text-xs font-600 uppercase tracking-wide text-muted-foreground">
+              Alasan <span className="text-muted-foreground/60">(opsional, maks 300 karakter)</span>
+            </label>
+            <Textarea
+              value={cancelReason}
+              onChange={(e) => setCancelReason(e.target.value)}
+              placeholder="Contoh: salah pesan, berubah pikiran, alamat salah…"
+              rows={3}
+              maxLength={300}
+              className="resize-none"
+              disabled={cancelling}
+              autoFocus
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setCancelTarget(null)}
+              disabled={cancelling}
+            >
+              Batal
+            </Button>
+            <Button
+              type="button"
+              onClick={confirmCancel}
+              disabled={cancelling}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {cancelling ? (
+                <><Loader2 className="h-4 w-4 animate-spin" /> Membatalkan…</>
+              ) : (
+                <><Ban className="h-4 w-4" /> Ya, batalkan</>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </section>
   );
 }

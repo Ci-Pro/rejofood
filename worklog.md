@@ -483,3 +483,60 @@ Stage Summary:
   - PWA push notification (untuk offline user)
   - Typing indicator untuk chat (kalau ada chat feature nanti)
   - Real-time driver geolocation tracking
+
+---
+Task ID: feat-4
+Agent: main
+Task: Customer cancel order — sebelum PICKED_UP (PENDING/ACCEPTED/PREPARING)
+
+Work Log:
+- Buat API `POST /api/orders/[id]/cancel`:
+  - Customer-only (requireRole CUSTOMER)
+  - Ownership check: order harus milik customer yang login
+  - Status validation: hanya PENDING/ACCEPTED/PREPARING yang bisa di-cancel
+  - Status READY/PICKED_UP/DELIVERED/CANCELLED → 400 dengan pesan jelas
+  - Body: { reason?: string } — reason opsional, maks 300 karakter
+  - Audit log: order.cancel event dengan from/to/reason/merchantName
+  - Realtime emit: order:status CHANGE → customer + merchant + admin (+driver if assigned)
+- Update `MyOrdersList` (customer):
+  - List item: tombol "Batalkan" muncul untuk status PENDING/ACCEPTED/PREPARING (ganti ChevronRight)
+  - Detail drawer: tombol "Batalkan pesanan" di bawah total summary (untuk status cancellable)
+  - Detail drawer: tampilkan alasan pembatalan + notes untuk status CANCELLED
+  - Cancel dialog: heading "Batalkan pesanan {code}?", body dengan kontekstual warning:
+    - PENDING: "Pembatalan aman dilakukan"
+    - ACCEPTED: "Pesanan sudah diterita restoran. Pembatalan tetap bisa dilakukan"
+    - PREPARING: warning kuning "Restoran sudah mulai memproses pesanan ini. Pembatalan sekarang mungkin menyebabkan kerugian untuk merchant"
+  - Reason textarea opsional dengan placeholder examples
+  - Tombol "Ya, batalkan" dengan loading state
+- Update `OrderQueue` (merchant):
+  - Tampilkan CANCELLED status dengan info lengkap: siapa yang cancel (customer), kapan, dan reason (jika ada)
+- Integration test `scripts/test-cancel-order.ts` — 16 assertions lulus:
+  - Test 1: cancel PENDING → 200 + CANCELLED + cancelledAt
+  - Test 2: cancel ACCEPTED → 200 + CANCELLED
+  - Test 3: cancel PREPARING → 200 + CANCELLED
+  - Test 4: cancel READY → 400 ditolak (sudah siap dijemput)
+  - Test 5: cancel non-existent order → 404
+  - Test 6: merchant via customer endpoint → 403 (Forbidden)
+  - Test 7: audit log captured 3+ cancel events dengan reason
+  - Test 8: cancel tanpa reason (opsional) tetap jalan
+- Verifikasi browser:
+  - Customer login → buat order via UI → scroll ke "Pesanan saya"
+  - Order baru (RF-4RKRSM) muncul dengan badge "Menunggu" + tombol "Batalkan"
+  - Klik Batalkan → dialog muncul "Batalkan pesanan RF-4RKRSM?"
+  - Isi reason "Salah pesan via browser test" → klik "Ya, batalkan"
+  - Order status berubah ke "Dibatalkan" + toast success muncul
+- 3 screenshot tersimpan di download/
+
+Stage Summary:
+- Customer kini bisa cancel order sendiri untuk status PENDING/ACCEPTED/PREPARING
+- Reason optional (maks 300 char) — disimpan di notes order + audit log
+- Status READY/PICKED_UP/DELIVERED tidak bisa di-cancel (already too late)
+- Real-time: merchant + admin langsung tahu saat customer cancel (socket emit)
+- Audit trail: 4 cancel events tercatat dengan actor + reason + from/to
+- UX context-aware: warning berbeda per status (PENDING aman, PREPARING berpotensi rugi merchant)
+- Server-side ownership check: customer tidak bisa cancel order milik customer lain
+- Production TODO:
+  - Refund flow jika payment sudah dilakukan (sekarang belum ada payment)
+  - Merchant notification saat customer cancel order yang sudah PREPARING (perlu push notification)
+  - Cancel rate limit per customer (anti-abuse)
+  - Auto-cancel jika merchant tidak accept dalam X menit (timeout)

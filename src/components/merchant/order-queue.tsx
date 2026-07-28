@@ -309,7 +309,17 @@ export function OrderQueue() {
                     <p className="text-xs text-mint font-600">Selesai · {formatTime(o.deliveredAt ?? o.createdAt)}</p>
                   )}
                   {o.status === "CANCELLED" && (
-                    <p className="text-xs text-rose font-600">Dibatalkan</p>
+                    <div className="text-xs">
+                      <p className="font-600 text-rose">Dibatalkan</p>
+                      {o.notes?.includes("[CANCELLED oleh customer:") && (
+                        <p className="mt-0.5 text-muted-foreground italic">
+                          "{o.notes.split("[CANCELLED oleh customer:")[1]?.replace("]", "")}"
+                        </p>
+                      )}
+                      <p className="mt-0.5 text-muted-foreground">
+                        Dibatalkan oleh customer · {formatTime(o.cancelledAt ?? o.createdAt)}
+                      </p>
+                    </div>
                   )}
                 </div>
               </motion.div>
