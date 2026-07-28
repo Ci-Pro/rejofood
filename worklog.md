@@ -720,3 +720,54 @@ Stage Summary:
   - Auto-flag review dengan kata sensitif (moderasi)
   - Review helpful voting (other customers bisa upvote)
   - Email merchant saat ada review baru
+
+---
+Task ID: feat-7
+Agent: main
+Task: Push ke GitHub + setup Android APK build via GitHub Actions
+
+Work Log:
+- Persiapan repo:
+  - .gitignore: exclude node_modules, .next, db/*.db, .env, .zscripts, Caddyfile, download, skills, tests, examples, android, ios
+  - .env.example: template dengan semua env vars (DATABASE_URL, REJO_DEMO_MODE, rate limit, realtime secret, payment placeholder, REJOFOOD_BACKEND_URL)
+  - README.md: lengkap dengan tech stack, quick start, demo accounts, features, Android build instructions, security layers, production deployment, project structure
+  - capacitor.config.ts: config untuk Android WebView wrapper (load remote backend URL)
+- Buat GitHub Actions workflow (.github/workflows/build-android.yml):
+  - Trigger: push to main + manual dispatch
+  - Steps: checkout → setup Bun → Node 22 → Java 21 → Android SDK → install deps → install Capacitor → generate capacitor.config.json → cap add android → manual assets copy (workaround cap sync bug) → gradle build → upload APK artifact
+  - Environment: REJOFOOD_BACKEND_URL dari secrets (default: http://10.0.2.2:3000 untuk emulator)
+  - Artifact retention: 30 hari
+  - Summary dengan instruksi install
+- Git init + cleanup:
+  - Remove sandbox-specific files dari tracking (.zscripts, Caddyfile, bun.lock, db/custom.db, download/, skills/, tests/, examples/, dev.log)
+  - Remove .env dari tracking (security!)
+  - 162 files tracked (151 source code + config files)
+- Create GitHub repo via API:
+  - URL: https://github.com/Ci-Pro/rejofood
+  - Public visibility
+  - Description lengkap
+- Push ke GitHub (3 commits untuk fix iteratif):
+  - Commit 1: initial push (all features)
+  - Commit 2: fix Node 22 (Capacitor CLI requires >=22)
+  - Commit 3: use capacitor.config.json (no TS compilation)
+  - Commit 4: manual assets copy (cap sync bug with server.url)
+  - Commit 5: Java 21 (Capacitor 7 requires source release 21)
+- Build verification (5 attempts, 1 success):
+  - Attempt 1: fail — Node 20, Capacitor CLI butuh Node 22
+  - Attempt 2: fail — capacitor.config.ts butuh TS compilation, cap sync gagal
+  - Attempt 3: fail — capacitor.settings.gradle tidak ada (cap sync gagal)
+  - Attempt 4: fail — Java 17, Capacitor 7 butuh Java 21
+  - Attempt 5: ✅ SUCCESS — APK 3.6 MB
+- Artifact: rejofood-debug-apk (3.6 MB), expires 30 hari
+  - Download: https://github.com/Ci-Pro/rejofood/actions/runs/30324938714/artifacts/8675324536
+
+Stage Summary:
+- Repo live: https://github.com/Ci-Pro/rejofood
+- APK build otomatis via GitHub Actions setiap push ke main
+- APK 3.6 MB (debug build, signed with debug key)
+- WebView wrapper approach: APK load backend URL yang configurable via REJOFOOD_BACKEND_URL secret
+- Default URL: http://10.0.2.2:3000 (untuk Android emulator, akses host machine)
+- Untuk HP real: user perlu deploy backend ke Vercel + set REJOFOOD_BACKEND_URL secret + rebuild
+- Security: .env tidak di-commit, .env.example sebagai template
+- 5 iterasi fix untuk resolve: Node version, TS config, cap sync bug, Java version
+- User perlu REVOKE token PAT yang share di chat (sudah dipakai, sekarang terekspos)
