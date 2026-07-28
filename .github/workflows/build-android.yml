@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 env:
-  REJOFOOD_BACKEND_URL: ${{ secrets.REJOFOOD_BACKEND_URL || 'http://10.0.2.2:3000' }}
+  REJOFOOD_BACKEND_URL: ${{ secrets.REJOFOOD_BACKEND_URL || 'https://rejofood.vercel.app' }}
 
 jobs:
   build:
