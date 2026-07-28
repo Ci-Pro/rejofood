@@ -189,7 +189,9 @@ export function UserProfileEditor() {
 
   if (!profile || !user) return null;
 
-  const accent = ROLE_ACCENT[profile.role];
+  const accent = ROLE_ACCENT[profile.role] ?? "saffron";
+  const safeFullName = profile.fullName || "User";
+  const safeInitial = safeFullName[0]?.toUpperCase() ?? "?";
 
   return (
     <div className="space-y-4">
@@ -202,18 +204,18 @@ export function UserProfileEditor() {
         <div className="flex items-center gap-4">
           <div className={cn(
             "flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl font-display text-2xl font-700 shadow-premium",
-            initialColor(profile.fullName, profile.role),
+            initialColor(safeFullName, profile.role),
           )}>
-            {profile.fullName[0]?.toUpperCase()}
+            {safeInitial}
           </div>
           <div className="min-w-0 flex-1">
-            <h2 className="truncate font-display text-xl font-700 text-foreground">{profile.fullName}</h2>
-            <p className="truncate text-sm text-muted-foreground">{profile.email}</p>
+            <h2 className="truncate font-display text-xl font-700 text-foreground">{safeFullName}</h2>
+            <p className="truncate text-sm text-muted-foreground">{profile.email || "—"}</p>
             <div className="mt-1.5 flex items-center gap-2">
               <Badge variant="outline" className={cn("h-5 border-transparent px-2 text-[0.6rem] font-700",
                 "bg-role-soft text-role",
               )}>
-                {ROLE_LABEL[profile.role]}
+                {ROLE_LABEL[profile.role] ?? profile.role}
               </Badge>
               {profile.role === "ADMIN" && (
                 <Badge variant="outline" className={cn(
@@ -226,7 +228,7 @@ export function UserProfileEditor() {
                   2FA {profile.twoFactorEnabled ? "ON" : "OFF"}
                 </Badge>
               )}
-              {profile.role === "DRIVER" && profile.rating !== undefined && (
+              {profile.role === "DRIVER" && typeof profile.rating === "number" && (
                 <Badge variant="outline" className="h-5 border-saffron/40 bg-saffron/10 px-1.5 text-[0.55rem] font-700 text-saffron">
                   ★ {profile.rating.toFixed(1)}
                 </Badge>

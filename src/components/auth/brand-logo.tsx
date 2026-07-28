@@ -117,8 +117,8 @@ function LogoMark({ dim, className }: { dim: number; className?: string }) {
       <g transform="translate(56 50)">
         <defs>
           <linearGradient id="arrow-grad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#FFB347" />
-            <stop offset="100%" stop-color="#FF9F1C" />
+            <stop offset="0%" stopColor="#FFB347" />
+            <stop offset="100%" stopColor="#FF9F1C" />
           </linearGradient>
         </defs>
         <rect x="-18" y="-3" width="22" height="6" rx="3" fill="url(#arrow-grad)" />

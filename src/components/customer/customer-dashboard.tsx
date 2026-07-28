@@ -9,6 +9,7 @@ import { CartButton } from "./cart-button";
 import { MyOrdersList } from "./my-orders-list";
 import { FavoritesList } from "./favorites-list";
 import { UserProfileEditor } from "@/components/shared/user-profile-editor";
+import { ErrorBoundary } from "@/components/shared/error-boundary";
 import { UtensilsCrossed, ShoppingBag, Heart, User } from "lucide-react";
 import type { NavAccent } from "@/components/shared/nav-types";
 
@@ -72,7 +73,7 @@ export function CustomerDashboard() {
             subtitle="Kelola informasi akunmu."
             accent="saffron"
           />
-          <UserProfileEditor />
+          <ErrorBoundary><UserProfileEditor /></ErrorBoundary>
         </>
       )}
 

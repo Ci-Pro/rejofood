@@ -6,6 +6,7 @@ import { AppShell } from "@/components/shared/app-shell";
 import { DashboardHeader } from "@/components/shared/dashboard-primitives";
 import { DriverOrders } from "./driver-orders";
 import { UserProfileEditor } from "@/components/shared/user-profile-editor";
+import { ErrorBoundary } from "@/components/shared/error-boundary";
 import { Bike, User } from "lucide-react";
 
 export function DriverDashboard() {
@@ -35,7 +36,7 @@ export function DriverDashboard() {
             subtitle="Kelola informasi akun dan kendaraan."
             accent="mint"
           />
-          <UserProfileEditor />
+          <ErrorBoundary><UserProfileEditor /></ErrorBoundary>
         </>
       )}
     </AppShell>
