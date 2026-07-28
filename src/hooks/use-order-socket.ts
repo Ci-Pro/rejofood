@@ -48,25 +48,54 @@ interface UseOrderSocketResult {
 
 let socketInstance: Socket | null = null;
 let socketRefCount = 0;
+let socketFailed = false;
 
-function getSocket(): Socket {
+function getSocket(): Socket | null {
+  // Production tanpa realtime service (mis. Vercel tanpa Railway): skip socket
+  // NEXT_PUBLIC_REALTIME_URL kosong = disabled, fallback ke polling
+  const realtimeUrl = process.env.NEXT_PUBLIC_REALTIME_URL;
+  if (!realtimeUrl && typeof window !== "undefined" && window.location.hostname !== "localhost") {
+    return null;
+  }
+
+  if (socketFailed) return null;
+
   if (!socketInstance) {
-    // Di sandbox/preview: connect via XTransformPort (Caddy gateway)
-    // Di local dev (browser can reach localhost:3001 directly): pakai direct URL
-    // Karena kita di localhost, direct URL lebih reliable
+    // Local dev: direct localhost:3001
+    // Preview/sandbox: via XTransformPort
+    // Production (with NEXT_PUBLIC_REALTIME_URL set): pakai URL tsb
     const isLocalDev = typeof window !== "undefined" && window.location.hostname === "localhost";
-    const url = isLocalDev
-      ? "http://localhost:3001"
-      : "/?XTransformPort=3001";
+    const url = realtimeUrl
+      ? realtimeUrl
+      : isLocalDev
+        ? "http://localhost:3001"
+        : "/?XTransformPort=3001";
 
-    socketInstance = io(url, {
-      transports: ["websocket", "polling"],
-      reconnection: true,
-      reconnectionAttempts: 10,
-      reconnectionDelay: 1000,
-      timeout: 10000,
-      withCredentials: true,
-    });
+    try {
+      socketInstance = io(url, {
+        transports: ["websocket", "polling"],
+        reconnection: true,
+        reconnectionAttempts: 5, // fewer retries di production
+        reconnectionDelay: 2000,
+        timeout: 10000,
+        withCredentials: true,
+        autoConnect: false,
+      });
+
+      // Connect async — jika fail, mark sebagai failed supaya tidak retry forever
+      socketInstance.on("connect_error", () => {
+        if (socketInstance) {
+          socketInstance.disconnect();
+          socketInstance = null;
+          socketFailed = true;
+        }
+      });
+
+      socketInstance.connect();
+    } catch {
+      socketFailed = true;
+      return null;
+    }
   }
   return socketInstance;
 }
@@ -83,6 +112,11 @@ export function useOrderSocket(options: UseOrderSocketOptions = {}): UseOrderSoc
     if (!user) return;
 
     const socket = getSocket();
+    // Jika socket null (production tanpa realtime service), skip — fallback ke polling
+    if (!socket) {
+      setIsConnected(false);
+      return;
+    }
     socketRefCount++;
 
     const onConnect = () => setIsConnected(true);
