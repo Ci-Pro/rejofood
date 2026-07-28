@@ -5,6 +5,7 @@ import { useAuthStore } from "@/store/auth-store";
 import { AppShell } from "@/components/shared/app-shell";
 import { DashboardHeader } from "@/components/shared/dashboard-primitives";
 import { DriverOrders } from "./driver-orders";
+import { UserProfileEditor } from "@/components/shared/user-profile-editor";
 import { Bike, User } from "lucide-react";
 
 export function DriverDashboard() {
@@ -27,13 +28,15 @@ export function DriverDashboard() {
       {(activeNav === "available" || activeNav === "active") && <DriverOrders />}
 
       {activeNav === "profile" && (
-        <div className="accent-mint rounded-2xl border border-dashed border-role/40 bg-role-soft/30 p-8 text-center">
-          <User className="mx-auto h-10 w-10 text-role" />
-          <p className="mt-3 font-display text-lg font-700 text-foreground">Profil segera hadir</p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Edit nama, kendaraan, dan lihat riwayat penghasilan.
-          </p>
-        </div>
+        <>
+          <DashboardHeader
+            greeting="Profil"
+            name={user?.fullName ?? "Driver Rejo"}
+            subtitle="Kelola informasi akun dan kendaraan."
+            accent="mint"
+          />
+          <UserProfileEditor />
+        </>
       )}
     </AppShell>
   );

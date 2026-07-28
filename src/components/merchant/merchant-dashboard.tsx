@@ -7,6 +7,7 @@ import { DashboardHeader } from "@/components/shared/dashboard-primitives";
 import { ProfileEditor } from "./profile-editor";
 import { MenuManager } from "./menu-manager";
 import { OrderQueue } from "./order-queue";
+import { UserProfileEditor } from "@/components/shared/user-profile-editor";
 import type { MerchantInfo } from "./menu-manager-bridge";
 
 export function MerchantDashboard() {
@@ -72,10 +73,13 @@ export function MerchantDashboard() {
           <DashboardHeader
             greeting="Profil"
             name={user?.fullName ?? "Partner Rejo"}
-            subtitle="Kelola informasi restoran."
+            subtitle="Kelola informasi akun dan restoran."
             accent="lavender"
           />
-          <ProfileEditor info={info} onUpdated={setInfo} />
+          <div className="space-y-4">
+            <UserProfileEditor />
+            <ProfileEditor info={info} onUpdated={setInfo} />
+          </div>
         </>
       )}
     </AppShell>

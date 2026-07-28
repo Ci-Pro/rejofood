@@ -9,6 +9,7 @@ import {
 } from "@/components/shared/dashboard-primitives";
 import { AuditLogViewer } from "./audit-log-viewer";
 import { OrderMonitor } from "./order-monitor";
+import { UserProfileEditor } from "@/components/shared/user-profile-editor";
 import { Users, Store, Bike, Activity } from "lucide-react";
 
 export function AdminDashboard() {
@@ -63,12 +64,7 @@ export function AdminDashboard() {
             subtitle="Kelola informasi akun admin."
             accent="rose"
           />
-          <div className="accent-rose rounded-2xl border border-dashed border-role/40 bg-role-soft/30 p-8 text-center">
-            <p className="font-display text-lg font-700 text-foreground">Profil admin segera hadir</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Kelola 2FA, sessions aktif, dan permissions.
-            </p>
-          </div>
+          <UserProfileEditor />
         </>
       )}
     </AppShell>

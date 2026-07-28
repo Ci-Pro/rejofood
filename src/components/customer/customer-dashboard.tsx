@@ -7,6 +7,7 @@ import { DashboardHeader } from "@/components/shared/dashboard-primitives";
 import { RestaurantGrid } from "./restaurant-grid";
 import { CartButton } from "./cart-button";
 import { MyOrdersList } from "./my-orders-list";
+import { UserProfileEditor } from "@/components/shared/user-profile-editor";
 import { UtensilsCrossed, ShoppingBag, Heart, User } from "lucide-react";
 import type { NavAccent } from "@/components/shared/nav-types";
 
@@ -76,13 +77,7 @@ export function CustomerDashboard() {
             subtitle="Kelola informasi akunmu."
             accent="saffron"
           />
-          <div className="accent-saffron rounded-2xl border border-dashed border-role/40 bg-role-soft/30 p-8 text-center">
-            <User className="mx-auto h-10 w-10 text-role" />
-            <p className="mt-3 font-display text-lg font-700 text-foreground">Profil segera hadir</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Edit nama, nomor HP, alamat default, dan password.
-            </p>
-          </div>
+          <UserProfileEditor />
         </>
       )}
 
