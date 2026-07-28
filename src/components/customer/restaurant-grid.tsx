@@ -2,11 +2,12 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Search, Star, MapPin, Clock, UtensilsCrossed, ChevronRight } from "lucide-react";
+import { Search, Star, MapPin, Clock, UtensilsCrossed, ChevronRight, Heart } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { RestaurantDetailDialog } from "./restaurant-detail-dialog";
+import { useFavorites } from "@/hooks/use-favorites";
 import { cn } from "@/lib/utils";
 
 interface RestaurantListItem {
@@ -57,6 +58,7 @@ export function RestaurantGrid() {
   const [query, setQuery] = useState("");
   const [openOnly, setOpenOnly] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const { isFavorited, toggle } = useFavorites();
 
   const fetchRestaurants = useCallback(async () => {
     setLoading(true);
@@ -133,23 +135,41 @@ export function RestaurantGrid() {
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {items.map((r, idx) => (
-            <motion.button
+            <motion.div
               key={r.id}
-              type="button"
-              onClick={() => setSelectedId(r.id)}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: idx * 0.04 }}
               whileHover={{ y: -3 }}
-              whileTap={{ scale: 0.98 }}
-              className="group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card p-4 text-left transition-colors hover:border-saffron/40"
+              className="group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card p-4 text-left transition-colors hover:border-saffron/40 shadow-premium"
             >
+              {/* Heart toggle (top right) */}
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); toggle(r.id, r.restaurantName); }}
+                className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-card/80 backdrop-blur-sm transition-premium hover:scale-110"
+                aria-label={isFavorited(r.id) ? "Hapus dari favorit" : "Tambah ke favorit"}
+              >
+                <Heart
+                  className={cn(
+                    "h-4 w-4 transition-premium",
+                    isFavorited(r.id) ? "fill-rose text-rose" : "text-muted-foreground",
+                  )}
+                />
+              </button>
+
+              {/* Clickable area untuk buka detail */}
+              <button
+                type="button"
+                onClick={() => setSelectedId(r.id)}
+                className="flex flex-1 flex-col text-left"
+              >
               {/* Header: avatar + name + open status */}
               <div className="flex items-start gap-3">
                 <div className={cn("flex h-12 w-12 shrink-0 items-center justify-center rounded-xl font-display text-xl font-700", initialColor(r.restaurantName))}>
                   {initial(r.restaurantName)}
                 </div>
-                <div className="min-w-0 flex-1">
+                <div className="min-w-0 flex-1 pr-8">
                   <div className="flex items-center gap-2">
                     <h3 className="truncate font-display text-base font-700 text-foreground">{r.restaurantName}</h3>
                     {r.isOpen ? (
@@ -194,9 +214,8 @@ export function RestaurantGrid() {
                   {r.menuCount} menu
                 </span>
               </div>
-
-              <ChevronRight className="absolute right-3 top-3 h-4 w-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
-            </motion.button>
+              </button>
+            </motion.div>
           ))}
         </div>
       )}

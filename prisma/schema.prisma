@@ -66,6 +66,7 @@ model Customer {
   updatedAt      DateTime @updatedAt
   orders         Order[]
   reviews        Review[]
+  favorites      Favorite[]
 }
 
 model Merchant {
@@ -87,6 +88,7 @@ model Merchant {
   menuItems      MenuItem[]
   orders         Order[]
   reviews        Review[]
+  favorites      Favorite[]
 }
 
 /// Item menu milik merchant. Item boleh unavailable tanpa hapus (untuk stok habis sementara).
@@ -284,6 +286,20 @@ model Review {
   @@index([merchantId])
   @@index([customerId])
   @@index([rating])
+}
+
+/// Favorite restoran milik customer. Unique constraint (customerId, merchantId).
+model Favorite {
+  id          String   @id @default(cuid())
+  customerId  String
+  customer    Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  merchantId  String
+  merchant    Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+
+  @@unique([customerId, merchantId])
+  @@index([customerId])
+  @@index([merchantId])
 }
 
 /// Jejak forensik: siapa melakukan apa, kapan, dari mana.
