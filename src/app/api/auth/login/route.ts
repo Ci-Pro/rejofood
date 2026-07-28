@@ -2,26 +2,32 @@
  * POST /api/auth/login
  * Body: { email, password, expectedRole? }
  *
- * Returns the safe user object on success. Sets the session cookie.
+ * Flow:
+ *  1. Verifikasi email + password (factor 1)
+ *  2. Jika role === ADMIN:
+ *     - Jika twoFactorEnabled=false → return { needsSetup: true, challengeToken }
+ *       (admin baru pertama login wajib setup 2FA)
+ *     - Jika twoFactorEnabled=true → return { needsTwoFactor: true, challengeToken }
+ *       (admin lama wajib verifikasi TOTP)
+ *  3. Role lain → langsung set session cookie
  *
  * SECURITY:
- *  - `expectedRole` hanya UX; server memverifikasi password secara terpisah.
- *  - Saat env `REJO_DEMO_MODE !== 'true'` (production default), email demo admin
- *    (`admin@rejofood.id`) ditolak meskipun password benar.
- *  - Rate limit: 5 percobaan gagal / 15 menit per (IP, email) → lockout 30 menit.
- *    Setiap response gagal mengembalikan `remainingAttempts` untuk UX.
- *    Lapisan berikutnya yang belum diimplementasi: 2FA, idle timeout, audit log.
+ *  - Rate limit berlaku per (IP, email). TOTP attempts di-rate-limit terpisah di challenge.
+ *  - Saat env `REJO_DEMO_MODE !== 'true'`, email demo admin ditolak meski password benar.
+ *  - Role mismatch tidak dihitung sebagai failure (UX, bukan serangan).
  */
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { verifyPassword } from "@/lib/auth/password";
-import { generateToken, setSessionCookie } from "@/lib/auth/session";
+import { generateToken as generateSessionToken, setSessionCookie } from "@/lib/auth/session";
 import {
   checkRateLimit,
   recordFailure,
   recordSuccess,
   getClientIp,
 } from "@/lib/auth/rate-limiter";
+import { createChallenge } from "@/lib/auth/challenge-store";
+import { generateSecret } from "@/lib/auth/totp";
 import { Role } from "@prisma/client";
 import type { SafeUser } from "@/types/auth";
 
@@ -33,7 +39,6 @@ function isDemoMode(): boolean {
   return process.env.REJO_DEMO_MODE === "true";
 }
 
-/** Format sisa waktu lockout ke "Xm Ys" atau "Xs" untuk pesan UI. */
 function formatDuration(seconds: number): string {
   if (seconds < 60) return `${seconds} detik`;
   const m = Math.floor(seconds / 60);
@@ -67,7 +72,6 @@ export async function POST(req: Request) {
 
     // 🔒 SECURITY: blokir email demo admin di production.
     if (!isDemoMode() && DEMO_BLOCKED_EMAILS.has(email)) {
-      // Hitung sebagai failure agar tidak bisa di-brute-force untuk cek keberadaan akun
       const after = recordFailure(ip, email);
       return NextResponse.json(
         {
@@ -82,7 +86,6 @@ export async function POST(req: Request) {
     const user = await db.user.findUnique({ where: { email } });
     if (!user || !user.isActive) {
       const after = recordFailure(ip, email);
-      // Jangan beri tahu email ada/tidak — pesan generik
       const isLocked = after.lockedUntil !== null;
       return NextResponse.json(
         {
@@ -116,7 +119,6 @@ export async function POST(req: Request) {
     }
 
     if (body.expectedRole && user.role !== (body.expectedRole as Role)) {
-      // Role mismatch TIDAK dihitung sebagai failure — itu bukan serangan, hanya UX
       return NextResponse.json(
         {
           error: `Akun ini bukan role ${body.expectedRole}. Silakan pilih role yang sesuai.`,
@@ -126,10 +128,43 @@ export async function POST(req: Request) {
       );
     }
 
-    // ✅ Sukses — reset counter agar user tidak terbebani history gagal lama
+    // ✅ Password verified — factor 1 complete. Reset rate limit bucket.
     recordSuccess(ip, email);
 
-    const token = generateToken();
+    // 🔒 2FA: WAJIB untuk ADMIN. Untuk role lain, optional (TODO di masa depan).
+    if (user.role === "ADMIN") {
+      if (!user.twoFactorEnabled || !user.twoFactorSecret) {
+        // First-time admin — needs to set up 2FA before they can complete login.
+        const pendingSecret = generateSecret();
+        const challenge = createChallenge({
+          userId: user.id,
+          email: user.email,
+          type: "setup",
+          pendingSecret,
+        });
+        return NextResponse.json({
+          needsSetup: true,
+          challengeToken: challenge.token,
+          email: user.email,
+          fullName: user.fullName,
+        });
+      }
+      // Existing admin with 2FA enabled — needs TOTP verification.
+      const challenge = createChallenge({
+        userId: user.id,
+        email: user.email,
+        type: "verify",
+      });
+      return NextResponse.json({
+        needsTwoFactor: true,
+        challengeToken: challenge.token,
+        email: user.email,
+        fullName: user.fullName,
+      });
+    }
+
+    // Non-admin: complete login immediately
+    const token = generateSessionToken();
     const expiresAt = new Date(Date.now() + SESSION_TTL_MS);
     await db.session.create({
       data: {
@@ -140,7 +175,6 @@ export async function POST(req: Request) {
         ipAddress: ip,
       },
     });
-
     await setSessionCookie(token);
 
     const safe: SafeUser = {

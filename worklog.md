@@ -71,3 +71,69 @@ Stage Summary:
 - Bucket terisolasi per email — satu user kena lockout tidak mempengaruhi user lain di IP yang sama
 - Production-ready: tinggal swap in-memory store ke Redis untuk multi-instance
 - TODO selanjutnya: 2FA TOTP, audit log table, session TTL differentiated per role, CAPTCHA setelah 2 kegagalan
+
+---
+Task ID: sec-3
+Agent: main
+Task: 2FA TOTP wajib untuk admin — cegah kompromi akun walau password bocor
+
+Work Log:
+- Install dependencies: `otplib@13` (RFC 6238 TOTP) + `qrcode@1.5` (QR PNG generator) + `@types/qrcode`
+- Update Prisma schema: tambah `twoFactorSecret String?` + `twoFactorEnabled Boolean @default(false)` ke User
+- Run `db:push` + `db:generate` untuk sinkronisasi
+- Buat `src/lib/auth/totp.ts`:
+  - `generateSecret()` — base32 secret 20 bytes entropy
+  - `buildOtpAuthUrl(email, secret)` — URL otpauth:// untuk QR
+  - `verifyToken(token, secret)` — verifikasi 6-digit, toleransi ±30 detik clock skew
+  - `_generateTokenForTesting(secret)` — helper untuk integration test
+  - Note: otplib v13 breaking change — pakai functional API (`generateSync`, `verifySync`) bukan `authenticator` object
+- Buat `src/lib/auth/challenge-store.ts`:
+  - In-memory store untuk challenge token 2FA (TTL 5 menit)
+  - Tipe challenge: "setup" (first-time admin) atau "verify" (admin dgn 2FA enabled)
+  - Pending secret disimpan di challenge entry untuk setup flow
+  - Rate limit per challenge (max 5 percobaan TOTP)
+  - Penting: pakai `globalThis.__rejoChallengeStore` agar persistent cross-module di Next.js dev server
+  - Same fix applied to `rate-limiter.ts` (`globalThis.__rejoRateLimitStore`)
+- Update `/api/auth/login`:
+  - Setelah password verified, cek role === ADMIN
+  - Jika !twoFactorEnabled → return `{ needsSetup: true, challengeToken }` (admin wajib setup 2FA dulu)
+  - Jika twoFactorEnabled → return `{ needsTwoFactor: true, challengeToken }` (admin verify TOTP)
+  - Role lain → langsung set session cookie (2FA optional, TODO)
+- Buat 3 API routes baru:
+  - `/api/auth/2fa/setup` POST — return `{ secret, otpauthUrl, qrDataUrl }` dari challenge token
+  - `/api/auth/2fa/enable` POST — verifikasi code pertama, persist secret, enable 2FA, set session
+  - `/api/auth/2fa/verify` POST — verifikasi code TOTP untuk admin yang sudah setup, set session
+- Buat 2 komponen UI:
+  - `TwoFactorSetup` — QR code (240px PNG) + secret (collapsible manual entry) + InputOTP 6-slot + copy-to-clipboard + step-by-step instructions
+  - `TwoFactorChallenge` — InputOTP 6-slot autoFocus + verifikasi
+  - Kedua komponen pakai accent rose (sesuai role admin) + tombol "Kembali ke login" untuk cancel
+- Update `LoginForm`:
+  - Tambah state machine: `null` (form biasa) → `"setup"` → `"challenge"`
+  - Handle response `needsSetup` / `needsTwoFactor` dari /api/auth/login
+  - Render komponen 2FA yang sesuai berdasarkan state
+  - `cancelTwoFactor()` reset semua state + password
+- Integration test `scripts/test-2fa.ts` — 30 test case, semua lulus:
+  - Test 1: First-time admin login → setup → enable → session cookie (16 assertions)
+  - Test 2: Subsequent admin login → challenge → verify → session cookie (8 assertions)
+  - Test 3: TOTP rate limit (5x wrong → 401, 6th → 429 CHALLENGE_EXHAUSTED) (2 assertions)
+- Verifikasi browser:
+  - Buka `/?admin=1` → klik Admin → demo login → screen 2FA Setup muncul (QR + OTP input)
+  - Input 6 digit → tombol "Aktifkan & Masuk" enabled
+  - Submit code salah → field reset, tombol disabled kembali (UX benar)
+  - Switch ke Customer → login langsung ke dashboard (2FA hanya admin, sesuai desain)
+- Screenshot: `download/rejofood-2fa-setup.png` (QR code + OTP input UI)
+
+Stage Summary:
+- Admin kini WAJIB setup 2FA pada login pertama (force-enroll), lalu wajib verifikasi TOTP di setiap login berikutnya
+- Brute force TOTP dibatasi: 5 percobaan per challenge token, lalu challenge di-destroy (must re-login)
+- Password + TOTP = 2 independent factors. Password bocor saja tidak cukup untuk login admin
+- Customer/Merchant/Driver tetap single-factor (2FA optional, TODO kalau diminta user)
+- QR code generation server-side via `qrcode` library (240px PNG, branded aubergine color)
+- Window toleransi ±30 detik untuk clock skew device (RFC 6238 compliant)
+- Challenge token: in-memory 5 menit TTL, persistent cross-module via globalThis
+- Production TODO:
+  - Enkripsi secret di DB (AES-GCM dengan KMS)
+  - Backup codes (10 kode satu-pakai untuk recovery jika HP hilang)
+  - Admin recovery flow (admin lain bisa reset 2FA admin tertentu)
+  - Tampilkan notifikasi email/push setiap login admin baru
+  - Session TTL differentiated per role (admin 2 jam, lainnya 7 hari)

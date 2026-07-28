@@ -13,22 +13,28 @@ datasource db {
 /// All four roles share one identity (User) but each gets a dedicated profile table.
 /// This keeps permissions clean and lets each role's data evolve independently.
 model User {
-  id           String         @id @default(cuid())
-  email        String         @unique
-  phone        String?        @unique
-  passwordHash String
-  fullName     String
-  role         Role           @default(CUSTOMER)
-  avatarUrl    String?
-  isActive     Boolean        @default(true)
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
+  id              String         @id @default(cuid())
+  email           String         @unique
+  phone           String?        @unique
+  passwordHash    String
+  fullName        String
+  role            Role           @default(CUSTOMER)
+  avatarUrl       String?
+  isActive        Boolean        @default(true)
 
-  customer     Customer?
-  merchant     Merchant?
-  driver       Driver?
-  admin        Admin?
-  sessions     Session[]
+  /// 2FA TOTP secret (base32). null = belum disetup. Disimpan terenkripsi di production.
+  twoFactorSecret String?
+  /// true jika 2FA sudah diaktifkan (secret sudah diverifikasi). Wajib true untuk ADMIN.
+  twoFactorEnabled Boolean       @default(false)
+
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  customer        Customer?
+  merchant        Merchant?
+  driver          Driver?
+  admin           Admin?
+  sessions        Session[]
 }
 
 /// Token-based session, stored in DB so we can revoke from any device.

@@ -10,6 +10,8 @@ import { Label } from "@/components/ui/label";
 import { useAuthStore } from "@/store/auth-store";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { TwoFactorSetup } from "./twofactor-setup";
+import { TwoFactorChallenge } from "./twofactor-challenge";
 
 interface LoginError {
   message: string;
@@ -44,6 +46,11 @@ export function LoginForm({
   const [error, setError] = useState<LoginError | null>(null);
   // Countdown lockout (detik). > 0 = tombol disabled.
   const [lockCountdown, setLockCountdown] = useState(0);
+
+  // 2FA flow state: null = form login biasa, "setup" = first-time admin, "challenge" = admin dgn 2FA
+  const [twoFactorMode, setTwoFactorMode] = useState<null | "setup" | "challenge">(null);
+  const [challengeToken, setChallengeToken] = useState<string | null>(null);
+  const [challengeName, setChallengeName] = useState<string>("");
 
   // Tick countdown setiap detik
   useEffect(() => {
@@ -84,6 +91,23 @@ export function LoginForm({
         }
         return;
       }
+
+      // 🔒 2FA: server meminta setup atau verifikasi sebelum login selesai
+      if (data.needsSetup && data.challengeToken) {
+        setChallengeToken(data.challengeToken);
+        setChallengeName(data.fullName || "");
+        setTwoFactorMode("setup");
+        setError(null);
+        return;
+      }
+      if (data.needsTwoFactor && data.challengeToken) {
+        setChallengeToken(data.challengeToken);
+        setChallengeName(data.fullName || "");
+        setTwoFactorMode("challenge");
+        setError(null);
+        return;
+      }
+
       setUser(data.user);
       toast.success(`Selamat datang, ${data.user.fullName}!`);
     } catch {
@@ -99,6 +123,14 @@ export function LoginForm({
     setError(null);
   }
 
+  function cancelTwoFactor() {
+    setTwoFactorMode(null);
+    setChallengeToken(null);
+    setChallengeName("");
+    setPassword("");
+    setError(null);
+  }
+
   const isLocked = lockCountdown > 0;
   // Tampilkan warning sisa percobaan hanya jika 1-2 tersisa dan belum locked
   const showLowAttemptsWarning =
@@ -107,6 +139,30 @@ export function LoginForm({
     typeof error.remainingAttempts === "number" &&
     error.remainingAttempts > 0 &&
     error.remainingAttempts <= 2;
+
+  // === 2FA SETUP MODE ===
+  if (twoFactorMode === "setup" && challengeToken) {
+    return (
+      <TwoFactorSetup
+        challengeToken={challengeToken}
+        fullName={challengeName}
+        onCancel={cancelTwoFactor}
+      />
+    );
+  }
+
+  // === 2FA CHALLENGE MODE ===
+  if (twoFactorMode === "challenge" && challengeToken) {
+    return (
+      <TwoFactorChallenge
+        challengeToken={challengeToken}
+        fullName={challengeName}
+        onCancel={cancelTwoFactor}
+      />
+    );
+  }
+
+  // === DEFAULT LOGIN FORM ===
 
   return (
     <motion.div

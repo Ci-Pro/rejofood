@@ -37,7 +37,10 @@ interface Bucket {
   lockedUntil: number | null;
 }
 
-const store = new Map<string, Bucket>();
+const store: Map<string, Bucket> = (globalThis as unknown as {
+  __rejoRateLimitStore?: Map<string, Bucket>;
+}).__rejoRateLimitStore ?? new Map<string, Bucket>();
+(globalThis as unknown as { __rejoRateLimitStore?: Map<string, Bucket> }).__rejoRateLimitStore = store;
 
 /** Sweeper interval: hapus bucket yang sudah tidak aktif > 1 jam. */
 let sweeperStarted = false;
