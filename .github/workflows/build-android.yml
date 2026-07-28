@@ -65,12 +65,17 @@ jobs:
       - name: Remove TypeScript config (avoid conflict)
         run: rm -f capacitor.config.ts
 
-      - name: Create Android project
-        run: npx cap add android
+      - name: Create Android project + sync
+        run: |
+          npx cap add android || true
+          npx cap sync android || true
+          # Ensure capacitor.settings.gradle exists
+          ls -la android/
+          ls -la android/app/src/main/assets/ || true
 
       - name: Build debug APK
         working-directory: android
-        run: ./gradlew assembleDebug --no-daemon -x lint
+        run: ./gradlew assembleDebug --no-daemon -x lint --stacktrace
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
