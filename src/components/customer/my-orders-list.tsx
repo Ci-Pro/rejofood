@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Package, RefreshCw, ChevronRight, Wifi, WifiOff, X, Ban, Loader2 } from "lucide-react";
+import { Package, RefreshCw, ChevronRight, Wifi, WifiOff, X, Ban, Loader2, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { useOrderSocket } from "@/hooks/use-order-socket";
 import { toast } from "sonner";
+import { PaymentDialog } from "./payment-dialog";
 
 interface OrderItem {
   id: string;
@@ -40,6 +41,16 @@ interface Order {
   driver: { id: string; name: string } | null;
   items: OrderItem[];
   itemCount: number;
+  payment: {
+    id: string;
+    code: string;
+    method: string;
+    status: "PENDING" | "SUCCESS" | "FAILED" | "REFUNDED";
+    amount: number;
+    paymentUrl: string | null;
+    expiresAt: string | null;
+    paidAt: string | null;
+  } | null;
 }
 
 const STATUS_FLOW: Order["status"][] = ["PENDING", "ACCEPTED", "PREPARING", "READY", "PICKED_UP", "DELIVERED"];
@@ -84,6 +95,8 @@ export function MyOrdersList() {
   const [cancelTarget, setCancelTarget] = useState<Order | null>(null);
   const [cancelReason, setCancelReason] = useState("");
   const [cancelling, setCancelling] = useState(false);
+  // Payment dialog state
+  const [payTarget, setPayTarget] = useState<Order | null>(null);
 
   const fetchOrders = useCallback(async () => {
     setLoading(true);
@@ -204,6 +217,7 @@ export function MyOrdersList() {
         <div className="space-y-2">
           {orders.map((o, idx) => {
             const canCancel = ["PENDING", "ACCEPTED", "PREPARING"].includes(o.status);
+            const needsPayment = o.status === "PENDING" && o.payment?.status !== "SUCCESS";
             return (
               <motion.div
                 key={o.id}
@@ -223,6 +237,16 @@ export function MyOrdersList() {
                     <Badge variant="outline" className={cn("h-4 px-1.5 text-[0.6rem] font-700", statusBadgeClass(o.status))}>
                       {statusLabel(o.status)}
                     </Badge>
+                    {o.payment && o.payment.status !== "SUCCESS" && o.status !== "CANCELLED" && (
+                      <Badge variant="outline" className={cn(
+                        "h-4 px-1.5 text-[0.55rem] font-700",
+                        o.payment.status === "PENDING" && "border-saffron/40 bg-saffron/10 text-saffron",
+                        o.payment.status === "FAILED" && "border-rose/40 bg-rose/10 text-rose",
+                        o.payment.status === "REFUNDED" && "border-lavender/40 bg-lavender/10 text-lavender",
+                      )}>
+                        {o.payment.status === "PENDING" ? "BELUM BAYAR" : o.payment.status}
+                      </Badge>
+                    )}
                   </div>
                   <p className="mt-0.5 truncate text-sm font-600 text-foreground">{o.merchant.restaurantName}</p>
                   <p className="mt-0.5 text-xs text-muted-foreground">
@@ -231,7 +255,16 @@ export function MyOrdersList() {
                 </button>
                 <div className="shrink-0 text-right">
                   <p className="font-display text-sm font-700 text-saffron">{formatRupiah(o.total)}</p>
-                  {canCancel ? (
+                  {needsPayment ? (
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); setPayTarget(o); }}
+                      className="mt-0.5 inline-flex items-center gap-1 rounded-full border border-saffron/40 bg-saffron/10 px-2 py-0.5 text-[0.65rem] font-700 text-saffron hover:bg-saffron/20"
+                    >
+                      <CreditCard className="h-2.5 w-2.5" />
+                      Bayar
+                    </button>
+                  ) : canCancel ? (
                     <button
                       type="button"
                       onClick={(e) => { e.stopPropagation(); openCancelDialog(o); }}
@@ -467,6 +500,20 @@ export function MyOrdersList() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Payment dialog */}
+      {payTarget && (
+        <PaymentDialog
+          open={!!payTarget}
+          onClose={() => setPayTarget(null)}
+          orderId={payTarget.id}
+          orderCode={payTarget.code}
+          total={payTarget.total}
+          onPaid={() => {
+            fetchOrders();
+          }}
+        />
+      )}
     </section>
   );
 }

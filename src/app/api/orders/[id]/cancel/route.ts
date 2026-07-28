@@ -49,6 +49,7 @@ export async function POST(
     include: {
       merchant: { select: { userId: true, restaurantName: true } },
       driver: { select: { userId: true } },
+      payments: { orderBy: { createdAt: "desc" }, take: 1 },
     },
   });
   if (!order) {
@@ -83,6 +84,40 @@ export async function POST(
     },
   });
 
+  // 💳 Refund logic: jika payment terakhir = SUCCESS (online methods), set ke REFUNDED
+  const latestPayment = order.payments[0];
+  let refunded = false;
+  if (latestPayment && latestPayment.status === "SUCCESS" && latestPayment.method !== "COD") {
+    await db.payment.update({
+      where: { id: latestPayment.id },
+      data: {
+        status: "REFUNDED" as const,
+        refundedAt: now,
+      },
+    });
+    refunded = true;
+    await logAction({
+      actorId: me.id,
+      actorEmail: me.email,
+      actorRole: me.role,
+      category: "payment",
+      action: "payment.refunded",
+      description: `Payment ${latestPayment.code} (${latestPayment.method}) di-refund karena order ${order.code} dibatalkan customer.`,
+      targetId: latestPayment.id,
+      targetType: "payment",
+      outcome: "success",
+      ipAddress: meta.ipAddress,
+      userAgent: meta.userAgent,
+      metadata: {
+        paymentCode: latestPayment.code,
+        orderCode: order.code,
+        method: latestPayment.method,
+        amount: latestPayment.amount,
+        reason: reason ?? null,
+      },
+    });
+  }
+
   // Audit log
   await logAction({
     actorId: me.id,
@@ -90,7 +125,7 @@ export async function POST(
     actorRole: me.role,
     category: "order",
     action: "order.cancel",
-    description: `Order ${order.code}: ${order.status} → CANCELLED oleh customer${reason ? ` (${reason})` : ""}.`,
+    description: `Order ${order.code}: ${order.status} → CANCELLED oleh customer${reason ? ` (${reason})` : ""}${refunded ? " [payment refunded]" : ""}.`,
     targetId: order.id,
     targetType: "order",
     outcome: "success",
@@ -102,6 +137,8 @@ export async function POST(
       to: "CANCELLED",
       reason: reason ?? null,
       merchantName: order.merchant.restaurantName,
+      refunded,
+      paymentCode: latestPayment?.code ?? null,
     },
   });
 

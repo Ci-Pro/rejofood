@@ -139,6 +139,26 @@ enum Role {
   ADMIN
 }
 
+/// Status pembayaran
+enum PaymentStatus {
+  PENDING    /// Menunggu pembayaran (untuk online methods)
+  SUCCESS    /// Pembayaran berhasil
+  FAILED     /// Pembayaran gagal/expired
+  REFUNDED   /// Pembayaran dikembalikan (saat customer cancel setelah bayar)
+}
+
+/// Metode pembayaran
+enum PaymentMethod {
+  COD        /// Cash on Delivery — bayar cash ke driver
+  QRIS       /// QRIS (semua e-wallet + m-banking)
+  VA_BCA     /// Virtual Account BCA
+  VA_MANDIRI /// Virtual Account Mandiri
+  VA_BNI     /// Virtual Account BNI
+  EWALLET_GOPAY
+  EWALLET_OVO
+  EWALLET_DANA
+}
+
 /// Status pesanan mengikuti lifecycle:
 ///   PENDING → ACCEPTED → PREPARING → READY → PICKED_UP → DELIVERED
 ///   PENDING/ACCEPTED/PREPARING/READY → CANCELLED (oleh customer sebelum PICKED_UP atau merchant reject)
@@ -181,11 +201,47 @@ model Order {
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
 
+  payments        Payment[]
+
   @@index([customerId])
   @@index([merchantId])
   @@index([driverId])
   @@index([status])
   @@index([createdAt])
+}
+
+/// Payment record untuk order. Satu order bisa punya multiple payment attempts
+/// (kalau gagal lalu retry), tapi hanya satu yang SUCCESS.
+model Payment {
+  id              String        @id @default(cuid())
+  /// Human-readable: "PAY-XXXXXX"
+  code            String        @unique
+  orderId         String
+  order           Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  customerId      String
+  method          PaymentMethod
+  status          PaymentStatus @default(PENDING)
+  amount          Int
+  /// Reference dari gateway (Midtrans order_id / Xendit invoice_id).
+  /// Untuk mock: "MOCK-{uuid}".
+  gatewayReference String?
+  /// URL untuk redirect/instruksi pembayaran (Midtrans Snap URL, VA number, dll).
+  /// Untuk mock: "https://mock-gateway.rejofood.id/pay/{code}".
+  paymentUrl      String?
+  /// Snapshot metadata dari gateway response (JSON string).
+  gatewayMetadata String?
+  /// Timestamp per transisi status.
+  paidAt          DateTime?
+  failedAt        DateTime?
+  refundedAt      DateTime?
+  expiresAt       DateTime?    /// Untuk online methods, kapan payment expired.
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([orderId])
+  @@index([customerId])
+  @@index([status])
+  @@index([method])
 }
 
 /// Snapshot item dari MenuItem saat checkout — tidak berubah meski merchant mengubah menu nanti.

@@ -53,7 +53,10 @@ export async function PATCH(
 
   const order = await db.order.findFirst({
     where: { id, merchantId: merchant.id },
-    include: { items: true },
+    include: {
+      items: true,
+      payments: { orderBy: { createdAt: "desc" }, take: 1 },
+    },
   });
   if (!order) {
     return NextResponse.json({ error: "Order tidak ditemukan." }, { status: 404 });
@@ -66,6 +69,28 @@ export async function PATCH(
       { error: `Transisi ${order.status} → ${newStatus} tidak diizinkan.` },
       { status: 400 },
     );
+  }
+
+  // 💳 Payment check: merchant tidak bisa ACCEPT order sebelum customer bayar
+  // (kecuali COD yang langsung SUCCESS saat checkout)
+  if (newStatus === "ACCEPTED") {
+    const latestPayment = order.payments[0];
+    if (!latestPayment) {
+      return NextResponse.json(
+        { error: "Customer belum memilih metode pembayaran. Tunggu hingga customer membayar." },
+        { status: 400 },
+      );
+    }
+    if (latestPayment.status !== "SUCCESS") {
+      const methodLabel = latestPayment.method.startsWith("VA") ? "Virtual Account" : latestPayment.method;
+      return NextResponse.json(
+        {
+          error: `Payment status: ${latestPayment.status}. Tunggu customer menyelesaikan pembayaran via ${methodLabel}.`,
+          paymentStatus: latestPayment.status,
+        },
+        { status: 400 },
+      );
+    }
   }
 
   // Update + set timestamp sesuai status

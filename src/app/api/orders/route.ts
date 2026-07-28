@@ -202,6 +202,20 @@ export async function GET(req: Request) {
       merchant: { select: { id: true, restaurantName: true, address: true } },
       driver: { select: { id: true, user: { select: { fullName: true } } } },
       items: true,
+      payments: {
+        orderBy: { createdAt: "desc" },
+        take: 1,
+        select: {
+          id: true,
+          code: true,
+          method: true,
+          status: true,
+          amount: true,
+          paymentUrl: true,
+          expiresAt: true,
+          paidAt: true,
+        },
+      },
     },
   });
 
@@ -225,6 +239,7 @@ export async function GET(req: Request) {
       driver: o.driver ? { id: o.driver.id, name: o.driver.user.fullName } : null,
       items: o.items,
       itemCount: o.items.reduce((sum, i) => sum + i.quantity, 0),
+      payment: o.payments[0] ?? null,
     })),
   });
 }

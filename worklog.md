@@ -540,3 +540,98 @@ Stage Summary:
   - Merchant notification saat customer cancel order yang sudah PREPARING (perlu push notification)
   - Cancel rate limit per customer (anti-abuse)
   - Auto-cancel jika merchant tidak accept dalam X menit (timeout)
+
+---
+Task ID: feat-5
+Agent: main
+Task: Payment gateway — mock Midtrans/Xendit dengan 8 metode (COD/QRIS/VA/E-wallet)
+
+Work Log:
+- Update Prisma schema:
+  - Tambah enum PaymentStatus (PENDING, SUCCESS, FAILED, REFUNDED)
+  - Tambah enum PaymentMethod (COD, QRIS, VA_BCA, VA_MANDIRI, VA_BNI, EWALLET_GOPAY, EWALLET_OVO, EWALLET_DANA)
+  - Tambah model Payment: id, code (PAY-XXXXXX), orderId, customerId, method, status, amount, gatewayReference, paymentUrl, gatewayMetadata (JSON), paidAt, failedAt, refundedAt, expiresAt, createdAt, updatedAt
+  - 4 indexes di Payment (orderId, customerId, status, method)
+  - Relation `payments` di Order
+  - Run `db:push` + `db:generate` + restart dev
+- Buat `src/lib/payment/gateway.ts`:
+  - MOCK gateway — siap swap ke Midtrans Snap / Xendit Invoice (signature function sama)
+  - `createPaymentCharge(input)` — buat charge: COD langsung SUCCESS, online methods PENDING + generate mock URL
+  - `verifyWebhookSignature()` — mock selalu valid (production: HMAC SHA512)
+  - `mapGatewayStatus()` — map settlement/pending/deny/expire/cancel/refund → PaymentStatus
+  - `methodLabel()`, `isOnlineMethod()`, `isCOD()` helpers
+  - Method-specific metadata: QRIS (qrString), VA (vaNumber + bankName), E-wallet (deeplink)
+  - Expiry 15 menit untuk online methods (mirip Midtrans default)
+- Buat 3 API endpoints:
+  - `POST /api/payment/create` — customer-only, ownership check, generate Payment record, audit + realtime emit
+    - COD: langsung SUCCESS (paidAt set)
+    - Online: PENDING + paymentUrl + expiresAt
+  - `POST /api/payment/mock-notify` — webhook simulator (production: dipanggil gateway)
+    - Verify masih PENDING (tidak bisa ubah final status)
+    - Cek expiry (kalau lewat → force FAILED)
+    - Update status + timestamp + audit + realtime emit
+  - `GET /api/payment/status/[orderId]` — customer lihat payment terakhir untuk order
+- Update `POST /api/orders` GET untuk include `payment` field di response (latest payment)
+- Update merchant ACCEPT (PATCH /api/merchant/orders/[id]/status):
+  - Require Payment.status === SUCCESS sebelum bisa ACCEPT
+  - Jika belum bayar / PENDING → 400 dengan pesan "Tunggu customer menyelesaikan pembayaran"
+  - COD auto-SUCCESS saat create → merchant bisa langsung accept
+- Update customer cancel (`POST /api/orders/[id]/cancel`):
+  - Jika latest payment SUCCESS + method != COD → set ke REFUNDED + audit payment.refunded
+  - COD tidak di-refund (belum ada uang masuk)
+  - Audit log order.cancel include `refunded: true/false` + paymentCode
+- Buat komponen `PaymentDialog`:
+  - 8 metode dalam grid 2-kolom dengan icon + label + description
+  - Selected state dengan accent-saffron ring
+  - SUCCESS state: CheckCircle2 hijau + "Restoran akan segera memproses pesananmu"
+  - FAILED state: XCircle merah + tombol "Pilih metode lain"
+  - PENDING state (online methods):
+    - Method badge + expiry countdown
+    - Method-specific instructions (VA number, QR string, deeplink)
+    - Tombol "Buka halaman pembayaran" (mock gateway URL)
+    - DEV: tombol "Saya sudah bayar (simulate)" dengan warning ini tidak ada di production
+  - Realtime: listen for order:status event untuk auto-update ke SUCCESS
+- Update `MyOrdersList`:
+  - List item: badge "BELUM BAYAR" (PENDING), "FAILED", "REFUNDED" untuk payment status
+  - Tombol "Bayar" muncul untuk order PENDING + payment belum SUCCESS (ganti Batalkan)
+  - Tombol "Batalkan" muncul setelah payment SUCCESS (atau COD)
+  - PaymentDialog integrated dengan onPaid callback untuk refetch
+- Integration test `scripts/test-payment.ts` — 23 assertions lulus:
+  - Test 1: COD flow → langsung SUCCESS → merchant bisa ACCEPT
+  - Test 2: QRIS flow → PENDING → merchant ditolak ACCEPT → simulate webhook SUCCESS → merchant bisa ACCEPT
+  - Test 3: Cancel dengan refund (QRIS SUCCESS → REFUNDED) + audit log payment.refunded
+  - Test 4: Cancel COD (no refund — payment tetap SUCCESS)
+  - Test 5: Webhook ditolak untuk payment sudah SUCCESS (400)
+  - Test 6: Merchant tries /api/payment/create → 403 (Forbidden)
+- Verifikasi browser:
+  - Customer login → lihat order dengan badge "BELUM BAYAR" + tombol "Bayar"
+  - Klik Bayar → PaymentDialog muncul dengan 8 metode (COD/QRIS/VA/E-wallet)
+  - Test COD: klik "Bayar Rp 22.000" → langsung SUCCESS state + tombol "Selesai"
+  - Test QRIS: buat order baru → Bayar → pilih QRIS → submit → PENDING state muncul dengan:
+    - Method badge + expiry
+    - Instruksi "Scan QR dengan e-wallet/m-banking apapun"
+    - QR code icon
+    - Tombol "Buka halaman pembayaran (mock gateway)"
+    - DEV: tombol "Saya sudah bayar (simulate)"
+  - Klik "Saya sudah bayar" → toast "Pembayaran berhasil dikonfirmasi!" + dialog state berubah ke SUCCESS
+- 3 screenshot tersimpan di `download/`
+
+Stage Summary:
+- RejoFood sekarang punya FULL PAYMENT PIPELINE dengan 8 metode (COD + 7 online methods)
+- Mock gateway siap production: tinggal swap `createPaymentCharge` + `verifyWebhookSignature` ke Midtrans/Xendit
+- Strict payment validation: merchant tidak bisa ACCEPT sebelum customer bayar (kecuali COD yang auto-SUCCESS)
+- Refund otomatis saat customer cancel order yang sudah dibayar online (non-COD)
+- Audit trail lengkap: payment.create, payment.success, payment.failed, payment.refunded, payment.expired
+- Realtime: merchant + admin langsung tahu saat customer bayar (socket emit)
+- UI feedback progresif: PENDING (saffron) → SUCCESS (mint) → FAILED (rose) → REFUNDED (lavender)
+- Method-specific instructions: QRIS (qrString), VA (vaNumber + bank), E-wallet (deeplink)
+- DEV simulator: tombol "Saya sudah bayar" untuk test tanpa real gateway
+- Production TODO:
+  - Swap mock gateway ke Midtrans Snap API (https://snap-docs.midtrans.com/)
+  - Verify webhook signature dengan HMAC SHA512 (server key)
+  - Payment expiry cron job (auto-fail PENDING yang lewat 15 menit)
+  - Retry payment (allow customer pilih metode lain jika FAILED)
+  - Refund via gateway API (sekarang hanya update status lokal)
+  - Payment receipt / invoice PDF
+  - Payment method fee (misal: VA BCA +Rp 4.000, QRIS 0.7%)
+  - Split payment (cash + e-wallet)
