@@ -37,17 +37,23 @@ export function AuthShell({ showAdmin = false }: { showAdmin?: boolean }) {
             className="pointer-events-none absolute inset-0 opacity-95"
             style={{
               background:
-                "radial-gradient(120% 80% at 0% 0%, oklch(0.38 0.10 296) 0%, oklch(0.26 0.10 296) 55%, oklch(0.20 0.06 296) 100%)",
+                "linear-gradient(160deg, #3D2364 0%, #2D1B4E 50%, #1C0E33 100%)",
             }}
             aria-hidden
           />
           {/* Saffron glow */}
           <div
-            className="pointer-events-none absolute -right-24 top-1/3 h-96 w-96 rounded-full opacity-40 blur-3xl"
-            style={{ background: "oklch(0.78 0.16 68)" }}
+            className="pointer-events-none absolute -right-24 top-1/4 h-96 w-96 rounded-full opacity-30 blur-3xl"
+            style={{ background: "#FF9F1C" }}
             aria-hidden
           />
-          <div className="relative z-10 flex w-full flex-col justify-between p-10 xl:p-12">
+          {/* Lavender glow */}
+          <div
+            className="pointer-events-none absolute -left-20 bottom-1/4 h-80 w-80 rounded-full opacity-15 blur-3xl"
+            style={{ background: "#7C5BBF" }}
+            aria-hidden
+          />
+          <div className="relative z-10 flex w-full flex-col justify-between p-8 xl:p-12">
             <BrandLogo size="lg" className="[&_p]:text-primary-foreground [&_.text-muted-foreground]:text-primary-foreground/60" />
 
             <div className="my-10">

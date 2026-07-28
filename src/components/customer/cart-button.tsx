@@ -27,21 +27,26 @@ export function CartButton() {
 
   return (
     <>
-      {/* Floating button */}
+      {/* Floating button — premium FAB */}
       <AnimatePresence>
         {totalItems > 0 && !open && (
           <motion.button
             type="button"
             onClick={() => setOpen(true)}
-            initial={{ opacity: 0, scale: 0.8, y: 20 }}
+            initial={{ opacity: 0, scale: 0.8, y: 30 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.8, y: 20 }}
-            className="accent-saffron fixed bottom-5 right-5 z-40 flex items-center gap-2 rounded-full bg-role px-4 py-3 text-role-fg shadow-2xl shadow-role/30 hover:opacity-90"
+            exit={{ opacity: 0, scale: 0.8, y: 30 }}
+            transition={{ type: "spring", stiffness: 400, damping: 30 }}
+            whileTap={{ scale: 0.95 }}
+            className="accent-saffron fixed bottom-20 right-4 z-40 flex items-center gap-2.5 rounded-2xl bg-role px-4 py-3.5 text-role-fg shadow-fab lg:bottom-8 lg:right-8"
           >
-            <ShoppingCart className="h-5 w-5" />
-            <span className="font-700">{totalItems} item</span>
-            <span className="h-4 w-px bg-role-fg/30" />
-            <span className="font-display font-700">{formatRupiah(total)}</span>
+            <span className="relative">
+              <ShoppingCart className="h-5 w-5" />
+              <span className="absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose px-1 text-[0.55rem] font-700 text-rose-foreground">
+                {totalItems}
+              </span>
+            </span>
+            <span className="font-700 text-sm">{formatRupiah(total)}</span>
           </motion.button>
         )}
       </AnimatePresence>

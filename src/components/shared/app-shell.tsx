@@ -62,41 +62,41 @@ export function AppShell({
         {/* Top header */}
         <header className={cn(
           "accent-" + accent,
-          "sticky top-0 z-30 glass-header border-b border-border/60",
+          "sticky top-0 z-30 glass-header border-b border-border/40",
         )}>
-          <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center gap-3">
-              {/* Mobile: show compact logo (sidebar hidden) */}
+          <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8 sm:h-16">
+            <div className="flex items-center gap-2.5">
+              {/* Mobile: show compact logo */}
               <div className="lg:hidden">
                 <BrandLogo size="sm" variant="compact" />
               </div>
-              {/* Desktop: role badge only (logo in sidebar) */}
-              <span className="hidden h-6 w-px bg-border lg:block" />
+              {/* Desktop: role badge */}
+              <span className="hidden h-5 w-px bg-border lg:block" />
               <span className={cn(
-                "hidden items-center gap-1.5 rounded-full bg-role-soft px-3 py-1 text-xs font-700 text-role lg:inline-flex",
+                "hidden items-center gap-1.5 rounded-full bg-role-soft px-2.5 py-1 text-[0.65rem] font-700 text-role lg:inline-flex",
               )}>
-                {meta && <meta.icon className="h-3.5 w-3.5" strokeWidth={2.4} />}
+                {meta && <meta.icon className="h-3 w-3" strokeWidth={2.5} />}
                 {meta?.label}
               </span>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2.5">
               <SessionCountdown />
               <div className="relative">
                 <button
                   type="button"
                   onClick={() => setMenuOpen((s) => !s)}
-                  className="flex items-center gap-2 rounded-full border border-border bg-card pl-2.5 pr-3 py-1.5 text-sm hover:border-role/40 transition-premium shadow-premium"
+                  className="flex items-center gap-2 rounded-full border border-border bg-card pl-1.5 pr-2.5 py-1 text-sm hover:border-role/30 transition-premium shadow-card press-feedback sm:pr-3"
                   aria-haspopup="menu"
                   aria-expanded={menuOpen}
                 >
                   <span className="flex h-7 w-7 items-center justify-center rounded-full bg-role text-role-fg text-xs font-700">
                     {user?.fullName?.[0]?.toUpperCase() ?? <CircleUser className="h-4 w-4" />}
                   </span>
-                  <span className="hidden max-w-[140px] truncate font-600 sm:block">
+                  <span className="hidden max-w-[100px] truncate text-xs font-600 sm:block sm:text-sm">
                     {user?.fullName}
                   </span>
-                  <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+                  <ChevronDown className="h-3 w-3 text-muted-foreground" />
                 </button>
 
                 <AnimatePresence>
@@ -138,7 +138,7 @@ export function AppShell({
         </header>
 
         {/* Page content */}
-        <main className="flex-1 px-4 py-6 pb-24 sm:px-6 sm:py-8 lg:px-8 lg:pb-8">
+        <main className="flex-1 px-3 py-4 pb-24 sm:px-6 sm:py-6 lg:px-8 lg:pb-8">
           <div className="mx-auto max-w-6xl">
             {children}
           </div>

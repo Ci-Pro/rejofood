@@ -133,21 +133,22 @@ export function RestaurantGrid() {
           <p className="mt-1 text-xs text-muted-foreground">Coba ubah kata kunci atau filter.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
           {items.map((r, idx) => (
             <motion.div
               key={r.id}
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: idx * 0.04 }}
-              whileHover={{ y: -3 }}
-              className="group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card p-4 text-left transition-colors hover:border-saffron/40 shadow-premium"
+              transition={{ duration: 0.35, delay: Math.min(idx * 0.05, 0.4), ease: [0.4, 0, 0.2, 1] }}
+              whileHover={{ y: -4 }}
+              whileTap={{ scale: 0.98 }}
+              className="group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-card transition-premium hover:shadow-card-hover hover:border-transparent"
             >
-              {/* Heart toggle (top right) */}
+              {/* Heart toggle (top right) — floating glass */}
               <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); toggle(r.id, r.restaurantName); }}
-                className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-card/80 backdrop-blur-sm transition-premium hover:scale-110"
+                className="absolute right-2.5 top-2.5 z-10 flex h-9 w-9 items-center justify-center rounded-full glass-card border border-border/30 transition-tap press-feedback hover:scale-110"
                 aria-label={isFavorited(r.id) ? "Hapus dari favorit" : "Tambah ke favorit"}
               >
                 <Heart
@@ -162,7 +163,7 @@ export function RestaurantGrid() {
               <button
                 type="button"
                 onClick={() => setSelectedId(r.id)}
-                className="flex flex-1 flex-col text-left"
+                className="flex flex-1 flex-col p-3.5 text-left sm:p-4"
               >
               {/* Header: avatar + name + open status */}
               <div className="flex items-start gap-3">
