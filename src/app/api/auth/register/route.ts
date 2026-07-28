@@ -10,10 +10,10 @@ import { db } from "@/lib/db";
 import { hashPassword } from "@/lib/auth/password";
 import { generateToken, setSessionCookie } from "@/lib/auth/session";
 import { logAction, getRequestMeta } from "@/lib/auth/audit";
+import { computeAbsoluteExpiry } from "@/lib/auth/session-config";
 import { Role } from "@prisma/client";
 import type { SafeUser } from "@/types/auth";
 
-const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 7;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MIN_PASSWORD = 6;
 
@@ -98,7 +98,8 @@ export async function POST(req: Request) {
       data: {
         token,
         userId: user.id,
-        expiresAt: new Date(Date.now() + SESSION_TTL_MS),
+        expiresAt: computeAbsoluteExpiry(user.role),
+        lastActivityAt: new Date(),
         userAgent: req.headers.get("user-agent") ?? null,
       },
     });

@@ -201,3 +201,68 @@ Stage Summary:
   - Export CSV/JSON untuk compliance audit
   - Index optimization untuk tabel besar (millions of rows)
   - Pindah ke append-only S3/CloudWatch untuk immutability guarantee
+
+---
+Task ID: sec-5
+Agent: main
+Task: Session TTL differentiated per role — admin 2 jam + idle 15 menit
+
+Work Log:
+- Update Prisma schema: tambah `lastActivityAt DateTime?` + index ke Session
+- Run `db:push` + `db:generate` + restart dev server (Prisma client butuh reload)
+- Buat `src/lib/auth/session-config.ts`:
+  - Konstanta per role: ADMIN (2 jam absolute + 15 menit idle), lainnya (7 hari, tanpa idle)
+  - `getSessionPolicy(role)` → { absoluteTtlMs, idleTimeoutMs }
+  - `computeAbsoluteExpiry(role, startMs?)` → Date untuk di-set saat create session
+  - `checkSessionExpiry(expiresAt, lastActivityAt, idleTimeoutMs, now)` → { expired, reason: "absolute" | "idle" }
+  - `TOUCH_THROTTLE_MS = 60_000` — touch DB tidak setiap request, hanya jika selisih > 1 menit
+- Update `src/lib/auth/context.ts`:
+  - `getCurrentUser()` sekarang enforce idle timeout admin + touch lastActivityAt (throttled)
+  - Session expired otomatis di-delete dari DB (lazy cleanup)
+  - Tambah `getSessionInfo()` → return { user, expiresAt, idleExpiresAt, absoluteTtlMs, idleTimeoutMs } untuk UI
+- Update 4 endpoint yang create session (login, register, 2fa/enable, 2fa/verify):
+  - Pakai `computeAbsoluteExpiry(user.role)` instead of hardcoded `SESSION_TTL_MS`
+  - Set `lastActivityAt: new Date()` saat create (reset idle timer)
+  - Hapus konstanta `SESSION_TTL_MS` yang sekarang tidak terpakai
+- Buat API `/api/auth/session-info` GET — public (return null jika no session), dipakai UI untuk polling
+- Buat hook `useSessionInfo`:
+  - Poll `/api/auth/session-info` setiap 30 detik
+  - Countdown ticker per detik (via state counter, bukan setState derived)
+  - Auto-logout client saat server return no user
+  - Compute `remainingSeconds`, `isCritical` (< 60s), `expiringBy` ("idle" | "absolute")
+  - Pola lint-compliant: tidak setState langsung di effect body
+- Buat komponen `SessionCountdown`:
+  - Hanya render untuk role ADMIN (karena idle timeout hanya admin)
+  - Default: chip clock + "Xm Yd" countdown (border-border, text-muted)
+  - Critical (< 60s): chip rose berdenyut + tombol "Perpanjang" (touch via refresh)
+  - Auto-redirect ke `/` saat remainingSeconds === 0
+  - Tooltip menjelaskan: "Sesi akan habis jika tidak ada aktivitas" (idle) vs TTL absolut
+- Update `AppShell` untuk include `SessionCountdown` di header (sebelah kiri user menu)
+- Integration test `scripts/test-session-ttl.ts` — 23 assertions lulus:
+  - Test 1: Customer TTL = 7 hari (604800000 ms), idleExpiresAt = null
+  - Test 2: Admin TTL = 2 jam (7200000 ms), idleTimeoutMs = 15 menit, idleExpiresAt ~ +15 menit
+  - Test 3: Set lastActivityAt ke 20 menit lalu → session-info return no user, row dihapus dari DB
+  - Test 4: Set expiresAt ke masa lalu → session-info return no user
+  - Test 5: Touch lastActivityAt berfungsi saat request berjalan
+  - Test 6: Throttling — touch tidak update jika lastActivityAt < 1 menit lalu
+- Verifikasi browser:
+  - Login admin full flow (password + TOTP)
+  - Header menampilkan SessionCountdown (chip "Xm Yd")
+  - Set lastActivityAt 14 menit lalu via DB → countdown turun ke <60 detik
+  - Critical state: chip berubah rose, muncul tombol "Perpanjang"
+  - Klik "Perpanjang" → session di-touch, countdown reset ke ~15 menit
+  - Screenshot: `download/rejofood-admin-session-ttl.png`
+
+Stage Summary:
+- Admin session kini punya 2 lapis expiry: absolute (2 jam) + idle (15 menit tidak aktif)
+- Touch throttling: hanya 1 DB write per menit per session — efisien untuk traffic tinggi
+- Lazy cleanup: session expired otomatis dihapus saat akses berikutnya (tidak butuh cron)
+- UI feedback progresif: countdown normal → critical (rose) → auto-logout
+- Customer/Merchant/Driver tetap nyaman: 7 hari, tanpa idle timeout (tidak annoying)
+- Server-side enforcement: idle timeout dicek di `getCurrentUser()` — tidak bisa di-bypass dari client
+- Production TODO:
+  - Tambah audit log event `auth.session.expired` (idle + absolute) — sudah di-hook tapi belum log
+  - Session revocation UI di admin (force logout user tertentu)
+  - Concurrent session limit per user (max 1 untuk admin, max 3 untuk customer)
+  - Session fingerprinting (bind ke IP/UA, logout jika berubah drastis)
+  - Refresh token mechanism untuk extend admin session tanpa re-login (jika diinginkan)

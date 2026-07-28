@@ -26,10 +26,9 @@ import {
 import { createChallenge } from "@/lib/auth/challenge-store";
 import { generateSecret } from "@/lib/auth/totp";
 import { logAction, getRequestMeta } from "@/lib/auth/audit";
+import { computeAbsoluteExpiry } from "@/lib/auth/session-config";
 import { Role } from "@prisma/client";
 import type { SafeUser } from "@/types/auth";
-
-const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 7;
 
 const DEMO_BLOCKED_EMAILS = new Set(["admin@rejofood.id"]);
 
@@ -252,12 +251,13 @@ export async function POST(req: Request) {
 
     // Non-admin: complete login immediately
     const token = generateSessionToken();
-    const expiresAt = new Date(Date.now() + SESSION_TTL_MS);
+    const expiresAt = computeAbsoluteExpiry(user.role);
     await db.session.create({
       data: {
         token,
         userId: user.id,
         expiresAt,
+        lastActivityAt: new Date(),
         userAgent: req.headers.get("user-agent") ?? null,
         ipAddress: ip,
       },

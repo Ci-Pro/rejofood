@@ -12,9 +12,8 @@ import { getChallenge, recordChallengeAttempt, consumeChallenge } from "@/lib/au
 import { verifyToken } from "@/lib/auth/totp";
 import { getClientIp } from "@/lib/auth/rate-limiter";
 import { logAction, getRequestMeta } from "@/lib/auth/audit";
+import { computeAbsoluteExpiry } from "@/lib/auth/session-config";
 import type { SafeUser } from "@/types/auth";
-
-const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 7;
 
 export async function POST(req: Request) {
   const meta = getRequestMeta(req);
@@ -96,7 +95,8 @@ export async function POST(req: Request) {
       data: {
         token,
         userId: user.id,
-        expiresAt: new Date(Date.now() + SESSION_TTL_MS),
+        expiresAt: computeAbsoluteExpiry(user.role),
+        lastActivityAt: new Date(),
         userAgent: req.headers.get("user-agent") ?? null,
         ipAddress: getClientIp(req),
       },

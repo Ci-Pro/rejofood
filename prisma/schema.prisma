@@ -39,16 +39,20 @@ model User {
 
 /// Token-based session, stored in DB so we can revoke from any device.
 model Session {
-  id         String   @id @default(cuid())
-  token      String   @unique
-  userId     String
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  expiresAt  DateTime
-  createdAt  DateTime @default(now())
-  ipAddress  String?
-  userAgent  String?
+  id              String   @id @default(cuid())
+  token           String   @unique
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt       DateTime
+  /// Timestamp aktivitas terakhir (untuk idle timeout admin). Di-touch setiap request.
+  /// Null = session lama sebelum fitur ini, dianggap aktif.
+  lastActivityAt  DateTime?
+  createdAt       DateTime @default(now())
+  ipAddress       String?
+  userAgent       String?
 
   @@index([userId])
+  @@index([lastActivityAt])
 }
 
 model Customer {
