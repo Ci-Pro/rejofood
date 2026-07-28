@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Eye, EyeOff, LogIn, AlertCircle, Sparkles } from "lucide-react";
+import { Eye, EyeOff, LogIn, AlertCircle, Sparkles, Lock, ShieldAlert } from "lucide-react";
 import { Role, ROLES } from "@/lib/auth/roles";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,23 @@ import { Label } from "@/components/ui/label";
 import { useAuthStore } from "@/store/auth-store";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+
+interface LoginError {
+  message: string;
+  code?: string;
+  remainingAttempts?: number;
+  maxAttempts?: number;
+  retryAfterSeconds?: number;
+  lockedUntil?: number | null;
+}
+
+/** Format detik → "Xm Ys" / "Xs" — sinkron dengan format di server. */
+function formatDuration(seconds: number): string {
+  if (seconds < 60) return `${seconds}d`;
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return s > 0 ? `${m}m ${s}d` : `${m}m`;
+}
 
 export function LoginForm({
   role,
@@ -24,10 +41,22 @@ export function LoginForm({
   const [password, setPassword] = useState("");
   const [showPwd, setShowPwd] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<LoginError | null>(null);
+  // Countdown lockout (detik). > 0 = tombol disabled.
+  const [lockCountdown, setLockCountdown] = useState(0);
 
-  async function onSubmit(e: React.FormEvent) {
+  // Tick countdown setiap detik
+  useEffect(() => {
+    if (lockCountdown <= 0) return;
+    const t = setInterval(() => {
+      setLockCountdown((s) => Math.max(0, s - 1));
+    }, 1000);
+    return () => clearInterval(t);
+  }, [lockCountdown]);
+
+  const onSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
+    if (lockCountdown > 0) return;
     setError(null);
     setLoading(true);
     try {
@@ -36,25 +65,48 @@ export function LoginForm({
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ email: email.trim(), password, expectedRole: role }),
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
+
       if (!res.ok) {
-        setError(data?.error || "Gagal masuk. Coba lagi.");
+        const err: LoginError = {
+          message: data?.error || "Gagal masuk. Coba lagi.",
+          code: data?.code,
+          remainingAttempts: data?.remainingAttempts,
+          maxAttempts: data?.maxAttempts,
+          retryAfterSeconds: data?.retryAfterSeconds,
+          lockedUntil: data?.lockedUntil,
+        };
+        setError(err);
+
+        // Jika kena lockout, mulai countdown
+        if (data?.code === "LOCKED_OUT" && typeof data.retryAfterSeconds === "number") {
+          setLockCountdown(data.retryAfterSeconds);
+        }
         return;
       }
       setUser(data.user);
       toast.success(`Selamat datang, ${data.user.fullName}!`);
     } catch {
-      setError("Koneksi bermasalah. Coba lagi.");
+      setError({ message: "Koneksi bermasalah. Coba lagi." });
     } finally {
       setLoading(false);
     }
-  }
+  }, [email, password, role, lockCountdown, setUser]);
 
   function fillDemo() {
     setEmail(meta.demoEmail);
     setPassword("rejo1234");
     setError(null);
   }
+
+  const isLocked = lockCountdown > 0;
+  // Tampilkan warning sisa percobaan hanya jika 1-2 tersisa dan belum locked
+  const showLowAttemptsWarning =
+    !!error &&
+    !isLocked &&
+    typeof error.remainingAttempts === "number" &&
+    error.remainingAttempts > 0 &&
+    error.remainingAttempts <= 2;
 
   return (
     <motion.div
@@ -90,7 +142,8 @@ export function LoginForm({
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="h-11 rounded-xl bg-card"
+            disabled={isLocked}
+            className="h-11 rounded-xl bg-card disabled:opacity-60"
           />
         </div>
 
@@ -107,12 +160,14 @@ export function LoginForm({
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="h-11 rounded-xl bg-card pr-11"
+              disabled={isLocked}
+              className="h-11 rounded-xl bg-card pr-11 disabled:opacity-60"
             />
             <button
               type="button"
               onClick={() => setShowPwd((s) => !s)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              disabled={isLocked}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground disabled:opacity-50"
               aria-label={showPwd ? "Sembunyikan password" : "Tampilkan password"}
             >
               {showPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -126,23 +181,92 @@ export function LoginForm({
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
-              className="flex items-start gap-2 rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive"
+              className={cn(
+                "flex items-start gap-2 rounded-xl border p-3 text-sm",
+                isLocked
+                  ? "border-rose/30 bg-rose/5 text-rose"
+                  : "border-destructive/30 bg-destructive/5 text-destructive",
+              )}
             >
-              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-              <span>{error}</span>
+              {isLocked ? <Lock className="mt-0.5 h-4 w-4 shrink-0" /> : <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />}
+              <div className="flex-1">
+                <span>{error.message}</span>
+                {!isLocked && typeof error.remainingAttempts === "number" && error.remainingAttempts > 0 && (
+                  <span className="mt-1 block text-xs opacity-80">
+                    Sisa percobaan: {error.remainingAttempts} dari {error.maxAttempts ?? 5}.
+                  </span>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Warning: percobaan tinggal sedikit, belum locked */}
+        <AnimatePresence>
+          {showLowAttemptsWarning && (
+            <motion.div
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              className="flex items-start gap-2 rounded-xl border border-amber-500/30 bg-amber-500/5 p-2.5 text-xs text-amber-700 dark:text-amber-500"
+            >
+              <ShieldAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+              <span>
+                Hati-hati. Setelah {error?.maxAttempts ?? 5}× gagal, akun akan dikunci sementara.
+                Coba reset password atau gunakan akun demo.
+              </span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Lockout countdown bar */}
+        <AnimatePresence>
+          {isLocked && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="overflow-hidden rounded-xl border border-rose/20 bg-rose/5"
+            >
+              <div className="flex items-center justify-between px-3 py-2.5 text-xs">
+                <span className="flex items-center gap-1.5 font-600 text-rose">
+                  <Lock className="h-3.5 w-3.5" />
+                  Sementara dikunci
+                </span>
+                <span className="font-display font-700 text-rose tabular-nums">
+                  {formatDuration(lockCountdown)}
+                </span>
+              </div>
+              <div className="h-1 w-full bg-rose/15">
+                <motion.div
+                  className="h-full bg-rose"
+                  initial={{ width: "100%" }}
+                  animate={{ width: `${(lockCountdown / (error?.retryAfterSeconds ?? 1)) * 100}%` }}
+                  transition={{ ease: "linear", duration: 1 }}
+                />
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
 
         <Button
           type="submit"
-          disabled={loading}
-          className={cn("accent-" + meta.accent, "h-11 w-full rounded-xl bg-role text-role-fg hover:opacity-90")}
+          disabled={loading || isLocked}
+          className={cn(
+            "accent-" + meta.accent,
+            "h-11 w-full rounded-xl bg-role text-role-fg hover:opacity-90",
+            isLocked && "opacity-50 cursor-not-allowed",
+          )}
         >
           {loading ? (
             <span className="flex items-center gap-2">
               <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
               Memproses…
+            </span>
+          ) : isLocked ? (
+            <span className="flex items-center gap-2">
+              <Lock className="h-4 w-4" />
+              Dikunci · {formatDuration(lockCountdown)}
             </span>
           ) : (
             <span className="flex items-center gap-2">
@@ -155,7 +279,8 @@ export function LoginForm({
         <button
           type="button"
           onClick={fillDemo}
-          className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-border bg-muted/40 px-3 py-2.5 text-xs font-500 text-muted-foreground hover:border-role hover:text-role"
+          disabled={isLocked}
+          className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-border bg-muted/40 px-3 py-2.5 text-xs font-500 text-muted-foreground hover:border-role hover:text-role disabled:opacity-50 disabled:hover:border-border disabled:hover:text-muted-foreground"
         >
           <Sparkles className="h-3.5 w-3.5" />
           Isi akun demo ({meta.demoEmail} · rejo1234)
