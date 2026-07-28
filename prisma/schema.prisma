@@ -65,6 +65,7 @@ model Customer {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
   orders         Order[]
+  reviews        Review[]
 }
 
 model Merchant {
@@ -85,6 +86,7 @@ model Merchant {
 
   menuItems      MenuItem[]
   orders         Order[]
+  reviews        Review[]
 }
 
 /// Item menu milik merchant. Item boleh unavailable tanpa hapus (untuk stok habis sementara).
@@ -202,6 +204,7 @@ model Order {
   updatedAt       DateTime    @updatedAt
 
   payments        Payment[]
+  review          Review?
 
   @@index([customerId])
   @@index([merchantId])
@@ -258,6 +261,29 @@ model OrderItem {
   subtotal    Int
 
   @@index([orderId])
+}
+
+/// Review dari customer untuk order yang sudah DELIVERED.
+/// Satu order = satu review (unique constraint orderId).
+/// Rating mempengaruhi Merchant.rating (auto-recompute saat review dibuat).
+model Review {
+  id          String   @id @default(cuid())
+  orderId     String   @unique
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  customerId  String
+  customer    Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  merchantId  String
+  merchant    Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  /// 1-5 stars (integer)
+  rating      Int
+  /// Optional comment, maks 500 char
+  comment     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([merchantId])
+  @@index([customerId])
+  @@index([rating])
 }
 
 /// Jejak forensik: siapa melakukan apa, kapan, dari mana.

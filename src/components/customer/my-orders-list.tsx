@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Package, RefreshCw, ChevronRight, Wifi, WifiOff, X, Ban, Loader2, CreditCard } from "lucide-react";
+import { Package, RefreshCw, ChevronRight, Wifi, WifiOff, X, Ban, Loader2, CreditCard, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import { useOrderSocket } from "@/hooks/use-order-socket";
 import { toast } from "sonner";
 import { PaymentDialog } from "./payment-dialog";
+import { ReviewDialog } from "./review-dialog";
 
 interface OrderItem {
   id: string;
@@ -51,6 +52,7 @@ interface Order {
     expiresAt: string | null;
     paidAt: string | null;
   } | null;
+  review: { id: string; rating: number; comment: string | null; createdAt: string } | null;
 }
 
 const STATUS_FLOW: Order["status"][] = ["PENDING", "ACCEPTED", "PREPARING", "READY", "PICKED_UP", "DELIVERED"];
@@ -97,6 +99,8 @@ export function MyOrdersList() {
   const [cancelling, setCancelling] = useState(false);
   // Payment dialog state
   const [payTarget, setPayTarget] = useState<Order | null>(null);
+  // Review dialog state
+  const [reviewTarget, setReviewTarget] = useState<Order | null>(null);
 
   const fetchOrders = useCallback(async () => {
     setLoading(true);
@@ -218,6 +222,7 @@ export function MyOrdersList() {
           {orders.map((o, idx) => {
             const canCancel = ["PENDING", "ACCEPTED", "PREPARING"].includes(o.status);
             const needsPayment = o.status === "PENDING" && o.payment?.status !== "SUCCESS";
+            const canReview = o.status === "DELIVERED" && !o.review;
             return (
               <motion.div
                 key={o.id}
@@ -247,6 +252,12 @@ export function MyOrdersList() {
                         {o.payment.status === "PENDING" ? "BELUM BAYAR" : o.payment.status}
                       </Badge>
                     )}
+                    {o.review && (
+                      <Badge variant="outline" className="h-4 border-saffron/40 bg-saffron/10 px-1.5 text-[0.55rem] font-700 text-saffron">
+                        <Star className="mr-0.5 h-2 w-2 fill-saffron" />
+                        {o.review.rating}
+                      </Badge>
+                    )}
                   </div>
                   <p className="mt-0.5 truncate text-sm font-600 text-foreground">{o.merchant.restaurantName}</p>
                   <p className="mt-0.5 text-xs text-muted-foreground">
@@ -263,6 +274,15 @@ export function MyOrdersList() {
                     >
                       <CreditCard className="h-2.5 w-2.5" />
                       Bayar
+                    </button>
+                  ) : canReview ? (
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); setReviewTarget(o); }}
+                      className="mt-0.5 inline-flex items-center gap-1 rounded-full border border-saffron/40 bg-saffron/10 px-2 py-0.5 text-[0.65rem] font-700 text-saffron hover:bg-saffron/20"
+                    >
+                      <Star className="h-2.5 w-2.5" />
+                      Beri Penilaian
                     </button>
                   ) : canCancel ? (
                     <button
@@ -510,6 +530,20 @@ export function MyOrdersList() {
           orderCode={payTarget.code}
           total={payTarget.total}
           onPaid={() => {
+            fetchOrders();
+          }}
+        />
+      )}
+
+      {/* Review dialog */}
+      {reviewTarget && (
+        <ReviewDialog
+          open={!!reviewTarget}
+          onClose={() => setReviewTarget(null)}
+          orderId={reviewTarget.id}
+          orderCode={reviewTarget.code}
+          restaurantName={reviewTarget.merchant.restaurantName}
+          onSubmitted={() => {
             fetchOrders();
           }}
         />

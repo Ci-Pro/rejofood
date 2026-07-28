@@ -202,6 +202,7 @@ export async function GET(req: Request) {
       merchant: { select: { id: true, restaurantName: true, address: true } },
       driver: { select: { id: true, user: { select: { fullName: true } } } },
       items: true,
+      review: { select: { id: true, rating: true, comment: true, createdAt: true } },
       payments: {
         orderBy: { createdAt: "desc" },
         take: 1,
@@ -240,6 +241,7 @@ export async function GET(req: Request) {
       items: o.items,
       itemCount: o.items.reduce((sum, i) => sum + i.quantity, 0),
       payment: o.payments[0] ?? null,
+      review: o.review ?? null,
     })),
   });
 }

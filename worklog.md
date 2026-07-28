@@ -635,3 +635,88 @@ Stage Summary:
   - Payment receipt / invoice PDF
   - Payment method fee (misal: VA BCA +Rp 4.000, QRIS 0.7%)
   - Split payment (cash + e-wallet)
+
+---
+Task ID: feat-6
+Agent: main
+Task: Order rating + review — customer beri rating setelah DELIVERED, merchant rating auto-recompute
+
+Work Log:
+- Update Prisma schema:
+  - Tambah model `Review`: id, orderId (unique), customerId, merchantId, rating (1-5), comment (maks 500), createdAt, updatedAt
+  - 3 indexes di Review (merchantId, customerId, rating)
+  - Relation `review` di Order, `reviews` di Customer + Merchant
+  - Run `db:push` + `db:generate` + restart dev
+- Buat 2 API endpoints:
+  - `POST /api/orders/[id]/review` — customer submit review
+    - Customer-only dengan ownership check
+    - Status check: order harus DELIVERED
+    - One review per order (unique constraint orderId)
+    - Rating 1-5 (integer, Math.floor)
+    - Comment optional, maks 500 char
+    - **Auto-recompute merchant.rating** (avg dari semua review merchant, 1 decimal)
+    - Audit log: review.create dengan rating + newMerchantRating + totalReviews
+    - Realtime emit: notify merchant + admin
+  - `GET /api/orders/[id]/review` — get existing review untuk order (customer only)
+  - `GET /api/restaurants/[id]/reviews` — public list review dengan:
+    - Rating distribution (5,4,3,2,1 count)
+    - Cursor pagination
+    - Include customer name + createdAt
+- Update `GET /api/restaurants/[id]`: include `reviewCount` field
+- Update `GET /api/orders`: include `review` field di response (untuk customer lihat review sendiri)
+- Buat komponen `ReviewDialog`:
+  - 5 star interactive dengan hover effect (fill saffron saat hover/selected)
+  - Label kontekstual per rating: "Sangat kecewa" / "Kecewa" / "Biasa saja" / "Puas" / "Sangat puas"
+  - Comment textarea opsional (maks 500 char) dengan counter
+  - Submit button disabled sampai rating dipilih
+  - Success state: CheckCircle2 hijau + "Terima kasih atas penilaianmu!"
+  - Loading state dengan spinner
+- Update `MyOrdersList`:
+  - Tombol "Beri Penilaian" muncul untuk order DELIVERED + belum di-review (prioritas: needsPayment > canReview > canCancel)
+  - Badge rating (★ 5) muncul untuk order yang sudah di-review
+  - ReviewDialog integrated dengan onSubmitted callback untuk refetch
+- Update `RestaurantDetailDialog` dengan `ReviewsSection`:
+  - Rating summary card: avg rating (besar) + stars + total count
+  - Rating distribution bar (5-1 stars dengan percentage bar)
+  - List review items (3 terbaru + "Lihat semua N ulasan")
+  - Setiap review: customer name + stars + comment + tanggal
+  - Empty state: "Belum ada ulasan"
+  - Loading skeleton
+- Integration test `scripts/test-review.ts` — 32 assertions lulus:
+  - Test 1: Submit review DELIVERED → 201 + rating + comment + merchantRating + totalReviews
+  - Test 2: Merchant rating auto-recompute (avg updated)
+  - Test 3: Review non-DELIVERED → 400 (error mentions DELIVERED)
+  - Test 4: Review twice → 400 (sudah di-review)
+  - Test 5: Invalid rating (0, 6, "abc", null) → 400
+  - Test 6: GET reviews list + distribution
+  - Test 7: GET /api/orders includes review field
+  - Test 8: GET existing review untuk order
+  - Test 9: Audit log captured review.create events
+- Verifikasi browser:
+  - Customer login → lihat order DELIVERED dengan tombol "Beri Penilaian"
+  - Klik → ReviewDialog muncul dengan 5 stars + comment field
+  - Klik 5 stars → label "Sangat puas" muncul
+  - Isi comment "Pelayanan cepat, makanan enak! Recommended."
+  - Klik "Kirim penilaian" → success state "Terima kasih!"
+  - Klik "Selesai" → kembali ke MyOrders, badge "5" muncul di order
+  - Buka restaurant detail → "Ulasan" section muncul dengan rating summary + distribution + list review
+- 3 screenshot tersimpan di `download/`
+
+Stage Summary:
+- Customer kini bisa beri rating 1-5 bintang + comment opsional untuk order DELIVERED
+- Merchant rating auto-recompute saat review dibuat (avg dari semua review)
+- Satu order = satu review (unique constraint, tidak bisa spam)
+- Review visible di restaurant detail drawer (untuk customer lain lihat feedback)
+- Rating distribution bar membantu customer lihat persebaran rating
+- Audit trail: review.create event dengan rating + newMerchantRating + totalReviews
+- Realtime: merchant + admin langsung tahu saat review masuk
+- UI feedback: badge rating (★ N) di MyOrders untuk order yang sudah di-review
+- Production TODO:
+  - Merchant reply to review (fitur response dari merchant)
+  - Review edit/delete (customer bisa ubah dalam X jam)
+  - Photo upload dengan review
+  - Filter reviews by rating (5 stars only, etc.)
+  - Sort reviews (terbaru / tertinggi / terendah)
+  - Auto-flag review dengan kata sensitif (moderasi)
+  - Review helpful voting (other customers bisa upvote)
+  - Email merchant saat ada review baru

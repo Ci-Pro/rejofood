@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Star, MapPin, UtensilsCrossed, Plus, Soup, ShoppingBag, AlertTriangle } from "lucide-react";
+import { X, Star, MapPin, UtensilsCrossed, Plus, Soup, ShoppingBag, AlertTriangle, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -298,6 +298,9 @@ export function RestaurantDetailDialog({
                   </div>
                 </div>
               ))}
+
+              {/* Reviews section */}
+              {data && <ReviewsSection merchantId={data.id} rating={data.rating} />}
             </div>
 
             {/* Footer placeholder — cart & checkout akan datang di phase 2 */}
@@ -343,5 +346,155 @@ export function RestaurantDetailDialog({
         </DialogContent>
       </Dialog>
     </AnimatePresence>
+  );
+}
+
+/** Sub-component: reviews section di drawer detail. */
+function ReviewsSection({ merchantId, rating }: { merchantId: string; rating: number }) {
+  const [reviews, setReviews] = useState<{
+    items: Array<{ id: string; rating: number; comment: string | null; customerName: string; createdAt: string }>;
+    total: number;
+    distribution: Record<number, number>;
+  } | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [showAll, setShowAll] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    (async () => {
+      try {
+        const res = await fetch(`/api/restaurants/${merchantId}/reviews?limit=${showAll ? 50 : 3}`, { cache: "no-store" });
+        const data = await res.json();
+        if (cancelled) return;
+        if (res.ok) setReviews(data);
+      } catch {
+        // silent
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [merchantId, showAll]);
+
+  if (loading) {
+    return (
+      <div className="mb-5">
+        <div className="accent-saffron mb-2 flex items-center gap-2">
+          <h3 className="font-display text-sm font-700 uppercase tracking-wide text-role">Ulasan</h3>
+          <span className="h-px flex-1 bg-border" />
+        </div>
+        <div className="h-20 animate-pulse rounded-xl bg-muted/50" />
+      </div>
+    );
+  }
+
+  if (!reviews || reviews.total === 0) {
+    return (
+      <div className="mb-5">
+        <div className="accent-saffron mb-2 flex items-center gap-2">
+          <h3 className="font-display text-sm font-700 uppercase tracking-wide text-role">Ulasan</h3>
+          <span className="h-px flex-1 bg-border" />
+        </div>
+        <div className="rounded-xl border border-dashed border-border bg-muted/30 p-4 text-center text-xs text-muted-foreground">
+          <MessageSquare className="mx-auto h-6 w-6" />
+          <p className="mt-1">Belum ada ulasan</p>
+        </div>
+      </div>
+    );
+  }
+
+  function formatTime(iso: string): string {
+    return new Date(iso).toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" });
+  }
+
+  return (
+    <div className="mb-5">
+      <div className="accent-saffron mb-2 flex items-center gap-2">
+        <h3 className="font-display text-sm font-700 uppercase tracking-wide text-role">Ulasan</h3>
+        <span className="h-px flex-1 bg-border" />
+        <span className="text-[0.65rem] text-muted-foreground">{reviews.total} ulasan</span>
+      </div>
+
+      {/* Rating summary */}
+      <div className="mb-3 flex items-center gap-3 rounded-xl border border-border bg-card p-3">
+        <div className="text-center">
+          <p className="font-display text-2xl font-700 text-saffron">{rating.toFixed(1)}</p>
+          <div className="flex justify-center">
+            {[1, 2, 3, 4, 5].map((s) => (
+              <Star
+                key={s}
+                className={cn(
+                  "h-3 w-3",
+                  s <= Math.round(rating) ? "fill-saffron text-saffron" : "fill-muted text-muted-foreground",
+                )}
+              />
+            ))}
+          </div>
+          <p className="mt-0.5 text-[0.6rem] text-muted-foreground">{reviews.total} ulasan</p>
+        </div>
+        <div className="flex-1 space-y-0.5">
+          {[5, 4, 3, 2, 1].map((star) => {
+            const count = reviews.distribution[star] ?? 0;
+            const pct = reviews.total > 0 ? (count / reviews.total) * 100 : 0;
+            return (
+              <div key={star} className="flex items-center gap-1.5 text-[0.65rem]">
+                <span className="w-3 text-muted-foreground">{star}</span>
+                <Star className="h-2 w-2 fill-saffron text-saffron" />
+                <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
+                  <div className="h-full bg-saffron" style={{ width: `${pct}%` }} />
+                </div>
+                <span className="w-4 text-right tabular-nums text-muted-foreground">{count}</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Review items */}
+      <div className="space-y-2">
+        {reviews.items.map((r) => (
+          <div key={r.id} className="rounded-xl border border-border bg-card p-3">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-700 text-foreground">{r.customerName}</p>
+              <div className="flex">
+                {[1, 2, 3, 4, 5].map((s) => (
+                  <Star
+                    key={s}
+                    className={cn(
+                      "h-2.5 w-2.5",
+                      s <= r.rating ? "fill-saffron text-saffron" : "fill-muted text-muted-foreground",
+                    )}
+                  />
+                ))}
+              </div>
+            </div>
+            {r.comment && (
+              <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">{r.comment}</p>
+            )}
+            <p className="mt-1.5 text-[0.6rem] text-muted-foreground/70">{formatTime(r.createdAt)}</p>
+          </div>
+        ))}
+      </div>
+
+      {reviews.total > 3 && !showAll && (
+        <button
+          type="button"
+          onClick={() => setShowAll(true)}
+          className="accent-saffron mt-2 w-full rounded-lg border border-dashed border-role/40 bg-role-soft/30 py-1.5 text-xs font-700 text-role hover:bg-role-soft/60"
+        >
+          Lihat semua {reviews.total} ulasan
+        </button>
+      )}
+      {showAll && reviews.total > 3 && (
+        <button
+          type="button"
+          onClick={() => setShowAll(false)}
+          className="accent-saffron mt-2 w-full rounded-lg border border-dashed border-border py-1.5 text-xs font-600 text-muted-foreground hover:border-role/40"
+        >
+          Sembunyikan
+        </button>
+      )}
+    </div>
   );
 }

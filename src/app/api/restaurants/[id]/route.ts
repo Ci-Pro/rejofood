@@ -34,6 +34,7 @@ export async function GET(
           category: true,
         },
       },
+      _count: { select: { reviews: true } },
     },
   });
 
@@ -41,5 +42,11 @@ export async function GET(
     return NextResponse.json({ error: "Restoran tidak ditemukan." }, { status: 404 });
   }
 
-  return NextResponse.json({ merchant });
+  return NextResponse.json({
+    merchant: {
+      ...merchant,
+      reviewCount: merchant._count.reviews,
+      _count: undefined,
+    },
+  });
 }
