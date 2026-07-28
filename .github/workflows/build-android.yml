@@ -1,0 +1,75 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+env:
+  REJOFOOD_BACKEND_URL: ${{ secrets.REJOFOOD_BACKEND_URL || 'http://10.0.2.2:3000' }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools platforms;android-34 build-tools;34.0.0'
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Install Capacitor
+        run: bun add @capacitor/core @capacitor/cli @capacitor/android
+
+      - name: Create Android project
+        run: npx cap add android
+
+      - name: Sync Capacitor
+        run: npx cap sync android
+
+      - name: Build debug APK
+        working-directory: android
+        run: ./gradlew assembleDebug --no-daemon -x lint
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rejofood-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 30
+
+      - name: Summary
+        run: |
+          echo "## APK Build Complete ✅" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Download APK dari **Artifacts** section di atas." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Konfigurasi backend:" >> $GITHUB_STEP_SUMMARY
+          echo "- Backend URL: \`${{ env.REJOFOOD_BACKEND_URL }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Cara install di HP:" >> $GITHUB_STEP_SUMMARY
+          echo "1. Download file \`app-debug.apk\` dari artifacts" >> $GITHUB_STEP_SUMMARY
+          echo "2. Transfer ke HP Android" >> $GITHUB_STEP_SUMMARY
+          echo "3. Buka file APK, izinkan install dari sumber tidak dikenal" >> $GITHUB_STEP_SUMMARY
+          echo "4. Buka app RejoFood" >> $GITHUB_STEP_SUMMARY
