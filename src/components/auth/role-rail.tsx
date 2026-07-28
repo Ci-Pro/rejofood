@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { Role, ROLES, ROLE_LIST, type RoleMeta } from "@/lib/auth/roles";
+import { Role, getRoleList, type RoleMeta } from "@/lib/auth/roles";
 import { cn } from "@/lib/utils";
 
 /**
@@ -11,16 +11,23 @@ import { cn } from "@/lib/utils";
  *  - It is unusual for a login screen, which matches the user's brief: "layout berbeda".
  *  - It gives each role its own breathing room with icon + label + tagline.
  *  - On mobile it gracefully collapses to a horizontal scrollable strip.
+ *
+ * SECURITY: `showAdmin` defaults to false. When false, Admin tidak muncul di rail,
+ * sehingga pengunjung biasa tidak tahu ada login admin. Admin mengaksesnya via
+ * URL `/?admin=1`. Server tetap melakukan verifikasi credentials terpisah.
  */
 export function RoleRail({
   selected,
   onChange,
   className,
+  showAdmin = false,
 }: {
   selected: Role;
   onChange: (r: Role) => void;
   className?: string;
+  showAdmin?: boolean;
 }) {
+  const list = getRoleList(showAdmin);
   return (
     <div className={cn("flex flex-col gap-3", className)}>
       <div className="mb-1 hidden items-center gap-2 px-1 md:flex">
@@ -28,18 +35,23 @@ export function RoleRail({
           Pilih peran
         </span>
         <span className="h-px flex-1 bg-border" />
+        {showAdmin && (
+          <span className="rounded-full bg-rose/15 px-2 py-0.5 text-[0.6rem] font-700 uppercase tracking-wider text-rose">
+            Mode admin
+          </span>
+        )}
       </div>
 
       {/* Mobile: horizontal scroll */}
       <div className="flex gap-2 overflow-x-auto pb-2 md:hidden scroll-slim">
-        {ROLE_LIST.map((r) => (
+        {list.map((r) => (
           <RoleChip key={r.value} role={r} active={selected === r.value} onClick={() => onChange(r.value)} />
         ))}
       </div>
 
       {/* Desktop: vertical rail */}
       <div className="hidden md:flex md:flex-col md:gap-2.5">
-        {ROLE_LIST.map((r, idx) => (
+        {list.map((r, idx) => (
           <RolePanel
             key={r.value}
             role={r}

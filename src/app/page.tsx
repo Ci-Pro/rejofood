@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { AuthShell } from "@/components/auth/auth-shell";
 import { CustomerDashboard } from "@/components/customer/customer-dashboard";
@@ -22,10 +23,37 @@ function viewForRole(role: Role): Exclude<View, "loading" | "auth"> {
   }
 }
 
-export default function Home() {
+function LoadingScreen() {
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.4 }}
+      >
+        <BrandLogo size="md" />
+      </motion.div>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.2 }}
+        className="flex items-center gap-2 text-xs text-muted-foreground"
+      >
+        <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+        Memuat RejoFood…
+      </motion.div>
+    </div>
+  );
+}
+
+function HomeInner() {
+  const searchParams = useSearchParams();
+  // SECURITY: Admin login entry disembunyikan. Hanya muncul saat URL berisi ?admin=1.
+  // Server tetap memverifikasi credentials, jadi ini hanya lapisan "obfuscation".
+  const showAdmin = searchParams.get("admin") === "1";
+
   const user = useAuthStore((s) => s.user);
   const setUser = useAuthStore((s) => s.setUser);
-  // `booted` flips true once the initial session check has resolved.
   const [booted, setBooted] = useState(false);
 
   useEffect(() => {
@@ -45,40 +73,26 @@ export default function Home() {
     return () => { cancelled = true; };
   }, [setUser]);
 
-  // Derive view directly from state — no chained effects, no cascading renders.
   const view: View = !booted
     ? "loading"
     : user
       ? viewForRole(user.role as Role)
       : "auth";
 
-  if (view === "loading") {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.4 }}
-        >
-          <BrandLogo size="md" />
-        </motion.div>
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-          className="flex items-center gap-2 text-xs text-muted-foreground"
-        >
-          <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-          Memuat RejoFood…
-        </motion.div>
-      </div>
-    );
-  }
-
-  if (view === "auth") return <AuthShell />;
+  if (view === "loading") return <LoadingScreen />;
+  if (view === "auth") return <AuthShell showAdmin={showAdmin} />;
   if (view === "customer") return <CustomerDashboard />;
   if (view === "merchant") return <MerchantDashboard />;
   if (view === "driver") return <DriverDashboard />;
   if (view === "admin") return <AdminDashboard />;
-  return <AuthShell />;
+  return <AuthShell showAdmin={showAdmin} />;
+}
+
+export default function Home() {
+  // Suspense wajib karena useSearchParams() bersifat async di Next.js 16.
+  return (
+    <Suspense fallback={<LoadingScreen />}>
+      <HomeInner />
+    </Suspense>
+  );
 }

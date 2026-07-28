@@ -76,6 +76,25 @@ export const ROLE_LIST: RoleMeta[] = [
   ROLES[Role.ADMIN],
 ];
 
+/**
+ * Daftar role yang tampil di UI publik (login/register).
+ *
+ * SECURITY: Admin sengaja DIHAPUS dari daftar publik agar tidak terlihat orang lain.
+ * Akses login admin hanya via URL terpisah dengan query param `?admin=1`,
+ * yang akan memunculkan role Admin di RoleRail. Ini bukan satu-satunya lapisan
+ * keamanan — server tetap memverifikasi credentials di setiap API call.
+ */
+export const PUBLIC_ROLE_LIST: RoleMeta[] = [
+  ROLES[Role.CUSTOMER],
+  ROLES[Role.MERCHANT],
+  ROLES[Role.DRIVER],
+];
+
+/** Gunakan ini ketika showAdmin=true (dari ?admin=1) */
+export function getRoleList(showAdmin: boolean): RoleMeta[] {
+  return showAdmin ? ROLE_LIST : PUBLIC_ROLE_LIST;
+}
+
 /** Permission matrix — keep small and explicit for the foundation. */
 export const PERMISSIONS: Record<Role, string[]> = {
   [Role.CUSTOMER]: ["order:create", "order:read_own", "profile:edit_own"],

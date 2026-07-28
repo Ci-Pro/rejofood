@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Lock } from "lucide-react";
 import { Role } from "@/lib/auth/roles";
 import { RoleRail } from "./role-rail";
 import { LoginForm } from "./login-form";
 import { RegisterForm } from "./register-form";
 import { BrandLogo } from "./brand-logo";
+import { cn } from "@/lib/utils";
 
 /**
  * AuthShell — the unique asymmetric auth screen.
@@ -17,8 +19,11 @@ import { BrandLogo } from "./brand-logo";
  *  - Mobile:  vertical stack with brand strip on top, role chips, form below.
  *
  * This is deliberately NOT a centered card — most apps use that pattern.
+ *
+ * SECURITY: `showAdmin` mengontrol visibilitas role Admin di RoleRail.
+ * Default false → Admin tidak terlihat. Set true hanya ketika user datang dari `/?admin=1`.
  */
-export function AuthShell() {
+export function AuthShell({ showAdmin = false }: { showAdmin?: boolean }) {
   const [role, setRole] = useState<Role>(Role.CUSTOMER);
   const [mode, setMode] = useState<"login" | "register">("login");
 
@@ -70,7 +75,14 @@ export function AuthShell() {
             </div>
 
             <div>
-              <RoleRail selected={role} onChange={setRole} />
+              <RoleRail selected={role} onChange={setRole} showAdmin={showAdmin} />
+              {showAdmin && (
+                <div className="mt-3 flex items-center gap-2 rounded-xl border border-rose/30 bg-rose/10 px-3 py-2 text-xs text-rose">
+                  <Lock className="h-3.5 w-3.5" />
+                  <span className="font-600">Area terbatas.</span>
+                  <span className="text-rose/80">Akses admin terverifikasi 2 lapis.</span>
+                </div>
+              )}
               <p className="mt-5 text-xs text-primary-foreground/50">
                 © {new Date().getFullYear()} RejoFood · v0.1 fondasi
               </p>
@@ -87,7 +99,14 @@ export function AuthShell() {
 
           {/* Mobile role rail (horizontal) */}
           <div className="px-5 py-3 lg:hidden">
-            <RoleRail selected={role} onChange={setRole} />
+            <RoleRail selected={role} onChange={setRole} showAdmin={showAdmin} />
+            {showAdmin && (
+              <div className={cn("mt-2 flex items-center gap-2 rounded-xl border border-rose/30 bg-rose/10 px-3 py-2 text-xs text-rose")}>
+                <Lock className="h-3.5 w-3.5" />
+                <span className="font-600">Area terbatas.</span>
+                <span className="text-rose/80">Akses admin terverifikasi 2 lapis.</span>
+              </div>
+            )}
           </div>
 
           <div className="flex flex-1 items-center justify-center px-5 py-8 sm:px-8">

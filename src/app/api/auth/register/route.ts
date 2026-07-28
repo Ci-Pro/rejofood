@@ -1,6 +1,10 @@
 /**
  * POST /api/auth/register
  * Body: { email, password, fullName, phone?, role, restaurantName?, vehicleType? }
+ *
+ * SECURITY: Role ADMIN tidak boleh dibuat lewat self-register.
+ * Admin hanya bisa dibuat oleh admin lain via invite system (lihat lib/auth/context.ts → requireAdmin).
+ * Setiap percobaan registrasi dengan role ADMIN akan ditolak dengan 403, terlepas dari UI.
  */
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
@@ -37,6 +41,15 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Role tidak valid." }, { status: 400 });
     }
 
+    // 🔒 SECURITY: self-registration sebagai ADMIN dilarang keras.
+    // Celah ini sebelumnya memungkinkan siapa saja menjadi admin hanya dengan POST { role: 'ADMIN' }.
+    if (role === Role.ADMIN) {
+      return NextResponse.json(
+        { error: "Role Admin tidak dapat didaftarkan sendiri. Hubungi admin eksisting." },
+        { status: 403 },
+      );
+    }
+
     const existing = await db.user.findUnique({ where: { email } });
     if (existing) {
       return NextResponse.json({ error: "Email sudah terdaftar." }, { status: 409 });
@@ -57,9 +70,9 @@ export async function POST(req: Request) {
       } else if (role === Role.DRIVER) {
         const vehicleType = (body.vehicleType as string) || "motorcycle";
         await tx.driver.create({ data: { userId: u.id, vehicleType } });
-      } else if (role === Role.ADMIN) {
-        await tx.admin.create({ data: { userId: u.id, permissions: JSON.stringify(["*"]) } });
       }
+      // Role.ADMIN sengaja tidak ditangani di sini karena sudah ditolak di atas.
+      // Jika suatu hari dibutuhkan invite flow, buat endpoint terpisah yang diawasi requireAdmin().
       return u;
     });
 
