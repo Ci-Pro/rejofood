@@ -330,3 +330,93 @@ Stage Summary:
   - Restaurant rating update dari customer review
   - Driver dashboard: available orders list
   - Admin: pending merchant verification, ban user, view all orders
+
+---
+Task ID: feat-2
+Agent: main
+Task: Phase 2 — Cart + Order pipeline end-to-end (customer → merchant → driver → admin)
+
+Work Log:
+- Update Prisma schema:
+  - Tambah enum `OrderStatus` (PENDING, ACCEPTED, PREPARING, READY, PICKED_UP, DELIVERED, CANCELLED)
+  - Tambah model `Order`: id, code (unique), customerId, merchantId, driverId?, status, items, subtotal, deliveryFee, total, deliveryAddress, notes, timestamp per status (acceptedAt, readyAt, pickedUpAt, deliveredAt, cancelledAt), createdAt, updatedAt
+  - Tambah model `OrderItem`: snapshot name + price + quantity + subtotal (untuk history konsisten meski merchant edit menu nanti)
+  - Tambah relation `orders` di Customer, Merchant, Driver
+  - Tambah relation `orderItems` di MenuItem
+  - 5 indexes di Order (customerId, merchantId, driverId, status, createdAt)
+  - Run `db:push` + `db:generate` + restart dev
+- Buat cart store `src/store/cart-store.ts`:
+  - Zustand + persist ke localStorage (cart tidak hilang saat refresh)
+  - Constraint same-merchant: addItem return { ok, conflict } kalau beda merchant
+  - forceAddItem: override cart dengan merchant baru (untuk "ganti restoran")
+  - Actions: addItem, forceAddItem, removeItem, updateQuantity, clearCart
+  - Selectors: getTotalItems, getSubtotal, getDeliveryFee (flat 10000), getTotal
+- Buat 9 API endpoints:
+  - `POST /api/orders` — checkout dengan server-side validation (same merchant, items available, merchant isOpen), generate unique code "RF-XXXXXX", snapshot name+price, log audit
+  - `GET /api/orders` — list own orders (customer only) dengan all relations
+  - `GET /api/orders/[id]` — detail order (customer only, ownership check)
+  - `GET /api/merchant/orders` — list incoming orders (active + recent 24h)
+  - `PATCH /api/merchant/orders/[id]/status` — transition dengan ALLOWED_TRANSITIONS map (PENDING → ACCEPTED|CANCELLED, ACCEPTED → PREPARING|CANCELLED, PREPARING → READY|CANCELLED)
+  - `GET /api/driver/orders/available` — READY orders + own PICKED_UP active deliveries
+  - `POST /api/driver/orders/[id]/pickup` — atomic claim via updateMany where status=READY AND driverId=null (race-safe)
+  - `POST /api/driver/orders/[id]/deliver` — ownership check + PICKED_UP → DELIVERED
+  - `GET /api/admin/orders` — all orders with filter status + cursor pagination
+- Buat 7 UI components:
+  - `cart-button.tsx` — floating button bottom-right (motion spring), click → drawer dengan qty +/-, remove, clear, total breakdown, checkout button
+  - `checkout-dialog.tsx` — form alamat + notes + summary, submit ke POST /api/orders
+  - `my-orders-list.tsx` — list own orders + polling 10s, status badge color-coded, status timeline (6-step), detail drawer dengan items + driver info
+  - `order-queue.tsx` (merchant) — list incoming + active orders + polling 8s, badge pending count, action buttons per status (Terima/Tolak → Mulai proses → Siap dijemput), customer phone + address display
+  - `driver-orders.tsx` — 2 sections: active deliveries (PICKED_UP) + available (READY), action buttons (Jemput & Antar → Sudah sampai), customer + merchant + address display
+  - `order-monitor.tsx` (admin) — list all orders with filter chips per status + polling 10s, customer/merchant/driver name display
+- Update `RestaurantDetailDialog`:
+  - Pakai cart store baru (ganti toast placeholder)
+  - Tambah conflict dialog "Ganti restoran?" kalau user add dari merchant berbeda
+  - Footer ganti dari "Segera hadir" → "Lihat di pojok kanan bawah"
+- Update 4 dashboards:
+  - CustomerDashboard: tambah CartButton + MyOrdersList
+  - MerchantDashboard: tambah OrderQueue (di atas MenuManager)
+  - DriverDashboard: ganti placeholder dengan DriverOrders (active + available)
+  - AdminDashboard: ganti placeholder sections dengan OrderMonitor
+- Audit log integration:
+  - `order.create` — customer place order (dengan code, merchantName, subtotal, deliveryFee, total, itemCount)
+  - `order.status_change` — semua transition (dengan from, to, actor, driverName jika pickup)
+  - Total 6 audit events per order lifecycle (1 create + 5 transitions)
+- Integration test `scripts/test-order-flow.ts` — 37 assertions lulus:
+  - Setup: login customer + merchant + driver (admin butuh 2FA)
+  - Step 2: Customer checkout → 201 + code generated + correct subtotal/total
+  - Step 4-5: Merchant sees PENDING order, accepts → ACCEPTED + acceptedAt set
+  - Step 6: Invalid transition ACCEPTED → READY ditolak (400)
+  - Step 7: PREPARING → READY
+  - Step 8-9: Driver sees READY order, pickup → PICKED_UP + pickedUpAt
+  - Step 10: Race condition — second pickup ditolak (409)
+  - Step 11: Driver has 1 active delivery, order removed from available
+  - Step 12: Deliver → DELIVERED + deliveredAt
+  - Step 13: Customer sees DELIVERED in own list
+  - Step 14: Admin sees all + customerName + merchantName
+  - Step 15: Audit log captured 6 events untuk order ini
+- Verifikasi browser:
+  - Customer: lihat restaurants → buka detail → klik Tambah 3x → cart button muncul "3 item Rp 92.000" → klik → drawer → Checkout → isi alamat → Buat pesanan → order muncul di "Pesanan saya"
+  - Merchant: login → lihat order baru di antrian dengan badge PENDING → klik Terima → Mulai proses → Siap dijemput → status berubah + "Menunggu driver"
+  - Driver: login → lihat order di "siap dijemput" → klik Jemput & Antar → order pindah ke "Pengiriman aktif" → klik Sudah sampai → order selesai
+- 5 screenshot tersimpan di `download/`
+
+Stage Summary:
+- RejoFood sekarang punya FULL ORDER PIPELINE end-to-end:
+  Customer checkout → Merchant accept/prepare/ready → Driver pickup/deliver → Admin monitor
+- Race condition safe: driver pickup pakai atomic updateMany (tidak bisa double-claim)
+- Status transition strict: ALLOWED_TRANSITIONS map memvalidasi setiap PATCH
+- OrderItem snapshot: name + price tidak berubah meski merchant edit menu nanti
+- Auto-refresh polling: customer 10s, merchant 8s, driver 8s, admin 10s
+- UI feedback: status badge color-coded, status timeline 6-step, action buttons context-aware
+- Cart persistence: localStorage via Zustand persist middleware
+- Cart constraint: same-merchant enforced di store + server validation
+- Audit trail: 6 events per order lifecycle (create + 5 transitions)
+- Production TODO:
+  - WebSocket untuk real-time update (sekarang polling 8-10s)
+  - Customer cancel order (sebelum ACCEPTED)
+  - Delivery fee by distance (sekarang flat Rp 10.000)
+  - Payment gateway integration
+  - Order rating + review setelah DELIVERED
+  - Push notification (PWA) saat status berubah
+  - Order history pagination
+  - Driver geolocation tracking real-time

@@ -6,6 +6,7 @@ import { AppShell } from "@/components/shared/app-shell";
 import { DashboardHeader } from "@/components/shared/dashboard-primitives";
 import { ProfileEditor } from "./profile-editor";
 import { MenuManager } from "./menu-manager";
+import { OrderQueue } from "./order-queue";
 import type { MerchantInfo } from "./menu-manager-bridge";
 
 export function MerchantDashboard() {
@@ -23,6 +24,7 @@ export function MerchantDashboard() {
 
       <div className="space-y-4">
         <ProfileEditor info={info} onUpdated={setInfo} />
+        <OrderQueue />
         <MenuManager onInfoLoaded={setInfo} />
       </div>
     </AppShell>

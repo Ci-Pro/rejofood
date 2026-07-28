@@ -64,6 +64,7 @@ model Customer {
   longitude      Float?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+  orders         Order[]
 }
 
 model Merchant {
@@ -83,6 +84,7 @@ model Merchant {
   updatedAt      DateTime @updatedAt
 
   menuItems      MenuItem[]
+  orders         Order[]
 }
 
 /// Item menu milik merchant. Item boleh unavailable tanpa hapus (untuk stok habis sementara).
@@ -99,6 +101,7 @@ model MenuItem {
   isAvailable Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  orderItems  OrderItem[]
 
   @@index([merchantId])
   @@index([merchantId, isAvailable])
@@ -117,6 +120,7 @@ model Driver {
   rating           Float    @default(0)
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
+  orders           Order[]
 }
 
 model Admin {
@@ -133,6 +137,71 @@ enum Role {
   MERCHANT
   DRIVER
   ADMIN
+}
+
+/// Status pesanan mengikuti lifecycle:
+///   PENDING → ACCEPTED → PREPARING → READY → PICKED_UP → DELIVERED
+///   PENDING/ACCEPTED/PREPARING/READY → CANCELLED (oleh customer sebelum PICKED_UP atau merchant reject)
+enum OrderStatus {
+  PENDING
+  ACCEPTED
+  PREPARING
+  READY
+  PICKED_UP
+  DELIVERED
+  CANCELLED
+}
+
+/// Order = transaksi pesanan dari customer ke merchant, diantar oleh driver.
+model Order {
+  id              String      @id @default(cuid())
+  /// Human-readable code: "RF-XXXXXX" (6 char alphanumeric)
+  code            String      @unique
+  customerId      String
+  customer        Customer    @relation(fields: [customerId], references: [id])
+  merchantId      String
+  merchant        Merchant    @relation(fields: [merchantId], references: [id])
+  driverId        String?
+  driver          Driver?     @relation(fields: [driverId], references: [id])
+  status          OrderStatus @default(PENDING)
+  items           OrderItem[]
+  /// Sum dari (price × qty) semua item — snapshot saat checkout.
+  subtotal        Int
+  /// Flat fee untuk MVP — nantinya dihitung dari jarak.
+  deliveryFee     Int         @default(10000)
+  total           Int
+  deliveryAddress String
+  notes           String?
+  /// Timestamp untuk setiap transisi status (untuk timeline UX).
+  acceptedAt      DateTime?
+  readyAt         DateTime?
+  pickedUpAt      DateTime?
+  deliveredAt     DateTime?
+  cancelledAt     DateTime?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@index([customerId])
+  @@index([merchantId])
+  @@index([driverId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+/// Snapshot item dari MenuItem saat checkout — tidak berubah meski merchant mengubah menu nanti.
+model OrderItem {
+  id          String   @id @default(cuid())
+  orderId     String
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItemId  String
+  menuItem    MenuItem @relation(fields: [menuItemId], references: [id])
+  /// Snapshot name + price saat checkout (untuk history yang konsisten).
+  name        String
+  price       Int
+  quantity    Int
+  subtotal    Int
+
+  @@index([orderId])
 }
 
 /// Jejak forensik: siapa melakukan apa, kapan, dari mana.

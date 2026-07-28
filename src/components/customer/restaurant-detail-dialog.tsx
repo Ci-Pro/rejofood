@@ -2,11 +2,15 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Star, MapPin, UtensilsCrossed, Plus, Soup, ShoppingBag } from "lucide-react";
+import { X, Star, MapPin, UtensilsCrossed, Plus, Soup, ShoppingBag, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useCartStore } from "@/store/cart-store";
 
 interface MenuItem {
   id: string;
@@ -56,6 +60,9 @@ export function RestaurantDetailDialog({
   const [data, setData] = useState<RestaurantDetail | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Cart conflict state
+  const [pendingItem, setPendingItem] = useState<MenuItem | null>(null);
+  const [conflictOpen, setConflictOpen] = useState(false);
 
   useEffect(() => {
     if (!restaurantId) {
@@ -98,10 +105,37 @@ export function RestaurantDetailDialog({
   }, [data]);
 
   function handleAddToCart(item: MenuItem) {
-    // Phase 1: toast placeholder. Cart & checkout akan datang di phase 2.
-    toast.success(`"${item.name}" ditambahkan ke keranjang.`, {
-      description: "Cart & checkout akan segera hadir.",
+    if (!data) return;
+    const result = useCartStore.getState().addItem({
+      menuItemId: item.id,
+      merchantId: data.id,
+      restaurantName: data.restaurantName,
+      name: item.name,
+      price: item.price,
+      category: item.category,
     });
+    if (result.conflict) {
+      // Beda merchant — tampilkan dialog konfirmasi clear cart
+      setPendingItem(item);
+      setConflictOpen(true);
+      return;
+    }
+    toast.success(`"${item.name}" ditambahkan ke keranjang.`);
+  }
+
+  function confirmForceAdd() {
+    if (!pendingItem || !data) return;
+    useCartStore.getState().forceAddItem({
+      menuItemId: pendingItem.id,
+      merchantId: data.id,
+      restaurantName: data.restaurantName,
+      name: pendingItem.name,
+      price: pendingItem.price,
+      category: pendingItem.category,
+    });
+    toast.success(`Keranjang diganti dengan "${pendingItem.name}".`);
+    setPendingItem(null);
+    setConflictOpen(false);
   }
 
   return (
@@ -269,18 +303,45 @@ export function RestaurantDetailDialog({
             {/* Footer placeholder — cart & checkout akan datang di phase 2 */}
             {data && data.isOpen && (
               <div className="shrink-0 border-t border-border bg-card/80 p-3 backdrop-blur-sm">
-                <div className="flex items-center justify-between rounded-xl border border-dashed border-saffron/40 bg-saffron/5 px-3 py-2 text-xs">
+                <div className="accent-saffron flex items-center justify-between rounded-xl border border-role/30 bg-role-soft/40 px-3 py-2 text-xs">
                   <span className="flex items-center gap-1.5 text-muted-foreground">
                     <ShoppingBag className="h-3.5 w-3.5" />
-                    Cart & checkout
+                    Keranjang Anda
                   </span>
-                  <span className="font-600 text-saffron">Segera hadir</span>
+                  <span className="font-600 text-role">Lihat di pojok kanan bawah</span>
                 </div>
               </div>
             )}
           </motion.div>
         </>
       )}
+
+      {/* Conflict dialog: beda merchant */}
+      <Dialog open={conflictOpen} onOpenChange={(o) => !o && setConflictOpen(false)}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-saffron" />
+              Ganti restoran?
+            </DialogTitle>
+            <DialogDescription>
+              Keranjang Anda sudah berisi item dari restoran lain. Tambahkan item ini akan
+              mengosongkan keranjang sebelumnya.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button variant="outline" onClick={() => setConflictOpen(false)}>
+              Batal
+            </Button>
+            <Button
+              onClick={confirmForceAdd}
+              className="accent-saffron bg-role text-role-fg hover:opacity-90"
+            >
+              Ganti keranjang
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AnimatePresence>
   );
 }

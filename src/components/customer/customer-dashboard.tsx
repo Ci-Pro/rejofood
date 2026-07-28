@@ -4,6 +4,8 @@ import { useAuthStore } from "@/store/auth-store";
 import { AppShell } from "@/components/shared/app-shell";
 import { DashboardHeader } from "@/components/shared/dashboard-primitives";
 import { RestaurantGrid } from "./restaurant-grid";
+import { CartButton } from "./cart-button";
+import { MyOrdersList } from "./my-orders-list";
 import { UtensilsCrossed } from "lucide-react";
 
 export function CustomerDashboard() {
@@ -17,17 +19,19 @@ export function CustomerDashboard() {
         accent="saffron"
       />
 
-      <section className="mb-5">
-        <div className="accent-saffron flex items-center gap-2">
-          <UtensilsCrossed className="h-4 w-4 text-role" />
-          <h2 className="font-display text-lg font-700 text-foreground">Restoran terdekat</h2>
-        </div>
-        <p className="mt-0.5 text-xs text-muted-foreground">
-          Pilih restoran untuk melihat menu dan memesan.
-        </p>
-      </section>
+      <div className="space-y-6">
+        <section>
+          <div className="accent-saffron mb-5 flex items-center gap-2">
+            <UtensilsCrossed className="h-4 w-4 text-role" />
+            <h2 className="font-display text-lg font-700 text-foreground">Restoran terdekat</h2>
+          </div>
+          <RestaurantGrid />
+        </section>
 
-      <RestaurantGrid />
+        <MyOrdersList />
+      </div>
+
+      <CartButton />
     </AppShell>
   );
 }
