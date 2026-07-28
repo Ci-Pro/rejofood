@@ -75,7 +75,7 @@ function timeAgo(iso: string): string {
   return `${hours} jam ${mins % 60} menit lalu`;
 }
 
-export function OrderQueue() {
+export function OrderQueue({ onPendingCountChange }: { onPendingCountChange?: (count: number) => void }) {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -137,6 +137,11 @@ export function OrderQueue() {
   }
 
   const pendingCount = orders.filter((o) => o.status === "PENDING").length;
+
+  // Emit pending count to parent (for nav badge)
+  useEffect(() => {
+    onPendingCountChange?.(pendingCount);
+  }, [pendingCount, onPendingCountChange]);
 
   return (
     <section className="rounded-2xl border border-border bg-card p-5 sm:p-6">

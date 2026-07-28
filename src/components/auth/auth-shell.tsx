@@ -61,7 +61,7 @@ export function AuthShell({ showAdmin = false }: { showAdmin?: boolean }) {
                 <br />
                 <span className="text-saffron">empat peran,</span>
                 <br />
-                tanpa ribet.
+                <span className="text-saffron">tanpa ribet.</span>
               </motion.h1>
               <motion.p
                 initial={{ opacity: 0, y: 12 }}
