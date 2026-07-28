@@ -42,11 +42,31 @@ jobs:
       - name: Install Capacitor
         run: bun add @capacitor/core @capacitor/cli @capacitor/android
 
+      - name: Generate capacitor.config.json
+        run: |
+          cat > capacitor.config.json << 'EOF'
+          {
+            "appId": "id.rejofood.app",
+            "appName": "RejoFood",
+            "webDir": "out",
+            "server": {
+              "url": "${{ env.REJOFOOD_BACKEND_URL }}",
+              "cleartext": true
+            },
+            "android": {
+              "allowMixedContent": true,
+              "webContentsDebuggingEnabled": true
+            }
+          }
+          EOF
+          echo "Generated capacitor.config.json:"
+          cat capacitor.config.json
+
+      - name: Remove TypeScript config (avoid conflict)
+        run: rm -f capacitor.config.ts
+
       - name: Create Android project
         run: npx cap add android
-
-      - name: Sync Capacitor
-        run: npx cap sync android
 
       - name: Build debug APK
         working-directory: android
