@@ -92,7 +92,6 @@ function MismatchScreen({ actualRole, expectedRole, onLogout }: {
 
 function HomeInner() {
   const searchParams = useSearchParams();
-  const showAdmin = searchParams.get("admin") === "1";
 
   // APP_ROLE detection — dari 3 sumber (urutan prioritas):
   // 1. NEXT_PUBLIC_APP_ROLE (env, saat build time — jarang dipakai di APK)
@@ -124,6 +123,12 @@ function HomeInner() {
   }, [appRoleParam]);
 
   const appRole = process.env.NEXT_PUBLIC_APP_ROLE || storedAppRole || null;
+
+  // Admin access control:
+  // - Web (tanpa appRole): admin bisa login via ?admin=1
+  // - APK (appRole set): admin TIDAK BISA login, bahkan jika ?admin=1 diset
+  //   (mencegah admin login dari APK Customer/Merchant/Driver)
+  const showAdmin = !appRole && searchParams.get("admin") === "1";
 
   const user = useAuthStore((s) => s.user);
   const setUser = useAuthStore((s) => s.setUser);
