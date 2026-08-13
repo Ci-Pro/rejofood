@@ -294,10 +294,10 @@ export function MyOrdersList() {
                     <button
                       type="button"
                       onClick={(e) => { e.stopPropagation(); setPayTarget(o); }}
-                      className="mt-0.5 inline-flex items-center gap-1 rounded-full border border-saffron/40 bg-saffron/10 px-2 py-0.5 text-[0.65rem] font-700 text-saffron hover:bg-saffron/20"
+                      className="accent-saffron mt-0.5 inline-flex animate-pulse items-center gap-1 rounded-full border border-role bg-role px-3 py-1 text-[0.65rem] font-700 text-role-fg shadow-glow-saffron hover:animate-none"
                     >
                       <CreditCard className="h-2.5 w-2.5" />
-                      Bayar
+                      Bayar Sekarang
                     </button>
                   ) : canReview ? (
                     <button

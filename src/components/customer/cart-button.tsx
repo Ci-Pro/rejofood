@@ -6,6 +6,7 @@ import { ShoppingCart, X, Plus, Minus, Trash2, ShoppingBag } from "lucide-react"
 import { Button } from "@/components/ui/button";
 import { useCartStore } from "@/store/cart-store";
 import { CheckoutDialog } from "./checkout-dialog";
+import { PaymentDialog } from "./payment-dialog";
 import { cn } from "@/lib/utils";
 
 function formatRupiah(n: number): string {
@@ -15,6 +16,7 @@ function formatRupiah(n: number): string {
 export function CartButton() {
   const [open, setOpen] = useState(false);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [paymentOrder, setPaymentOrder] = useState<{ id: string; code: string; total: number } | null>(null);
   const items = useCartStore((s) => s.items);
   const restaurantName = useCartStore((s) => s.restaurantName);
   const updateQuantity = useCartStore((s) => s.updateQuantity);
@@ -192,11 +194,27 @@ export function CartButton() {
       <CheckoutDialog
         open={checkoutOpen}
         onClose={() => setCheckoutOpen(false)}
-        onSubmitted={() => {
+        onSubmitted={(order) => {
           setCheckoutOpen(false);
           setOpen(false);
+          // Auto-open payment dialog after checkout
+          setPaymentOrder(order);
         }}
       />
+
+      {/* Payment dialog — auto-opens after checkout */}
+      {paymentOrder && (
+        <PaymentDialog
+          open={!!paymentOrder}
+          onClose={() => setPaymentOrder(null)}
+          orderId={paymentOrder.id}
+          orderCode={paymentOrder.code}
+          total={paymentOrder.total}
+          onPaid={() => {
+            setPaymentOrder(null);
+          }}
+        />
+      )}
     </>
   );
 }

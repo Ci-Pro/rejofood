@@ -23,6 +23,7 @@ function formatRupiah(n: number): string {
 interface CreatedOrder {
   id: string;
   code: string;
+  total: number;
 }
 
 interface DeliveryEstimate {
@@ -128,10 +129,11 @@ export function CheckoutDialog({
         return;
       }
       toast.success(`Order ${data.order.code} dibuat!`, {
-        description: "Menunggu konfirmasi restoran.",
+        description: "Silakan pilih metode pembayaran.",
       });
       clearCart();
-      onSubmitted({ id: data.order.id, code: data.order.code });
+      // Pass order info to parent so it can open PaymentDialog
+      onSubmitted({ id: data.order.id, code: data.order.code, total: data.order.total });
     } catch {
       toast.error("Koneksi bermasalah.");
     } finally {
