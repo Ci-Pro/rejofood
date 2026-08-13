@@ -5,6 +5,7 @@ import { useAuthStore } from "@/store/auth-store";
 import { AppShell } from "@/components/shared/app-shell";
 import { DashboardHeader } from "@/components/shared/dashboard-primitives";
 import { DriverOrders } from "./driver-orders";
+import { DriverEarnings } from "./driver-earnings";
 import { UserProfileEditor } from "@/components/shared/user-profile-editor";
 import { ErrorBoundary } from "@/components/shared/error-boundary";
 import { Bike, User } from "lucide-react";
@@ -25,6 +26,10 @@ export function DriverDashboard() {
         subtitle="Antar dengan cepat, aman, dan dapatkan penghasilan harian."
         accent="mint"
       />
+
+      <div className="mb-4">
+        <DriverEarnings />
+      </div>
 
       {(activeNav === "available" || activeNav === "active") && <DriverOrders />}
 

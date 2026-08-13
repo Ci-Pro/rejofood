@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Package, RefreshCw, ChevronRight, Wifi, WifiOff, X, Ban, Loader2, CreditCard, Star, RotateCcw, Clock } from "lucide-react";
+import { Package, RefreshCw, ChevronRight, Wifi, WifiOff, X, Ban, Loader2, CreditCard, Star, RotateCcw, Clock, Receipt } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -14,6 +14,7 @@ import { useOrderSocket } from "@/hooks/use-order-socket";
 import { toast } from "sonner";
 import { PaymentDialog } from "./payment-dialog";
 import { ReviewDialog } from "./review-dialog";
+import { InvoiceDialog } from "./invoice-dialog";
 
 interface OrderItem {
   id: string;
@@ -114,6 +115,8 @@ export function MyOrdersList() {
   const [reviewTarget, setReviewTarget] = useState<Order | null>(null);
   // Reorder state
   const [reordering, setReordering] = useState<string | null>(null);
+  // Invoice state
+  const [invoiceOrder, setInvoiceOrder] = useState<Order | null>(null);
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
 
@@ -521,6 +524,17 @@ export function MyOrdersList() {
                     <p className="mt-0.5">{selected.notes.split("[CANCELLED oleh customer:")[1]?.replace("]", "") ?? selected.notes}</p>
                   </div>
                 )}
+
+                {/* Invoice button */}
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setInvoiceOrder(selected)}
+                  className="h-9 w-full"
+                >
+                  <Receipt className="h-4 w-4" />
+                  Lihat Invoice
+                </Button>
               </div>
             </motion.div>
           </>
@@ -641,6 +655,13 @@ export function MyOrdersList() {
           }}
         />
       )}
+
+      {/* Invoice dialog */}
+      <InvoiceDialog
+        orderId={invoiceOrder?.id ?? null}
+        open={!!invoiceOrder}
+        onClose={() => setInvoiceOrder(null)}
+      />
     </section>
   );
 }
