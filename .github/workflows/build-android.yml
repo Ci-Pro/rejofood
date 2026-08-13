@@ -46,24 +46,17 @@ jobs:
       - name: Install Capacitor
         run: bun add @capacitor/core @capacitor/cli @capacitor/android
 
-      - name: Generate capacitor.config.json for ${{ matrix.role }}
+      - name: Generate capacitor.config.json for role
         run: |
-          # Set NEXT_PUBLIC_APP_ROLE based on matrix
           ROLE_UPPER=$(echo "${{ matrix.role }}" | tr '[:lower:]' '[:upper:]')
-          
-          # Copy the role-specific config
           cp capacitor.${{ matrix.role }}.json capacitor.config.json
-          
-          # Remove TS config to avoid conflict
           rm -f capacitor.config.ts
-          
           echo "Building APK for role: $ROLE_UPPER"
           cat capacitor.config.json
 
       - name: Create Android project
         run: |
           npx cap add android || true
-          # Manual copy config because cap sync fails with server.url
           mkdir -p android/app/src/main/assets
           cp capacitor.config.json android/app/src/main/assets/
           echo '{"plugins":{}}' > android/app/src/main/assets/capacitor.plugins.json
@@ -92,7 +85,7 @@ jobs:
 
       - name: Summary
         run: |
-          echo "## ${{ matrix.role }} APK Build Complete ✅" >> $GITHUB_STEP_SUMMARY
+          echo "## ${{ matrix.role }} APK Build Complete" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- App ID: \`id.rejofood.${{ matrix.role }}\`" >> $GITHUB_STEP_SUMMARY
           echo "- App Name: RejoFood ${{ matrix.role }}" >> $GITHUB_STEP_SUMMARY
