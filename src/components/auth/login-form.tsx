@@ -33,9 +33,12 @@ function formatDuration(seconds: number): string {
 export function LoginForm({
   role,
   onSwitchToRegister,
+  isLockedRole = false,
 }: {
   role: Role;
   onSwitchToRegister: () => void;
+  /** Jika true (APK mode), hide demo button — production app tidak perlu akun demo */
+  isLockedRole?: boolean;
 }) {
   const meta = ROLES[role];
   const setUser = useAuthStore((s) => s.setUser);
@@ -332,15 +335,18 @@ export function LoginForm({
           )}
         </Button>
 
-        <button
-          type="button"
-          onClick={fillDemo}
-          disabled={isLocked}
-          className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-border bg-muted/40 px-3 py-2.5 text-xs font-500 text-muted-foreground hover:border-role hover:text-role disabled:opacity-50 disabled:hover:border-border disabled:hover:text-muted-foreground"
-        >
-          <Sparkles className="h-3.5 w-3.5" />
-          Isi akun demo ({meta.demoEmail} · rejo1234)
-        </button>
+        {/* Demo button — only show in web mode (not APK locked) */}
+        {!isLockedRole && (
+          <button
+            type="button"
+            onClick={fillDemo}
+            disabled={isLocked}
+            className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-border bg-muted/40 px-3 py-2.5 text-xs font-500 text-muted-foreground hover:border-role hover:text-role disabled:opacity-50 disabled:hover:border-border disabled:hover:text-muted-foreground"
+          >
+            <Sparkles className="h-3.5 w-3.5" />
+            Isi akun demo ({meta.demoEmail} · rejo1234)
+          </button>
+        )}
       </form>
 
       <p className="mt-6 text-center text-sm text-muted-foreground">

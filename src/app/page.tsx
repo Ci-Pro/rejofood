@@ -152,7 +152,26 @@ function HomeInner() {
   }, [setUser]);
 
   // Role mismatch check — APK locked to specific role
+  // Jika user login dengan role lain (mis. admin di APK Customer), auto-logout
   const isMismatched = !!user && !!appRole && user.role !== appRole;
+
+  // 🔒 Auto-logout saat mismatch terdeteksi (defense in depth)
+  // Jika server-side expectedRole check terlewat (mis. API dibobol),
+  // client tetap kick user keluar
+  useEffect(() => {
+    if (!isMismatched) return;
+    // Hanya log sekali per session
+    console.warn("[security] Role mismatch detected — auto-logout");
+    (async () => {
+      try {
+        await fetch("/api/auth/logout", { method: "POST" });
+      } catch {
+        // ignore network error
+      } finally {
+        setUser(null);
+      }
+    })();
+  }, [isMismatched, setUser]);
 
   async function handleLogout() {
     await fetch("/api/auth/logout", { method: "POST" }).catch(() => {});

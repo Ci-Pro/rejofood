@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Lock, UtensilsCrossed, Store, Bike } from "lucide-react";
 import { Role } from "@/lib/auth/roles";
@@ -11,11 +11,13 @@ import { BrandLogo } from "./brand-logo";
 import { cn } from "@/lib/utils";
 
 /**
- * AuthShell v3.0 — premium centered layout.
+ * AuthShell v3.1 — premium centered layout with strict role lock.
  *
- * Single column, full-screen gradient with floating glass card.
- * Animated background blobs (saffron + lavender) for depth.
- * Role badge shown when locked (separate APKs).
+ * Lock behavior:
+ *  - Jika appRole diset (APK Customer/Merchant/Driver), role TIDAK BISA diubah sama sekali
+ *  - RoleRail disembunyikan, hanya role badge yang tampil
+ *  - LoginForm/RegisterForm menerima role hardcode dari appRole
+ *  - Tidak ada cara UI untuk switch role
  */
 export function AuthShell({ showAdmin = false, appRole = null }: { showAdmin?: boolean; appRole?: string | null }) {
   const initialRole = appRole === "CUSTOMER" ? Role.CUSTOMER
@@ -27,6 +29,17 @@ export function AuthShell({ showAdmin = false, appRole = null }: { showAdmin?: b
   const [role, setRole] = useState<Role>(initialRole);
   const [mode, setMode] = useState<"login" | "register">("login");
   const isLockedRole = !!appRole;
+
+  // 🔒 Defense in depth: paksa role tetap = appRole meskipun state berubah
+  // Kalau appRole set, override role dengan appRole (tidak bisa diubah oleh siapapun)
+  useEffect(() => {
+    if (appRole === "CUSTOMER") setRole(Role.CUSTOMER);
+    else if (appRole === "MERCHANT") setRole(Role.MERCHANT);
+    else if (appRole === "DRIVER") setRole(Role.DRIVER);
+  }, [appRole]);
+
+  // Saat locked, setRole adalah no-op (tidak bisa mengubah role)
+  const safeSetRole = isLockedRole ? () => {} : setRole;
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-background">
@@ -89,7 +102,7 @@ export function AuthShell({ showAdmin = false, appRole = null }: { showAdmin?: b
             transition={{ delay: 0.3 }}
             className="mb-6 w-full max-w-md"
           >
-            <RoleRail selected={role} onChange={setRole} showAdmin={showAdmin} />
+            <RoleRail selected={role} onChange={safeSetRole} showAdmin={showAdmin} />
             {showAdmin && (
               <div className="mt-3 flex items-center gap-2 rounded-xl border border-rose/30 bg-rose/10 px-3 py-2 text-xs text-rose">
                 <Lock className="h-3.5 w-3.5" />
@@ -137,7 +150,12 @@ export function AuthShell({ showAdmin = false, appRole = null }: { showAdmin?: b
         >
           <AnimatePresence mode="wait">
             {mode === "login" ? (
-              <LoginForm key={`login-${role}`} role={role} onSwitchToRegister={() => setMode("register")} />
+              <LoginForm
+                key={`login-${role}`}
+                role={role}
+                onSwitchToRegister={() => setMode("register")}
+                isLockedRole={isLockedRole}
+              />
             ) : (
               <RegisterForm key={`register-${role}`} role={role} onSwitchToLogin={() => setMode("login")} />
             )}
