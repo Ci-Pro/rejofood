@@ -15,6 +15,7 @@ import { useAuthStore } from "@/store/auth-store";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { usePushNotifications } from "@/hooks/use-push-notifications";
+import { ImageUploader } from "@/components/shared/image-uploader";
 
 interface ProfileData {
   id: string;
@@ -203,12 +204,28 @@ export function UserProfileEditor() {
         className={cn("accent-" + accent, "rounded-2xl border border-border bg-card p-5 shadow-premium sm:p-6")}
       >
         <div className="flex items-center gap-4">
-          <div className={cn(
-            "flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl font-display text-2xl font-700 shadow-premium",
-            initialColor(safeFullName, profile.role),
-          )}>
-            {safeInitial}
-          </div>
+          {/* Avatar upload */}
+          <ImageUploader
+            value={profile.avatarUrl}
+            onChange={async (url) => {
+              try {
+                const res = await fetch("/api/profile/avatar", {
+                  method: "PATCH",
+                  headers: { "content-type": "application/json" },
+                  body: JSON.stringify({ avatarUrl: url }),
+                });
+                if (res.ok) {
+                  setProfile({ ...profile, avatarUrl: url });
+                  if (user) setUser({ ...user, avatarUrl: url });
+                  toast.success("Foto profil diperbarui.");
+                }
+              } catch { /* silent */ }
+            }}
+            folder="avatar"
+            shape="rounded"
+            size={64}
+            label="Foto Profil"
+          />
           <div className="min-w-0 flex-1">
             <h2 className="truncate font-display text-xl font-700 text-foreground">{safeFullName}</h2>
             <p className="truncate text-sm text-muted-foreground">{profile.email || "—"}</p>

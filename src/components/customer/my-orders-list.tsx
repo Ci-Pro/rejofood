@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Package, RefreshCw, ChevronRight, Wifi, WifiOff, X, Ban, Loader2, CreditCard, Star, RotateCcw } from "lucide-react";
+import { Package, RefreshCw, ChevronRight, Wifi, WifiOff, X, Ban, Loader2, CreditCard, Star, RotateCcw, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -86,6 +86,17 @@ function formatTime(iso: string): string {
   return new Date(iso).toLocaleString("id-ID", {
     day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit",
   });
+}
+
+function elapsedTime(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "baru saja";
+  if (mins < 60) return `${mins}m lalu`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}j ${mins % 60}m`;
+  const days = Math.floor(hours / 24);
+  return `${days}h lalu`;
 }
 
 export function MyOrdersList() {
@@ -305,6 +316,11 @@ export function MyOrdersList() {
                   <p className="mt-0.5 truncate text-sm font-600 text-foreground">{o.merchant.restaurantName}</p>
                   <p className="mt-0.5 text-xs text-muted-foreground">
                     {o.itemCount} item · {formatTime(o.createdAt)}
+                    {o.status !== "DELIVERED" && o.status !== "CANCELLED" && (
+                      <span className="ml-1 inline-flex items-center gap-0.5 text-saffron">
+                        · <Clock className="h-2 w-2" /> {elapsedTime(o.createdAt)}
+                      </span>
+                    )}
                   </p>
                 </button>
                 <div className="shrink-0 text-right">
