@@ -187,6 +187,12 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Profil customer tidak ditemukan." }, { status: 404 });
   }
 
+  // Lazy auto-cancel: cleanup stale PENDING orders (>15 min without payment)
+  // Fire-and-forget — don't block the response
+  fetch(`${req.headers.get("origin") || "http://localhost:3000"}/api/orders/auto-cancel`, {
+    method: "POST",
+  }).catch(() => { /* silent — best effort */ });
+
   const url = new URL(req.url);
   const limit = Math.min(parseInt(url.searchParams.get("limit") ?? "20", 10) || 20, 100);
   const status = url.searchParams.get("status");

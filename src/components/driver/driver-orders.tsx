@@ -56,6 +56,41 @@ export function DriverOrders() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  const [isOnline, setIsOnline] = useState(false);
+
+  // Fetch driver online status
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch("/api/profile", { cache: "no-store" });
+        const data = await res.json();
+        if (data.isOnline !== undefined) setIsOnline(data.isOnline);
+      } catch { /* silent */ }
+    })();
+  }, []);
+
+  async function toggleOnline() {
+    const newValue = !isOnline;
+    setIsOnline(newValue); // optimistic
+    try {
+      const res = await fetch("/api/driver/status", {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ isOnline: newValue }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setIsOnline(!newValue); // rollback
+        toast.error(data?.error || "Gagal mengubah status.");
+        return;
+      }
+      toast.success(newValue ? "Kamu sekarang ONLINE" : "Kamu sekarang OFFLINE");
+      if (newValue) fetchOrders();
+    } catch {
+      setIsOnline(!newValue);
+      toast.error("Koneksi bermasalah.");
+    }
+  }
 
   const fetchOrders = useCallback(async () => {
     try {
@@ -223,6 +258,40 @@ export function DriverOrders() {
 
   return (
     <>
+      {/* Online/Offline toggle */}
+      <section className="accent-mint rounded-2xl border border-border bg-card p-4 shadow-card mb-4">
+        <button
+          type="button"
+          onClick={toggleOnline}
+          className="flex w-full items-center justify-between press-feedback"
+        >
+          <div className="flex items-center gap-3">
+            <span className={cn(
+              "flex h-10 w-10 items-center justify-center rounded-xl transition-premium",
+              isOnline ? "bg-mint text-mint-foreground" : "bg-muted text-muted-foreground",
+            )}>
+              {isOnline ? <Wifi className="h-5 w-5" /> : <WifiOff className="h-5 w-5" />}
+            </span>
+            <div className="text-left">
+              <p className="font-display text-sm font-700 text-foreground">
+                {isOnline ? "Online — Siap menerima order" : "Offline — Tidak menerima order"}
+              </p>
+              <p className="text-[0.65rem] text-muted-foreground">
+                {isOnline ? "Kamu akan melihat pesanan siap dijemput" : "Aktifkan untuk mulai menerima order"}
+              </p>
+            </div>
+          </div>
+          <span className={cn(
+            "flex h-6 w-11 items-center rounded-full p-0.5 transition-premium",
+            isOnline ? "bg-mint justify-end" : "bg-muted justify-start",
+          )}>
+            <span className={cn(
+              "h-5 w-5 rounded-full bg-white shadow-sm transition-premium",
+            )} />
+          </span>
+        </button>
+      </section>
+
       {/* Active deliveries (PICKED_UP) */}
       <section className="rounded-2xl border border-border bg-card p-5 sm:p-6">
         <header className="mb-4 flex items-center justify-between gap-3">

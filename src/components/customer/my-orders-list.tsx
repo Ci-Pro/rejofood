@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Package, RefreshCw, ChevronRight, Wifi, WifiOff, X, Ban, Loader2, CreditCard, Star } from "lucide-react";
+import { Package, RefreshCw, ChevronRight, Wifi, WifiOff, X, Ban, Loader2, CreditCard, Star, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -101,6 +101,8 @@ export function MyOrdersList() {
   const [payTarget, setPayTarget] = useState<Order | null>(null);
   // Review dialog state
   const [reviewTarget, setReviewTarget] = useState<Order | null>(null);
+  // Reorder state
+  const [reordering, setReordering] = useState<string | null>(null);
 
   const fetchOrders = useCallback(async () => {
     setLoading(true);
@@ -140,6 +142,27 @@ export function MyOrdersList() {
   function openCancelDialog(order: Order) {
     setCancelTarget(order);
     setCancelReason("");
+  }
+
+  async function handleReorder(order: Order) {
+    setReordering(order.id);
+    try {
+      const res = await fetch(`/api/orders/${order.id}/reorder`, {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data?.error || "Gagal membuat ulang pesanan.");
+        return;
+      }
+      toast.success(`Pesanan baru dibuat: ${data.order.code}. Silakan bayar.`);
+      setSelected(null);
+      await fetchOrders();
+    } catch {
+      toast.error("Koneksi bermasalah.");
+    } finally {
+      setReordering(null);
+    }
   }
 
   async function confirmCancel() {
@@ -223,6 +246,7 @@ export function MyOrdersList() {
             const canCancel = ["PENDING", "ACCEPTED", "PREPARING"].includes(o.status);
             const needsPayment = o.status === "PENDING" && o.payment?.status !== "SUCCESS";
             const canReview = o.status === "DELIVERED" && !o.review;
+            const canReorder = o.status === "DELIVERED" || o.status === "CANCELLED";
             return (
               <motion.div
                 key={o.id}
@@ -439,6 +463,21 @@ export function MyOrdersList() {
                   >
                     <Ban className="h-4 w-4" />
                     Batalkan pesanan
+                  </Button>
+                )}
+                {(selected.status === "DELIVERED" || selected.status === "CANCELLED") && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => handleReorder(selected)}
+                    disabled={reordering === selected.id}
+                    className="accent-saffron h-9 w-full border-role/40 text-role hover:bg-role-soft"
+                  >
+                    {reordering === selected.id ? (
+                      <><Loader2 className="h-4 w-4 animate-spin" /> Memproses…</>
+                    ) : (
+                      <><RotateCcw className="h-4 w-4" /> Pesan Lagi</>
+                    )}
                   </Button>
                 )}
                 {selected.status === "CANCELLED" && selected.notes && (

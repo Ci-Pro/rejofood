@@ -9,6 +9,7 @@ import {
 } from "@/components/shared/dashboard-primitives";
 import { AuditLogViewer } from "./audit-log-viewer";
 import { OrderMonitor } from "./order-monitor";
+import { UserManagement } from "./user-management";
 import { UserProfileEditor } from "@/components/shared/user-profile-editor";
 import { ErrorBoundary } from "@/components/shared/error-boundary";
 import { Users, Store, Bike, Activity } from "lucide-react";
@@ -65,7 +66,10 @@ export function AdminDashboard() {
             subtitle="Kelola informasi akun admin."
             accent="rose"
           />
-          <ErrorBoundary><UserProfileEditor /></ErrorBoundary>
+          <div className="space-y-4">
+            <ErrorBoundary><UserProfileEditor /></ErrorBoundary>
+            <UserManagement />
+          </div>
         </>
       )}
     </AppShell>
