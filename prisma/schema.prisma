@@ -6,6 +6,9 @@ generator client {
 }
 
 datasource db {
+  // DEV (local): sqlite  →  set DATABASE_URL=file:./db/custom.db in .env
+  // PROD (Vercel): postgresql  →  set DATABASE_URL=postgresql://... in Vercel env
+  // ⚠️ Saat switch, update provider di bawah ini juga.
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
@@ -35,6 +38,7 @@ model User {
   driver          Driver?
   admin           Admin?
   sessions        Session[]
+  wallet          Wallet?
 }
 
 /// Token-based session, stored in DB so we can revoke from any device.
@@ -161,6 +165,24 @@ enum PaymentMethod {
   EWALLET_GOPAY
   EWALLET_OVO
   EWALLET_DANA
+  WALLET     /// RejoPay — dompet digital internal RejoFood
+}
+
+/// Tipe transaksi dompet (RejoPay).
+enum WalletTxType {
+  TOPUP        /// Customer top-up saldo (via QRIS/VA/e-wallet)
+  PAYMENT      /// Customer bayar order pakai saldo
+  REFUND       /// Refund ke dompet karena order dibatalkan
+  EARNING      /// Driver/merchant menerima earning dari order
+  WITHDRAWAL   /// Driver/merchant tarik dana ke bank
+  ADJUSTMENT   /// Penyesuaian manual oleh admin (cashback, koreksi)
+}
+
+/// Status transaksi dompet.
+enum WalletTxStatus {
+  PENDING   /// Top-up/withdrawal menunggu konfirmasi gateway
+  SUCCESS   /// Transaksi berhasil, saldo sudah ter-update
+  FAILED    /// Transaksi gagal, saldo tidak berubah
 }
 
 /// Status pesanan mengikuti lifecycle:
@@ -350,5 +372,62 @@ model AuditLog {
 
   @@index([actorId])
   @@index([category, action])
+  @@index([createdAt])
+}
+
+/// RejoPay — Dompet digital internal RejoFood.
+/// Satu user = satu wallet. Saldo dalam Rupiah (integer, tidak ada floating-point).
+/// Driver & Merchant juga punya wallet untuk menerima earning/settlement.
+model Wallet {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// Saldo saat ini dalam Rupiah. Bisa negatif hanya untuk kasus luar biasa (default 0).
+  balance     Int      @default(0)
+  /// True jika admin membekukan dompet (tidak bisa top-up/pay/withdraw sampai di-unfreeze).
+  isFrozen    Boolean  @default(false)
+  /// PIN 6-digit (bcrypt hash) untuk konfirmasi transaksi sensitif (withdraw, large payment).
+  /// null = belum diset, transaksi kecil tidak butuh PIN.
+  pinHash     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  transactions WalletTransaction[]
+
+  @@index([userId])
+}
+
+/// Riwayat transaksi dompet. Append-only — tidak ada UPDATE/DELETE (kecuali DBA untuk retensi).
+/// Setiap baris = satu pergerakan saldo (debit atau kredit).
+model WalletTransaction {
+  id          String          @id @default(cuid())
+  /// Human-readable: "WAL-XXXXXX"
+  code        String          @unique
+  walletId    String
+  wallet      Wallet          @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  /// Untuk cross-reference (user selain pemilik wallet) — mis. customer bayar ke merchant.
+  userId      String
+  type        WalletTxType
+  status      WalletTxStatus  @default(SUCCESS)
+  /// Positif = kredit (saldo naik), negatif = debit (saldo turun).
+  amount      Int
+  /// Saldo setelah transaksi ini dilakukan (snapshot untuk audit).
+  balanceAfter Int
+  /// Deskripsi human-readable: "Top-up via QRIS", "Bayar order RF-ABC123", dll.
+  description String
+  /// ID order terkait (untuk PAYMENT, REFUND, EARNING). null untuk TOPUP/WITHDRAWAL/ADJUSTMENT.
+  orderId     String?
+  /// Reference dari gateway eksternal (untuk top-up/withdrawal). null untuk transaksi internal.
+  gatewayReference String?
+  /// Metadata tambahan (JSON string): payment method untuk top-up, bank info untuk withdrawal, dll.
+  metadata    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([walletId])
+  @@index([userId])
+  @@index([type])
+  @@index([status])
+  @@index([orderId])
   @@index([createdAt])
 }

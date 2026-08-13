@@ -10,8 +10,9 @@ import { CartButton } from "./cart-button";
 import { MyOrdersList } from "./my-orders-list";
 import { FavoritesList } from "./favorites-list";
 import { UserProfileEditor } from "@/components/shared/user-profile-editor";
+import { WalletPanel } from "@/components/wallet/wallet-panel";
 import { ErrorBoundary } from "@/components/shared/error-boundary";
-import { UtensilsCrossed, ShoppingBag, Heart, User } from "lucide-react";
+import { UtensilsCrossed, ShoppingBag, Heart, User, Wallet } from "lucide-react";
 import type { NavAccent } from "@/components/shared/nav-types";
 
 export function CustomerDashboard() {
@@ -63,6 +64,20 @@ export function CustomerDashboard() {
             accent="saffron"
           />
           <FavoritesList />
+        </>
+      )}
+
+      {activeNav === "wallet" && (
+        <>
+          <DashboardHeader
+            greeting="RejoPay"
+            name={user?.fullName ?? "Sobat Rejo"}
+            subtitle="Dompet digital RejoFood — top-up, bayar, & lacak transaksimu."
+            accent="saffron"
+          />
+          <ErrorBoundary>
+            <WalletPanel />
+          </ErrorBoundary>
         </>
       )}
 

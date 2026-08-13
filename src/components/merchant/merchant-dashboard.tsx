@@ -11,6 +11,7 @@ import { MerchantReviews } from "./merchant-reviews";
 import { RevenueSummary } from "./revenue-summary";
 import { DailyOrdersChart } from "./daily-orders-chart";
 import { UserProfileEditor } from "@/components/shared/user-profile-editor";
+import { WalletPanel } from "@/components/wallet/wallet-panel";
 import { ErrorBoundary } from "@/components/shared/error-boundary";
 import type { MerchantInfo } from "./menu-manager-bridge";
 
@@ -71,6 +72,20 @@ export function MerchantDashboard() {
             <MerchantReviews />
             <MenuManager onInfoLoaded={setInfo} />
           </div>
+        </>
+      )}
+
+      {activeNav === "wallet" && (
+        <>
+          <DashboardHeader
+            greeting="RejoPay"
+            name={user?.fullName ?? "Partner Rejo"}
+            subtitle="Saldo penjualan restoranmu — cairkan kapan saja."
+            accent="lavender"
+          />
+          <ErrorBoundary>
+            <WalletPanel showWithdraw />
+          </ErrorBoundary>
         </>
       )}
 

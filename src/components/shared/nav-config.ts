@@ -3,7 +3,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { LucideIcon } from "lucide-react";
 import {
-  UtensilsCrossed, ShoppingBag, Heart, User,
+  UtensilsCrossed, ShoppingBag, Heart, User, Wallet,
   Store, ClipboardList, Bell,
   Package, Bike, CheckCircle2,
   ScrollText, Activity, ShieldCheck,
@@ -32,6 +32,7 @@ export function getNavItems(role: string, badges?: Record<string, number>): NavI
         { key: "restaurants", label: "Beranda", icon: UtensilsCrossed },
         { key: "orders", label: "Pesanan", icon: ShoppingBag },
         { key: "favorites", label: "Favorit", icon: Heart, badge: badgeFor("favorites") },
+        { key: "wallet", label: "RejoPay", icon: Wallet },
         { key: "profile", label: "Profil", icon: User },
       ];
 
@@ -39,6 +40,7 @@ export function getNavItems(role: string, badges?: Record<string, number>): NavI
       return [
         { key: "orders", label: "Pesanan", icon: Bell, badge: badgeFor("orders") },
         { key: "menu", label: "Menu", icon: ClipboardList },
+        { key: "wallet", label: "RejoPay", icon: Wallet },
         { key: "profile", label: "Profil", icon: Store },
       ];
 
@@ -46,12 +48,14 @@ export function getNavItems(role: string, badges?: Record<string, number>): NavI
       return [
         { key: "available", label: "Tersedia", icon: Package, badge: badgeFor("available") },
         { key: "active", label: "Aktif", icon: Bike, badge: badgeFor("active") },
+        { key: "wallet", label: "RejoPay", icon: Wallet },
         { key: "profile", label: "Profil", icon: User },
       ];
 
     case "ADMIN":
       return [
         { key: "orders", label: "Pesanan", icon: ScrollText },
+        { key: "wallets", label: "Dompet", icon: Wallet },
         { key: "audit", label: "Audit Log", icon: Activity },
         { key: "profile", label: "Profil", icon: ShieldCheck },
       ];

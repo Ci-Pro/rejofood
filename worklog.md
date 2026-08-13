@@ -771,3 +771,45 @@ Stage Summary:
 - Security: .env tidak di-commit, .env.example sebagai template
 - 5 iterasi fix untuk resolve: Node version, TS config, cap sync bug, Java version
 - User perlu REVOKE token PAT yang share di chat (sudah dipakai, sekarang terekspos)
+
+---
+Task ID: post-mvp-wallet
+Agent: main (Super Z)
+Task: Tambahkan dompet digital RejoPay untuk semua role — top-up, pay, refund, earning, withdraw, admin management
+
+Work Log:
+- Update Prisma schema: tambah model Wallet + WalletTransaction, enum WalletTxType (TOPUP/PAYMENT/REFUND/EARNING/WITHDRAWAL/ADJUSTMENT) + WalletTxStatus (PENDING/SUCCESS/FAILED), tambah WALLET ke PaymentMethod enum
+- Sync schema ke SQLite lokal (untuk production Neon, switch provider ke postgresql)
+- Buat wallet service (`src/lib/wallet/wallet-service.ts`) dengan atomic credit/debit operations menggunakan db.$transaction — guarantee balance update + transaction record consistency
+- Buat 6 API endpoint wallet:
+  - GET /api/wallet — balance + summary (monthTopup, monthSpending, monthEarning) + 5 transaksi terakhir
+  - POST /api/wallet/topup — buat PENDING top-up via mock gateway (QRIS/VA/E-wallet), generate VA number + payment URL
+  - POST /api/wallet/topup/confirm — mock webhook simulator, credit saldo + mark SUCCESS
+  - GET /api/wallet/transactions — paginated transaction history (20/page, max 50) dengan filter by type
+  - POST /api/wallet/withdraw — untuk driver & merchant, debit atomic + record ke bank account
+  - GET /api/admin/wallets — list semua wallet dengan search, role filter, frozen filter, aggregate stats
+  - PATCH /api/admin/wallets/[walletId] — admin freeze/unfreeze wallet + manual adjust saldo (credit/debit)
+- Update /api/payment/create: handle WALLET method — debit atomic dari wallet customer + langsung SUCCESS (mirip COD flow)
+- Update /api/orders/[id]/cancel: jika payment via WALLET, refund saldo ke wallet customer via creditWallet()
+- Update /api/driver/orders/[id]/deliver: credit earning ke wallet driver (deliveryFee) + wallet merchant (subtotal) saat order DELIVERED
+- Update /lib/payment/gateway.ts: tambah WALLET method (instant SUCCESS, no payment URL), fix needsOnlineAction & methodLabel, tambah isInternalMethod()
+- Buat 5 UI component wallet (`src/components/wallet/`):
+  - wallet-card.tsx — gradient purple card dengan balance, top-up/withdraw button, monthly stats
+  - topup-dialog.tsx — 4-step wizard: amount → method → instruction → success (dengan VA copy, QR placeholder, expiry countdown)
+  - withdraw-dialog.tsx — form withdraw dengan pilihan bank + nomor rekening + nama pemilik
+  - wallet-transactions-list.tsx — paginated list dengan filter tab (TOPUP/PAYMENT/EARNING/REFUND/WITHDRAWAL), color-coded icon, balance snapshot
+  - wallet-panel.tsx — main panel combining card + transactions list, dengan frozen warning banner
+- Buat admin/wallet-management.tsx — search/filter/pagination, stats card (totalBalance, walletCount, frozenCount), freeze/unfreeze button, adjust dialog (credit/debit dengan reason wajib untuk audit)
+- Update nav-config.ts: tambah "wallet" item untuk CUSTOMER/MERCHANT/DRIVER, "wallets" untuk ADMIN
+- Update customer/merchant/driver/admin dashboard: render WalletPanel saat nav "wallet" dipilih (dengan ErrorBoundary)
+- Update PaymentDialog: tambah WALLET sebagai opsi pertama, fetch & display wallet balance real-time, disable pay button jika saldo tidak cukup, tampilkan warning kekurangan
+
+Stage Summary:
+- RejoPay dompet digital lengkap — customer top-up & pay, driver/merchant earning & withdraw, admin manage & adjust
+- Atomic saldo operations via db.$transaction mencegah race condition
+- Auto settlement saat order DELIVERED: driver dapat deliveryFee, merchant dapat subtotal
+- Auto refund ke wallet jika customer cancel order yang sudah dibayar via WALLET
+- Mock gateway swap-ready untuk Midtrans/Xendit (tinggal ganti createPaymentCharge + add webhook handler)
+- Premium UI: gradient purple card, 4-step top-up wizard, paginated transaction list, admin adjust dialog dengan audit trail
+- Build berhasil, semua route wallet ter-register di Next.js
+- Untuk production: set DATABASE_URL Neon di Vercel, run `prisma db push --accept-data-loss` di deploy

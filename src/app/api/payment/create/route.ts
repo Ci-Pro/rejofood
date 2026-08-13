@@ -13,6 +13,7 @@
  *  - Create payment via mock gateway
  *  - Simpan Payment record ke DB
  *  - Jika COD: langsung set SUCCESS + emit order:status (unlock merchant accept)
+ *  - Jika WALLET: debit saldo atomic + langsung SUCCESS + emit order:status
  *  - Audit + realtime emit
  *
  * Returns: { payment: { id, code, method, status, paymentUrl, expiresAt, metadata } }
@@ -23,6 +24,7 @@ import { requireRole } from "@/lib/auth/context";
 import { logAction, getRequestMeta } from "@/lib/auth/audit";
 import { emitRealtime } from "@/lib/realtime/realtime-client";
 import { createPaymentCharge, isCOD, methodLabel } from "@/lib/payment/gateway";
+import { debitWallet } from "@/lib/wallet/wallet-service";
 import { PaymentMethod, PaymentStatus } from "@prisma/client";
 
 function generatePaymentCode(): string {
@@ -98,8 +100,46 @@ export async function POST(req: Request) {
     customerEmail: me.email,
   });
 
-  // COD = langsung SUCCESS; online methods = PENDING
-  const initialStatus = isCOD(method) ? PaymentStatus.SUCCESS : PaymentStatus.PENDING;
+  // COD = langsung SUCCESS; WALLET = debit atomic + SUCCESS; online methods = PENDING
+  let initialStatus: PaymentStatus;
+  let walletTxCode: string | null = null;
+  if (isCOD(method)) {
+    initialStatus = PaymentStatus.SUCCESS;
+  } else if (method === PaymentMethod.WALLET) {
+    // Debit saldo RejoPay secara atomic
+    try {
+      const walletTx = await debitWallet({
+        userId: me.id,
+        amount: order.total,
+        type: "PAYMENT",
+        description: `Bayar order ${order.code}`,
+        orderId: order.id,
+        gatewayReference: charge.gatewayReference,
+        metadata: { paymentCode, orderCode: order.code, method: "WALLET" },
+      });
+      walletTxCode = walletTx.code;
+      initialStatus = PaymentStatus.SUCCESS;
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : "Gagal debit wallet";
+      await logAction({
+        actorId: me.id,
+        actorEmail: me.email,
+        actorRole: me.role,
+        category: "payment",
+        action: "payment.wallet.failed",
+        description: `Wallet payment gagal untuk order ${order.code}: ${errMsg}`,
+        targetId: order.id,
+        targetType: "order",
+        outcome: "failure",
+        ipAddress: meta.ipAddress,
+        userAgent: meta.userAgent,
+        metadata: { orderCode: order.code, error: errMsg },
+      });
+      return NextResponse.json({ error: errMsg }, { status: 400 });
+    }
+  } else {
+    initialStatus = PaymentStatus.PENDING;
+  }
 
   const payment = await db.payment.create({
     data: {
@@ -153,7 +193,7 @@ export async function POST(req: Request) {
     },
   });
 
-  // Kalau COD = SUCCESS, log audit + emit payment.success
+  // Kalau COD/WALLET = SUCCESS, log audit + emit payment.success
   if (initialStatus === PaymentStatus.SUCCESS) {
     await logAction({
       actorId: me.id,
@@ -161,13 +201,13 @@ export async function POST(req: Request) {
       actorRole: me.role,
       category: "payment",
       action: "payment.success",
-      description: `Payment ${payment.code} (COD) berhasil untuk order ${order.code}.`,
+      description: `Payment ${payment.code} (${methodLabel(method)}) berhasil untuk order ${order.code}.`,
       targetId: payment.id,
       targetType: "payment",
       outcome: "success",
       ipAddress: meta.ipAddress,
       userAgent: meta.userAgent,
-      metadata: { paymentCode: payment.code, orderCode: order.code, method },
+      metadata: { paymentCode: payment.code, orderCode: order.code, method, walletTxCode },
     });
     await emitRealtime({
       event: "order:status",

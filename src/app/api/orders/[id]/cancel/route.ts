@@ -19,6 +19,7 @@ import { db } from "@/lib/db";
 import { requireRole } from "@/lib/auth/context";
 import { logAction, getRequestMeta } from "@/lib/auth/audit";
 import { emitOrderStatusChange } from "@/lib/realtime/realtime-client";
+import { creditWallet } from "@/lib/wallet/wallet-service";
 import { OrderStatus } from "@prisma/client";
 
 const CANCELLABLE_STATUSES: OrderStatus[] = ["PENDING", "ACCEPTED", "PREPARING"];
@@ -87,6 +88,7 @@ export async function POST(
   // 💳 Refund logic: jika payment terakhir = SUCCESS (online methods), set ke REFUNDED
   const latestPayment = order.payments[0];
   let refunded = false;
+  let walletRefunded = false;
   if (latestPayment && latestPayment.status === "SUCCESS" && latestPayment.method !== "COD") {
     await db.payment.update({
       where: { id: latestPayment.id },
@@ -96,13 +98,37 @@ export async function POST(
       },
     });
     refunded = true;
+
+    // 🏦 Jika payment via WALLET (RejoPay), refund saldo ke wallet customer
+    if (latestPayment.method === "WALLET") {
+      try {
+        await creditWallet({
+          userId: me.id,
+          amount: latestPayment.amount,
+          type: "REFUND",
+          description: `Refund order ${order.code} (dibatalkan)`,
+          orderId: order.id,
+          gatewayReference: latestPayment.gatewayReference ?? undefined,
+          metadata: {
+            paymentCode: latestPayment.code,
+            orderCode: order.code,
+            reason: reason ?? null,
+          },
+        });
+        walletRefunded = true;
+      } catch (err) {
+        console.error("[order cancel] wallet refund failed:", err);
+        // Tidak gagalkan cancel, tapi log error
+      }
+    }
+
     await logAction({
       actorId: me.id,
       actorEmail: me.email,
       actorRole: me.role,
       category: "payment",
       action: "payment.refunded",
-      description: `Payment ${latestPayment.code} (${latestPayment.method}) di-refund karena order ${order.code} dibatalkan customer.`,
+      description: `Payment ${latestPayment.code} (${latestPayment.method}) di-refund karena order ${order.code} dibatalkan customer.${walletRefunded ? " Saldo RejoPay +Rp " + latestPayment.amount.toLocaleString("id-ID") + "." : ""}`,
       targetId: latestPayment.id,
       targetType: "payment",
       outcome: "success",
@@ -114,6 +140,7 @@ export async function POST(
         method: latestPayment.method,
         amount: latestPayment.amount,
         reason: reason ?? null,
+        walletRefunded,
       },
     });
   }

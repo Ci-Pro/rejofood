@@ -15,7 +15,7 @@ import { useOrderSocket } from "@/hooks/use-order-socket";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
-type PaymentMethod = "COD" | "QRIS" | "VA_BCA" | "VA_MANDIRI" | "VA_BNI" | "EWALLET_GOPAY" | "EWALLET_OVO" | "EWALLET_DANA";
+type PaymentMethod = "COD" | "WALLET" | "QRIS" | "VA_BCA" | "VA_MANDIRI" | "VA_BNI" | "EWALLET_GOPAY" | "EWALLET_OVO" | "EWALLET_DANA";
 type PaymentStatus = "PENDING" | "SUCCESS" | "FAILED" | "REFUNDED";
 
 interface PaymentInfo {
@@ -55,6 +55,7 @@ function methodIcon(method: PaymentMethod) {
 function methodLabel(method: PaymentMethod): string {
   const map: Record<PaymentMethod, string> = {
     COD: "Cash (COD)",
+    WALLET: "RejoPay (Saldo)",
     QRIS: "QRIS",
     VA_BCA: "VA BCA",
     VA_MANDIRI: "VA Mandiri",
@@ -67,6 +68,7 @@ function methodLabel(method: PaymentMethod): string {
 }
 
 const METHODS: { value: PaymentMethod; label: string; desc: string; icon: React.ReactNode }[] = [
+  { value: "WALLET", label: "RejoPay", desc: "Bayar pakai saldo dompet", icon: <Wallet className="h-5 w-5" /> },
   { value: "COD", label: "Cash (COD)", desc: "Bayar tunai ke driver", icon: <Banknote className="h-5 w-5" /> },
   { value: "QRIS", label: "QRIS", desc: "Semua e-wallet & m-banking", icon: <QrCode className="h-5 w-5" /> },
   { value: "VA_BCA", label: "VA BCA", desc: "Transfer via BCA", icon: <CreditCard className="h-5 w-5" /> },
@@ -86,10 +88,26 @@ export function PaymentDialog({
   existingPayment,
   onPaid,
 }: PaymentDialogProps) {
-  const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>("COD");
+  const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>("WALLET");
   const [creating, setCreating] = useState(false);
   const [payment, setPayment] = useState<PaymentInfo | null>(existingPayment ?? null);
   const [simulating, setSimulating] = useState(false);
+  const [walletBalance, setWalletBalance] = useState<number | null>(null);
+  const [walletLoading, setWalletLoading] = useState(false);
+
+  // Fetch wallet balance when dialog opens (untuk display di opsi WALLET)
+  useEffect(() => {
+    if (!open) return;
+    setWalletLoading(true);
+    fetch("/api/wallet")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d?.wallet) setWalletBalance(d.wallet.balance);
+        else setWalletBalance(null);
+      })
+      .catch(() => setWalletBalance(null))
+      .finally(() => setWalletLoading(false));
+  }, [open]);
 
   // Reset state saat dialog open berubah
   useEffect(() => {
@@ -127,7 +145,12 @@ export function PaymentDialog({
       }
       setPayment(data.payment);
       if (data.payment.status === "SUCCESS") {
-        toast.success("Pembayaran COD berhasil!");
+        const msg = selectedMethod === "WALLET"
+          ? "Pembayaran RejoPay berhasil!"
+          : selectedMethod === "COD"
+            ? "Pembayaran COD berhasil!"
+            : "Pembayaran berhasil!";
+        toast.success(msg);
         onPaid?.();
       } else {
         toast.info(`Payment ${data.payment.code} dibuat. Selesaikan pembayaran sebelum expiry.`);
@@ -225,29 +248,70 @@ export function PaymentDialog({
                 Pilih metode pembayaran
               </p>
               <div className="grid grid-cols-2 gap-2">
-                {METHODS.map((m) => (
-                  <button
-                    key={m.value}
-                    type="button"
-                    onClick={() => setSelectedMethod(m.value)}
-                    className={cn(
-                      "flex flex-col items-start gap-1 rounded-xl border p-2.5 text-left transition-colors",
-                      selectedMethod === m.value
-                        ? "accent-saffron border-role bg-role-soft ring-role"
-                        : "border-border bg-card hover:border-role/40",
-                    )}
-                  >
-                    <span className={cn(
-                      "flex h-8 w-8 items-center justify-center rounded-lg",
-                      selectedMethod === m.value ? "bg-role text-role-fg" : "bg-muted text-muted-foreground",
-                    )}>
-                      {m.icon}
-                    </span>
-                    <span className="text-xs font-700 text-foreground">{m.label}</span>
-                    <span className="text-[0.65rem] text-muted-foreground">{m.desc}</span>
-                  </button>
-                ))}
+                {METHODS.map((m) => {
+                  const walletInsufficient = m.value === "WALLET" && walletBalance !== null && walletBalance < total;
+                  return (
+                    <button
+                      key={m.value}
+                      type="button"
+                      onClick={() => setSelectedMethod(m.value)}
+                      className={cn(
+                        "flex flex-col items-start gap-1 rounded-xl border p-2.5 text-left transition-colors",
+                        selectedMethod === m.value
+                          ? "accent-saffron border-role bg-role-soft ring-role"
+                          : "border-border bg-card hover:border-role/40",
+                        walletInsufficient && "opacity-60",
+                      )}
+                    >
+                      <span className={cn(
+                        "flex h-8 w-8 items-center justify-center rounded-lg",
+                        selectedMethod === m.value ? "bg-role text-role-fg" : "bg-muted text-muted-foreground",
+                      )}>
+                        {m.icon}
+                      </span>
+                      <span className="text-xs font-700 text-foreground">{m.label}</span>
+                      {m.value === "WALLET" && (
+                        <span className={cn(
+                          "text-[0.65rem] font-600",
+                          walletLoading
+                            ? "text-muted-foreground"
+                            : walletBalance === null
+                              ? "text-muted-foreground"
+                              : walletBalance < total
+                                ? "text-rose-500"
+                                : "text-emerald-600 dark:text-emerald-400",
+                        )}>
+                          {walletLoading
+                            ? "Memuat saldo..."
+                            : walletBalance === null
+                              ? m.desc
+                              : `Saldo: ${formatRupiah(walletBalance)}`}
+                        </span>
+                      )}
+                      {m.value !== "WALLET" && (
+                        <span className="text-[0.65rem] text-muted-foreground">{m.desc}</span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
+
+              {/* Wallet insufficient warning */}
+              {selectedMethod === "WALLET" && walletBalance !== null && walletBalance < total && (
+                <div className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-300">
+                  <div className="flex items-start gap-2">
+                    <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                    <div>
+                      <p className="font-700">Saldo RejoPay tidak cukup</p>
+                      <p className="mt-0.5">
+                        Saldo: {formatRupiah(walletBalance)} • Dibutuhkan: {formatRupiah(total)}.
+                        Kekurangan: {formatRupiah(total - walletBalance)}.
+                      </p>
+                      <p className="mt-0.5">Top up dulu atau pilih metode lain.</p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -339,7 +403,7 @@ export function PaymentDialog({
               </Button>
               <Button
                 onClick={createPayment}
-                disabled={creating}
+                disabled={creating || (selectedMethod === "WALLET" && walletBalance !== null && walletBalance < total)}
                 className="accent-saffron bg-role text-role-fg hover:opacity-90"
               >
                 {creating ? (

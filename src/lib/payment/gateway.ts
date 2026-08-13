@@ -9,6 +9,7 @@
  *
  * Mock behavior:
  *  - COD: langsung SUCCESS (customer bayar cash ke driver saat sampai)
+ *  - WALLET (RejoPay): langsung SUCCESS (saldo di-debit atomic saat createPayment)
  *  - QRIS/VA/E-wallet: PENDING + generate mock payment URL
  *    User klik "Saya sudah bayar" via mock-notify endpoint → SUCCESS
  *  - Expiry: 15 menit untuk online methods (mirip Midtrans default)
@@ -81,6 +82,22 @@ export async function createPaymentCharge(input: CreatePaymentInput): Promise<Cr
         gateway: "mock",
         method: "COD",
         instruction: "Bayar cash ke driver saat pesanan tiba.",
+      },
+    };
+  }
+
+  // WALLET (RejoPay) — pembayaran internal, langsung SUCCESS.
+  // Saldo di-debit atomic di /api/payment/create route sebelum panggil ini.
+  // Di sini kita cuma return metadata — tidak ada URL pembayaran eksternal.
+  if (input.method === "WALLET") {
+    return {
+      gatewayReference: `WALLET-${input.paymentCode}`,
+      paymentUrl: null,
+      expiresAt: null, // Wallet payment instant
+      metadata: {
+        gateway: "internal",
+        method: "WALLET",
+        instruction: "Pembayaran langsung dari saldo RejoPay.",
       },
     };
   }
@@ -174,9 +191,10 @@ export function isCOD(method: PaymentMethod): boolean {
 export function methodLabel(method: PaymentMethod): string {
   const map: Record<PaymentMethod, string> = {
     COD: "Cash (COD)",
+    WALLET: "RejoPay (Saldo)",
     QRIS: "QRIS",
     VA_BCA: "Virtual Account BCA",
-    VA_MANDIRI: "Virtual Account Mandirii",
+    VA_MANDIRI: "Virtual Account Mandiri",
     VA_BNI: "Virtual Account BNI",
     EWALLET_GOPAY: "GoPay",
     EWALLET_OVO: "OVO",
@@ -185,7 +203,12 @@ export function methodLabel(method: PaymentMethod): string {
   return map[method] ?? method;
 }
 
-/** Cek apakah payment perlu instruks pembayaran online (bukan COD). */
+/** Cek apakah payment perlu instruks pembayaran online (bukan COD/WALLET). */
 export function needsOnlineAction(method: PaymentMethod): boolean {
-  return method !== "COD";
+  return method !== "COD" && method !== "WALLET";
+}
+
+/** Cek apakah method adalah pembayaran internal (langsung SUCCESS tanpa gateway). */
+export function isInternalMethod(method: PaymentMethod): boolean {
+  return method === "COD" || method === "WALLET";
 }

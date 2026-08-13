@@ -7,6 +7,7 @@ import { DashboardHeader } from "@/components/shared/dashboard-primitives";
 import { DriverOrders } from "./driver-orders";
 import { DriverEarnings } from "./driver-earnings";
 import { UserProfileEditor } from "@/components/shared/user-profile-editor";
+import { WalletPanel } from "@/components/wallet/wallet-panel";
 import { ErrorBoundary } from "@/components/shared/error-boundary";
 import { Bike, User } from "lucide-react";
 
@@ -20,18 +21,36 @@ export function DriverDashboard() {
       activeNav={activeNav}
       onNavChange={setActiveNav}
     >
-      <DashboardHeader
-        greeting="Driver"
-        name={user?.fullName ?? "Driver Rejo"}
-        subtitle="Antar dengan cepat, aman, dan dapatkan penghasilan harian."
-        accent="mint"
-      />
+      {activeNav !== "wallet" && activeNav !== "profile" && (
+        <>
+          <DashboardHeader
+            greeting="Driver"
+            name={user?.fullName ?? "Driver Rejo"}
+            subtitle="Antar dengan cepat, aman, dan dapatkan penghasilan harian."
+            accent="mint"
+          />
 
-      <div className="mb-4">
-        <DriverEarnings />
-      </div>
+          <div className="mb-4">
+            <DriverEarnings />
+          </div>
 
-      {(activeNav === "available" || activeNav === "active") && <DriverOrders />}
+          <DriverOrders />
+        </>
+      )}
+
+      {activeNav === "wallet" && (
+        <>
+          <DashboardHeader
+            greeting="RejoPay"
+            name={user?.fullName ?? "Driver Rejo"}
+            subtitle="Penghasilanmu dari setiap pengiriman — cairkan kapan saja."
+            accent="mint"
+          />
+          <ErrorBoundary>
+            <WalletPanel showWithdraw />
+          </ErrorBoundary>
+        </>
+      )}
 
       {activeNav === "profile" && (
         <>

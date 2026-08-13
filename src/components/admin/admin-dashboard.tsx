@@ -10,6 +10,7 @@ import {
 import { AuditLogViewer } from "./audit-log-viewer";
 import { OrderMonitor } from "./order-monitor";
 import { UserManagement } from "./user-management";
+import { AdminWalletManagement as WalletManagement } from "./wallet-management";
 import { UserProfileEditor } from "@/components/shared/user-profile-editor";
 import { ErrorBoundary } from "@/components/shared/error-boundary";
 import { Users, Store, Bike, Activity, Loader2 } from "lucide-react";
@@ -108,6 +109,20 @@ export function AdminDashboard() {
             accent="rose"
           />
           <AuditLogViewer />
+        </>
+      )}
+
+      {activeNav === "wallets" && (
+        <>
+          <DashboardHeader
+            greeting="Manajemen Dompet"
+            name={user?.fullName ?? "Admin Rejo"}
+            subtitle="Pantau & kelola saldo RejoPay semua user."
+            accent="rose"
+          />
+          <ErrorBoundary>
+            <WalletManagement />
+          </ErrorBoundary>
         </>
       )}
 
