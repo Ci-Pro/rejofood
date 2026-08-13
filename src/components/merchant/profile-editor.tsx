@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { ImageUploader } from "@/components/shared/image-uploader";
 
 interface MerchantInfo {
   id: string;
@@ -86,6 +87,7 @@ export function ProfileEditor({ info, onUpdated }: ProfileEditorProps) {
         description: form.description.trim() || null,
         address: form.address.trim() || null,
         cuisine: form.cuisine.trim() || null,
+        logoUrl: info?.logoUrl ?? null,
       };
       const res = await fetch("/api/merchant/profile", {
         method: "PATCH",
@@ -113,9 +115,14 @@ export function ProfileEditor({ info, onUpdated }: ProfileEditorProps) {
     <section className="accent-lavender rounded-2xl border border-border bg-card p-5 sm:p-6">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-3">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-role text-role-fg">
-            <Store className="h-4.5 w-4.5" strokeWidth={2.2} />
-          </span>
+          {info.logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={info.logoUrl} alt={info.restaurantName} className="h-12 w-12 shrink-0 rounded-xl object-cover" />
+          ) : (
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-role text-role-fg">
+              <Store className="h-4.5 w-4.5" strokeWidth={2.2} />
+            </span>
+          )}
           <div className="min-w-0 flex-1">
             <h3 className="font-display text-lg font-700 text-foreground">{info.restaurantName}</h3>
             <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
@@ -175,6 +182,18 @@ export function ProfileEditor({ info, onUpdated }: ProfileEditorProps) {
           exit={{ opacity: 0, height: 0 }}
           className="mt-4 space-y-3 border-t border-border pt-4"
         >
+          {/* Logo upload */}
+          <ImageUploader
+            value={info.logoUrl}
+            onChange={(url) => {
+              onUpdated({ ...info, logoUrl: url });
+            }}
+            folder="logo"
+            shape="rounded"
+            size={72}
+            label="Logo restoran"
+          />
+
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="space-y-1.5 sm:col-span-2">
               <Label htmlFor="restaurantName" className="text-xs font-600 uppercase tracking-wide text-muted-foreground">

@@ -21,6 +21,7 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { MerchantInfo } from "./menu-manager-bridge";
+import { ImageUploader } from "@/components/shared/image-uploader";
 
 export type { MerchantInfo };
 
@@ -45,6 +46,7 @@ interface EditForm {
   price: string;
   category: string;
   isAvailable: boolean;
+  imageUrl: string | null;
 }
 
 const EMPTY_FORM: EditForm = {
@@ -53,6 +55,7 @@ const EMPTY_FORM: EditForm = {
   price: "",
   category: "Makanan",
   isAvailable: true,
+  imageUrl: null,
 };
 
 export function MenuManager({ onInfoLoaded }: { onInfoLoaded?: (info: MerchantInfo) => void }) {
@@ -108,6 +111,7 @@ export function MenuManager({ onInfoLoaded }: { onInfoLoaded?: (info: MerchantIn
       price: String(item.price),
       category: item.category,
       isAvailable: item.isAvailable,
+      imageUrl: item.imageUrl,
     });
     setEditOpen(true);
   }
@@ -138,6 +142,7 @@ export function MenuManager({ onInfoLoaded }: { onInfoLoaded?: (info: MerchantIn
         price,
         category: form.category.trim() || "Lainnya",
         isAvailable: form.isAvailable,
+        imageUrl: form.imageUrl,
       };
       const url = editingId
         ? `/api/merchant/menu/${editingId}`
@@ -339,6 +344,16 @@ export function MenuManager({ onInfoLoaded }: { onInfoLoaded?: (info: MerchantIn
             <DialogTitle>{editingId ? "Edit menu" : "Tambah menu baru"}</DialogTitle>
           </DialogHeader>
           <form onSubmit={onSubmit} className="space-y-4 py-2">
+            {/* Image upload */}
+            <ImageUploader
+              value={form.imageUrl}
+              onChange={(url) => setForm((f) => ({ ...f, imageUrl: url }))}
+              folder="menu"
+              shape="square"
+              size={88}
+              label="Foto menu"
+            />
+
             <div className="space-y-1.5">
               <Label htmlFor="name" className="text-xs font-600 uppercase tracking-wide text-muted-foreground">
                 Nama menu
