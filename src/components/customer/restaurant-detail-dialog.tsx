@@ -473,6 +473,16 @@ function ReviewsSection({ merchantId, rating }: { merchantId: string; rating: nu
               <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">{r.comment}</p>
             )}
             <p className="mt-1.5 text-[0.6rem] text-muted-foreground/70">{formatTime(r.createdAt)}</p>
+
+            {/* Merchant reply */}
+            {r.merchantReply && (
+              <div className="mt-2 rounded-lg border border-lavender/20 bg-lavender/5 p-2">
+                <p className="text-[0.55rem] font-700 uppercase tracking-wide text-lavender">
+                  Balasan restoran
+                </p>
+                <p className="mt-0.5 text-xs leading-relaxed text-foreground">{r.merchantReply}</p>
+              </div>
+            )}
           </div>
         ))}
       </div>

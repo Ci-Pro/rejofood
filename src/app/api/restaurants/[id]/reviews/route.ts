@@ -69,6 +69,8 @@ export async function GET(
       id: r.id,
       rating: r.rating,
       comment: r.comment,
+      merchantReply: r.merchantReply,
+      merchantReplyAt: r.merchantReplyAt?.toISOString() ?? null,
       customerName: r.customer.user.fullName,
       createdAt: r.createdAt.toISOString(),
     })),

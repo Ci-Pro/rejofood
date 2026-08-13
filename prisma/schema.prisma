@@ -280,6 +280,9 @@ model Review {
   rating      Int
   /// Optional comment, maks 500 char
   comment     String?
+  /// Merchant reply to this review (optional, maks 500 char)
+  merchantReply    String?
+  merchantReplyAt  DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

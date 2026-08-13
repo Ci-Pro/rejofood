@@ -7,6 +7,7 @@ import { DashboardHeader } from "@/components/shared/dashboard-primitives";
 import { ProfileEditor } from "./profile-editor";
 import { MenuManager } from "./menu-manager";
 import { OrderQueue } from "./order-queue";
+import { MerchantReviews } from "./merchant-reviews";
 import { UserProfileEditor } from "@/components/shared/user-profile-editor";
 import { ErrorBoundary } from "@/components/shared/error-boundary";
 import type { MerchantInfo } from "./menu-manager-bridge";
@@ -63,7 +64,7 @@ export function MerchantDashboard() {
             accent="lavender"
           />
           <div className="space-y-4">
-            <ProfileEditor info={info} onUpdated={setInfo} />
+            <MerchantReviews />
             <MenuManager onInfoLoaded={setInfo} />
           </div>
         </>
