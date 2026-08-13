@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Bell, RefreshCw, Check, X, ChefHat, PackageCheck, Phone, MapPin, Clock, Wifi, WifiOff,
@@ -148,6 +148,46 @@ export function OrderQueue({ onPendingCountChange }: { onPendingCountChange?: (c
   useEffect(() => {
     onPendingCountChange?.(pendingCount);
   }, [pendingCount, onPendingCountChange]);
+
+  // 🔔 Play sound when new pending order arrives
+  const prevPendingRef = useRef(0);
+
+  const playOrderBeep = useCallback(() => {
+    try {
+      const ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+      const oscillator = ctx.createOscillator();
+      const gain = ctx.createGain();
+      oscillator.connect(gain);
+      gain.connect(ctx.destination);
+      oscillator.frequency.value = 880;
+      oscillator.type = "sine";
+      gain.gain.setValueAtTime(0.3, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+      oscillator.start(ctx.currentTime);
+      oscillator.stop(ctx.currentTime + 0.5);
+      setTimeout(() => {
+        try {
+          const osc2 = ctx.createOscillator();
+          const gain2 = ctx.createGain();
+          osc2.connect(gain2);
+          gain2.connect(ctx.destination);
+          osc2.frequency.value = 1100;
+          osc2.type = "sine";
+          gain2.gain.setValueAtTime(0.3, ctx.currentTime);
+          gain2.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+          osc2.start(ctx.currentTime);
+          osc2.stop(ctx.currentTime + 0.4);
+        } catch { /* silent */ }
+      }, 200);
+    } catch { /* AudioContext not available */ }
+  }, []);
+
+  useEffect(() => {
+    if (pendingCount > prevPendingRef.current && prevPendingRef.current >= 0) {
+      playOrderBeep();
+    }
+    prevPendingRef.current = pendingCount;
+  }, [pendingCount, playOrderBeep]);
 
   return (
     <section className="rounded-2xl border border-border bg-card p-5 sm:p-6">

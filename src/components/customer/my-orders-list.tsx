@@ -103,24 +103,43 @@ export function MyOrdersList() {
   const [reviewTarget, setReviewTarget] = useState<Order | null>(null);
   // Reorder state
   const [reordering, setReordering] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   const fetchOrders = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/orders?limit=20", { cache: "no-store" });
+      const res = await fetch("/api/orders?limit=10", { cache: "no-store" });
       const data = await res.json();
       if (!res.ok) {
         setError(data?.error || "Gagal memuat pesanan.");
         return;
       }
       setOrders(data.items);
+      setHasMore(data.items.length >= 10);
     } catch {
       setError("Koneksi bermasalah.");
     } finally {
       setLoading(false);
     }
   }, []);
+
+  const loadMore = useCallback(async () => {
+    if (!hasMore || loadingMore || orders.length === 0) return;
+    setLoadingMore(true);
+    try {
+      const lastOrder = orders[orders.length - 1];
+      const res = await fetch(`/api/orders?limit=10&cursor=${lastOrder.id}`, { cache: "no-store" });
+      const data = await res.json();
+      if (res.ok) {
+        setOrders((prev) => [...prev, ...data.items]);
+        setHasMore(data.items.length >= 10);
+      }
+    } catch { /* silent */ } finally {
+      setLoadingMore(false);
+    }
+  }, [hasMore, loadingMore, orders]);
 
   // 🔔 Realtime: refetch saat event masuk, fallback polling 30s (longer, karena socket utama)
   const { isConnected: socketConnected } = useOrderSocket({
@@ -491,6 +510,25 @@ export function MyOrdersList() {
           </>
         )}
       </AnimatePresence>
+
+      {/* Load more */}
+      {hasMore && !loading && orders.length > 0 && (
+        <div className="mt-3 text-center">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={loadMore}
+            disabled={loadingMore}
+            className="h-8"
+          >
+            {loadingMore ? (
+              <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Memuat…</>
+            ) : (
+              "Muat lebih banyak"
+            )}
+          </Button>
+        </div>
+      )}
 
       {/* Cancel dialog */}
       <Dialog open={!!cancelTarget} onOpenChange={(open) => !open && !cancelling && setCancelTarget(null)}>

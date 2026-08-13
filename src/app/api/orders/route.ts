@@ -207,6 +207,7 @@ export async function GET(req: Request) {
 
   const url = new URL(req.url);
   const limit = Math.min(parseInt(url.searchParams.get("limit") ?? "20", 10) || 20, 100);
+  const cursor = url.searchParams.get("cursor") || undefined;
   const status = url.searchParams.get("status");
 
   const orders = await db.order.findMany({
@@ -215,7 +216,8 @@ export async function GET(req: Request) {
       ...(status ? { status: status as OrderStatus } : {}),
     },
     orderBy: { createdAt: "desc" },
-    take: limit,
+    take: limit + 1,
+    ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
     include: {
       merchant: { select: { id: true, restaurantName: true, address: true } },
       driver: { select: { id: true, user: { select: { fullName: true } } } },
@@ -238,8 +240,12 @@ export async function GET(req: Request) {
     },
   });
 
+  // Check if there are more items (we fetched limit + 1)
+  const hasMore = orders.length > limit;
+  const items = hasMore ? orders.slice(0, limit) : orders;
+
   return NextResponse.json({
-    items: orders.map((o) => ({
+    items: items.map((o) => ({
       id: o.id,
       code: o.code,
       status: o.status,

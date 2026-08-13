@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Search, Star, MapPin, Clock, UtensilsCrossed, ChevronRight, Heart } from "lucide-react";
+import { Search, Star, MapPin, Clock, UtensilsCrossed, ChevronRight, Heart, Coffee } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +20,27 @@ interface RestaurantListItem {
   rating: number;
   isOpen: boolean;
   menuCount: number;
+}
+
+interface MenuItemResult {
+  id: string;
+  name: string;
+  description: string | null;
+  price: number;
+  imageUrl: string | null;
+  category: string;
+  merchant: {
+    id: string;
+    restaurantName: string;
+    cuisine: string | null;
+    rating: number;
+    isOpen: boolean;
+    address: string | null;
+  };
+}
+
+function formatRupiah(n: number): string {
+  return "Rp " + n.toLocaleString("id-ID");
 }
 
 function cuisineColor(cuisine: string | null): string {
@@ -53,6 +74,8 @@ function initialColor(name: string): string {
 
 export function RestaurantGrid() {
   const [items, setItems] = useState<RestaurantListItem[]>([]);
+  const [menuResults, setMenuResults] = useState<MenuItemResult[]>([]);
+  const [searchMode, setSearchMode] = useState<"restaurants" | "menu">("restaurants");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
@@ -82,36 +105,89 @@ export function RestaurantGrid() {
     }
   }, [query, openOnly]);
 
+  const fetchMenuItems = useCallback(async (q: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/menu-items/search?q=${encodeURIComponent(q)}&limit=30`, { cache: "no-store" });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data?.error || "Gagal mencari menu.");
+        return;
+      }
+      setMenuResults(data.items);
+    } catch {
+      setError("Koneksi bermasalah.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
-    const t = setTimeout(fetchRestaurants, 200); // debounce search
-    return () => clearTimeout(t);
-  }, [fetchRestaurants]);
+    if (searchMode === "restaurants") {
+      const t = setTimeout(fetchRestaurants, 200);
+      return () => clearTimeout(t);
+    } else if (searchMode === "menu" && query.length >= 2) {
+      const t = setTimeout(() => fetchMenuItems(query), 300);
+      return () => clearTimeout(t);
+    } else {
+      setMenuResults([]);
+      setLoading(false);
+    }
+  }, [fetchRestaurants, fetchMenuItems, query, searchMode]);
 
   return (
     <div>
       {/* Search + filter */}
-      <div className="accent-saffron mb-5 flex flex-wrap items-center gap-2.5">
-        <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            type="text"
-            placeholder="Cari restoran, masakan, atau kata kunci…"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="h-10 rounded-xl bg-card pl-9"
-          />
-        </div>
-        <Button
-          variant={openOnly ? "default" : "outline"}
-          onClick={() => setOpenOnly((s) => !s)}
-          className={cn(
-            "h-10 rounded-xl",
-            openOnly && "accent-saffron bg-role text-role-fg hover:opacity-90",
+      <div className="accent-saffron mb-5 space-y-2">
+        <div className="flex flex-wrap items-center gap-2.5">
+          <div className="relative flex-1 min-w-[200px]">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder={searchMode === "restaurants" ? "Cari restoran, masakan…" : "Cari menu (cth: nasi goreng)…"}
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="h-10 rounded-xl bg-card pl-9"
+            />
+          </div>
+          {/* Search mode toggle */}
+          <div className="flex gap-1 rounded-xl border border-border bg-card p-0.5">
+            <button
+              type="button"
+              onClick={() => { setSearchMode("restaurants"); setQuery(""); }}
+              className={cn(
+                "flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-700 transition-premium",
+                searchMode === "restaurants" ? "bg-role text-role-fg" : "text-muted-foreground",
+              )}
+            >
+              <UtensilsCrossed className="h-3 w-3" /> Restoran
+            </button>
+            <button
+              type="button"
+              onClick={() => { setSearchMode("menu"); setQuery(""); }}
+              className={cn(
+                "flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-700 transition-premium",
+                searchMode === "menu" ? "bg-role text-role-fg" : "text-muted-foreground",
+              )}
+            >
+              <Coffee className="h-3 w-3" /> Menu
+            </button>
+          </div>
+          {searchMode === "restaurants" && (
+            <Button
+              variant={openOnly ? "default" : "outline"}
+              onClick={() => setOpenOnly((s) => !s)}
+              className={cn(
+                "h-10 rounded-xl",
+                openOnly && "accent-saffron bg-role text-role-fg hover:opacity-90",
+              )}
+            >
+              <Clock className="h-4 w-4" />
+              {openOnly ? "Buka saja" : "Semua"}
+            </Button>
           )}
-        >
-          <Clock className="h-4 w-4" />
-          {openOnly ? "Buka saja" : "Semua"}
-        </Button>
+        </div>
       </div>
 
       {error && (
@@ -120,7 +196,64 @@ export function RestaurantGrid() {
         </div>
       )}
 
-      {loading ? (
+      {/* Menu search results */}
+      {searchMode === "menu" && !loading && (
+        menuResults.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-border bg-muted/30 p-10 text-center">
+            <Coffee className="mx-auto h-8 w-8 text-muted-foreground" />
+            <p className="mt-3 text-sm font-600 text-foreground">
+              {query.length < 2 ? "Ketik minimal 2 huruf untuk mencari menu" : "Menu tidak ditemukan"}
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <p className="text-xs text-muted-foreground">{menuResults.length} menu ditemukan untuk "{query}"</p>
+            {menuResults.map((item, idx) => (
+              <motion.div
+                key={item.id}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: Math.min(idx * 0.04, 0.3) }}
+                className="accent-saffron flex items-center gap-3 rounded-xl border border-border bg-card p-3 shadow-card transition-premium hover:shadow-card-hover"
+              >
+                {/* Image or placeholder */}
+                {item.imageUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={item.imageUrl} alt={item.name} className="h-14 w-14 shrink-0 rounded-xl object-cover" />
+                ) : (
+                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-saffron/10 text-saffron">
+                    <Coffee className="h-5 w-5" />
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setSelectedId(item.merchant.id)}
+                  className="min-w-0 flex-1 text-left"
+                >
+                  <p className="truncate text-sm font-700 text-foreground">{item.name}</p>
+                  {item.description && (
+                    <p className="truncate text-xs text-muted-foreground">{item.description}</p>
+                  )}
+                  <div className="mt-1 flex items-center gap-2">
+                    <span className="font-display text-sm font-700 text-saffron">{formatRupiah(item.price)}</span>
+                    <span className="text-[0.6rem] text-muted-foreground">·</span>
+                    <span className="text-[0.65rem] text-muted-foreground">{item.merchant.restaurantName}</span>
+                    {item.merchant.isOpen ? (
+                      <Badge variant="outline" className="h-4 border-mint/40 bg-mint/10 px-1 text-[0.55rem] font-700 text-mint">BUKA</Badge>
+                    ) : (
+                      <Badge variant="outline" className="h-4 border-border px-1 text-[0.55rem] font-700 text-muted-foreground">TUTUP</Badge>
+                    )}
+                  </div>
+                </button>
+              </motion.div>
+            ))}
+          </div>
+        )
+      )}
+
+      {/* Restaurant grid (only in restaurant mode) */}
+      {searchMode === "restaurants" && (
+        loading ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="h-44 animate-pulse rounded-2xl border border-border bg-muted/50" />
@@ -219,7 +352,7 @@ export function RestaurantGrid() {
             </motion.div>
           ))}
         </div>
-      )}
+      ))}
 
       {/* Detail dialog */}
       <RestaurantDetailDialog
