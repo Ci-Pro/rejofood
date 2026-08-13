@@ -167,71 +167,88 @@ export function RestaurantDetailDialog({
                 className="pointer-events-none absolute inset-0 opacity-95"
                 style={{
                   background:
-                    "radial-gradient(120% 80% at 100% 0%, oklch(0.38 0.10 296) 0%, oklch(0.26 0.10 296) 55%, oklch(0.20 0.06 296) 100%)",
+                    "linear-gradient(135deg, #3D2364 0%, #2D1B4E 40%, #1C0E33 100%)",
                 }}
                 aria-hidden
               />
-              <div className="relative z-10 flex items-start gap-3 p-5 text-primary-foreground">
-                <div className={cn("flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl font-display text-2xl font-700", initialColor(data?.restaurantName ?? "R"))}>
-                  {data?.restaurantName?.charAt(0).toUpperCase() ?? "?"}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <h2 className="font-display text-xl font-700 leading-tight">
-                      {data?.restaurantName ?? (loading ? "Memuat…" : "—")}
-                    </h2>
-                    {data && (
-                      data.isOpen ? (
-                        <Badge variant="outline" className="border-mint/40 bg-mint/15 px-1.5 text-[0.6rem] font-700 text-mint">
-                          BUKA
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline" className="border-white/20 bg-white/10 px-1.5 text-[0.6rem] font-700 text-primary-foreground/80">
-                          TUTUP
-                        </Badge>
-                      )
-                    )}
+              {/* Saffron glow */}
+              <div
+                className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full opacity-20 blur-3xl"
+                style={{ background: "#FF9F1C" }}
+                aria-hidden
+              />
+              <div className="relative z-10 p-5 text-primary-foreground">
+                <div className="flex items-start gap-3">
+                  <div className={cn("flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl font-display text-2xl font-700 shadow-lg", initialColor(data?.restaurantName ?? "R"))}>
+                    {data?.restaurantName?.charAt(0).toUpperCase() ?? "?"}
                   </div>
-                  {data?.cuisine && (
-                    <p className="mt-0.5 text-[0.7rem] uppercase tracking-wider text-primary-foreground/60">
-                      {data.cuisine}
-                    </p>
-                  )}
-                  <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-primary-foreground/80">
-                    {data && (
-                      <span className="flex items-center gap-1">
-                        <Star className="h-3 w-3 fill-saffron text-saffron" />
-                        <span className="font-700">{data.rating.toFixed(1)}</span>
-                      </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <h2 className="font-display text-xl font-700 leading-tight">
+                        {data?.restaurantName ?? (loading ? "Memuat…" : "—")}
+                      </h2>
+                      {data && (
+                        data.isOpen ? (
+                          <span className="flex items-center gap-1 rounded-full border border-mint/40 bg-mint/20 px-2 py-0.5 text-[0.55rem] font-700 text-mint">
+                            <span className="h-1.5 w-1.5 rounded-full bg-mint" />
+                            BUKA
+                          </span>
+                        ) : (
+                          <span className="flex items-center gap-1 rounded-full border border-white/20 bg-white/10 px-2 py-0.5 text-[0.55rem] font-700 text-primary-foreground/80">
+                            <span className="h-1.5 w-1.5 rounded-full bg-primary-foreground/50" />
+                            TUTUP
+                          </span>
+                        )
+                      )}
+                    </div>
+                    {data?.cuisine && (
+                      <div className="mt-1 flex flex-wrap gap-1">
+                        <span className="rounded-full bg-white/10 px-2 py-0.5 text-[0.6rem] font-600 text-primary-foreground/80">
+                          {data.cuisine}
+                        </span>
+                        {data?.reviewCount !== undefined && data.reviewCount > 0 && (
+                          <span className="rounded-full bg-white/10 px-2 py-0.5 text-[0.6rem] font-600 text-primary-foreground/80">
+                            {data.reviewCount} ulasan
+                          </span>
+                        )}
+                      </div>
                     )}
-                    {data?.address && (
-                      <span className="flex items-center gap-1 truncate">
-                        <MapPin className="h-3 w-3" />
-                        <span className="truncate">{data.address}</span>
-                      </span>
-                    )}
-                    {data && (
-                      <span className="flex items-center gap-1">
-                        <UtensilsCrossed className="h-3 w-3" />
-                        {data.menuItems.length} menu
-                      </span>
-                    )}
+                    <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-primary-foreground/80">
+                      {data && (
+                        <span className="flex items-center gap-1 rounded-full bg-saffron/20 px-2 py-0.5">
+                          <Star className="h-3 w-3 fill-saffron text-saffron" />
+                          <span className="font-700 text-saffron">{data.rating.toFixed(1)}</span>
+                        </span>
+                      )}
+                      {data?.address && (
+                        <span className="flex items-center gap-1 truncate">
+                          <MapPin className="h-3 w-3" />
+                          <span className="truncate">{data.address}</span>
+                        </span>
+                      )}
+                      {data && (
+                        <span className="flex items-center gap-1">
+                          <UtensilsCrossed className="h-3 w-3" />
+                          {data.menuItems.length} menu
+                        </span>
+                      )}
+                    </div>
                   </div>
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    aria-label="Tutup"
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/10 text-primary-foreground transition-premium hover:bg-white/20 press-feedback"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={onClose}
-                  aria-label="Tutup"
-                  className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-lg bg-white/10 text-primary-foreground hover:bg-white/20"
-                >
-                  <X className="h-4 w-4" />
-                </button>
+                {data?.description && (
+                  <p className="mt-3 text-xs leading-relaxed text-primary-foreground/60">
+                    {data.description}
+                  </p>
+                )}
               </div>
-              {data?.description && (
-                <p className="relative z-10 -mb-1 px-5 pb-4 text-xs leading-relaxed text-primary-foreground/70">
-                  {data.description}
-                </p>
-              )}
             </div>
 
             {/* Body: menu list */}
@@ -261,9 +278,9 @@ export function RestaurantDetailDialog({
               {!loading && !error && grouped.map(([category, items]) => (
                 <div key={category} className="mb-5">
                   <div className="accent-saffron mb-2 flex items-center gap-2">
-                    <h3 className="font-display text-sm font-700 uppercase tracking-wide text-role">{category}</h3>
+                    <h3 className="text-[0.7rem] font-700 uppercase tracking-wider text-role">{category}</h3>
                     <span className="h-px flex-1 bg-border" />
-                    <span className="text-[0.65rem] text-muted-foreground">{items.length} item</span>
+                    <span className="text-[0.6rem] text-muted-foreground">{items.length} item</span>
                   </div>
                   <div className="space-y-2">
                     {items.map((item) => (
@@ -271,12 +288,21 @@ export function RestaurantDetailDialog({
                         key={item.id}
                         initial={{ opacity: 0, y: 6 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="flex items-start gap-3 rounded-xl border border-border bg-card p-3 transition-colors hover:border-saffron/40"
+                        className="flex items-start gap-3 rounded-xl border border-border bg-card p-3 transition-premium hover:shadow-card hover:border-transparent"
                       >
+                        {/* Thumbnail */}
+                        {item.imageUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={item.imageUrl} alt={item.name} className="h-14 w-14 shrink-0 rounded-xl object-cover" />
+                        ) : (
+                          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-saffron/8">
+                            <UtensilsCrossed className="h-5 w-5 text-saffron/40" />
+                          </div>
+                        )}
                         <div className="min-w-0 flex-1">
                           <p className="text-sm font-700 text-foreground">{item.name}</p>
                           {item.description && (
-                            <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{item.description}</p>
+                            <p className="mt-0.5 line-clamp-2 text-[0.7rem] leading-relaxed text-muted-foreground">{item.description}</p>
                           )}
                           <p className="mt-1.5 font-display text-sm font-700 text-saffron">
                             {formatRupiah(item.price)}
@@ -287,7 +313,7 @@ export function RestaurantDetailDialog({
                           size="sm"
                           onClick={() => handleAddToCart(item)}
                           disabled={!data?.isOpen}
-                          className="accent-saffron h-8 shrink-0 bg-role-soft px-2.5 text-role hover:bg-role hover:text-role-fg disabled:opacity-40"
+                          className="accent-saffron h-8 shrink-0 rounded-full bg-role-soft px-3 text-role transition-tap press-feedback hover:bg-role hover:text-role-fg disabled:opacity-40"
                           aria-label={`Tambah ${item.name} ke keranjang`}
                         >
                           <Plus className="h-3.5 w-3.5" />

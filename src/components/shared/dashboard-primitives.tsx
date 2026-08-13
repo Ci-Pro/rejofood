@@ -75,3 +75,52 @@ export function DashboardHeader({
     </motion.div>
   );
 }
+
+export function DashboardBanner({
+  greeting,
+  name,
+  subtitle,
+  accent,
+  children,
+}: {
+  greeting: string;
+  name: string;
+  subtitle: string;
+  accent: Accent;
+  children?: React.ReactNode;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      className={cn(
+        "accent-" + accent,
+        "relative mb-6 overflow-hidden rounded-2xl p-5 shadow-card sm:p-6",
+      )}
+    >
+      {/* Gradient background */}
+      <div
+        className="pointer-events-none absolute inset-0 opacity-95"
+        style={{
+          background: "linear-gradient(135deg, #3D2364 0%, #2D1B4E 50%, #1C0E33 100%)",
+        }}
+        aria-hidden
+      />
+      {/* Glow */}
+      <div
+        className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full opacity-15 blur-3xl"
+        style={{ background: "var(--role)" }}
+        aria-hidden
+      />
+      <div className="relative z-10 text-primary-foreground">
+        <p className="text-[0.65rem] font-700 uppercase tracking-[0.2em] text-saffron">{greeting}</p>
+        <h1 className="mt-1.5 font-display text-2xl font-700 tracking-tight sm:text-3xl">
+          Halo, {name}!
+        </h1>
+        <p className="mt-1 text-sm text-primary-foreground/70">{subtitle}</p>
+        {children && <div className="mt-3">{children}</div>}
+      </div>
+    </motion.div>
+  );
+}

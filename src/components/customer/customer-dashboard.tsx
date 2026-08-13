@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useAuthStore } from "@/store/auth-store";
 import { AppShell } from "@/components/shared/app-shell";
+import { DashboardBanner } from "@/components/shared/dashboard-primitives";
 import { DashboardHeader } from "@/components/shared/dashboard-primitives";
 import { RestaurantGrid } from "./restaurant-grid";
 import { CartButton } from "./cart-button";
@@ -25,7 +26,7 @@ export function CustomerDashboard() {
     >
       {activeNav === "restaurants" && (
         <>
-          <DashboardHeader
+          <DashboardBanner
             greeting="Pelanggan"
             name={user?.fullName ?? "Sobat Rejo"}
             subtitle="Lagi lapar? Restoran favoritmu menanti."
