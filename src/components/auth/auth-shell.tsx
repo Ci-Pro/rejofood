@@ -11,20 +11,13 @@ import { BrandLogo } from "./brand-logo";
 import { cn } from "@/lib/utils";
 
 /**
- * AuthShell — the unique asymmetric auth screen.
+ * AuthShell v3.0 — premium centered layout.
  *
- * Layout idea:
- *  - Desktop: 5/12 left "theatre" panel (deep aubergine, brand mark, role rail, value prop)
- *             7/12 right "stage" panel (warm ivory, glass form card)
- *  - Mobile:  vertical stack with brand strip on top, role chips, form below.
- *
- * This is deliberately NOT a centered card — most apps use that pattern.
- *
- * SECURITY: `showAdmin` mengontrol visibilitas role Admin di RoleRail.
- * Default false → Admin tidak terlihat. Set true hanya ketika user datang dari `/?admin=1`.
+ * Single column, full-screen gradient with floating glass card.
+ * Animated background blobs (saffron + lavender) for depth.
+ * Role badge shown when locked (separate APKs).
  */
 export function AuthShell({ showAdmin = false, appRole = null }: { showAdmin?: boolean; appRole?: string | null }) {
-  // If appRole is set, lock to that role (separate APK per role)
   const initialRole = appRole === "CUSTOMER" ? Role.CUSTOMER
     : appRole === "MERCHANT" ? Role.MERCHANT
     : appRole === "DRIVER" ? Role.DRIVER
@@ -33,137 +26,128 @@ export function AuthShell({ showAdmin = false, appRole = null }: { showAdmin?: b
 
   const [role, setRole] = useState<Role>(initialRole);
   const [mode, setMode] = useState<"login" | "register">("login");
-  const isLockedRole = !!appRole; // if true, hide role rail
+  const isLockedRole = !!appRole;
 
   return (
-    <div className="min-h-screen w-full bg-background">
-      <div className="grid min-h-screen w-full grid-cols-1 lg:grid-cols-12">
-        {/* Left theatre panel (desktop only) */}
-        <aside className="relative hidden overflow-hidden bg-primary lg:flex lg:col-span-5 xl:col-span-4">
-          {/* Decorative warm gradient */}
-          <div
-            className="pointer-events-none absolute inset-0 opacity-95"
-            style={{
-              background:
-                "linear-gradient(160deg, #3D2364 0%, #2D1B4E 50%, #1C0E33 100%)",
-            }}
-            aria-hidden
-          />
-          {/* Saffron glow */}
-          <div
-            className="pointer-events-none absolute -right-24 top-1/4 h-96 w-96 rounded-full opacity-30 blur-3xl"
-            style={{ background: "#FF9F1C" }}
-            aria-hidden
-          />
-          {/* Lavender glow */}
-          <div
-            className="pointer-events-none absolute -left-20 bottom-1/4 h-80 w-80 rounded-full opacity-15 blur-3xl"
-            style={{ background: "#7C5BBF" }}
-            aria-hidden
-          />
-          <div className="relative z-10 flex w-full flex-col justify-between p-8 xl:p-12">
-            <BrandLogo size="lg" className="[&_p]:text-primary-foreground [&_.text-muted-foreground]:text-primary-foreground/60" />
+    <div className="relative min-h-screen w-full overflow-hidden bg-background">
+      {/* Animated background blobs */}
+      <div className="pointer-events-none fixed inset-0">
+        <motion.div
+          animate={{ x: [0, 30, 0], y: [0, -20, 0] }}
+          transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute -left-20 top-1/4 h-72 w-72 rounded-full opacity-20 blur-3xl"
+          style={{ background: "#7C5BBF" }}
+        />
+        <motion.div
+          animate={{ x: [0, -40, 0], y: [0, 30, 0] }}
+          transition={{ duration: 25, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute -right-20 bottom-1/4 h-80 w-80 rounded-full opacity-15 blur-3xl"
+          style={{ background: "#FF9F1C" }}
+        />
+        <motion.div
+          animate={{ x: [0, 20, 0], y: [0, -30, 0] }}
+          transition={{ duration: 30, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute left-1/2 top-0 h-64 w-64 -translate-x-1/2 rounded-full opacity-10 blur-3xl"
+          style={{ background: "#2D1B4E" }}
+        />
+      </div>
 
-            <div className="my-10">
-              <motion.h1
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-                className="font-display text-4xl font-700 leading-[1.1] text-primary-foreground xl:text-5xl"
-              >
-                Satu ekosistem,
-                <br />
-                <span className="text-saffron">empat peran,</span>
-                <br />
-                <span className="text-saffron">tanpa ribet.</span>
-              </motion.h1>
-              <motion.p
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.1 }}
-                className="mt-4 max-w-md text-sm leading-relaxed text-primary-foreground/70"
-              >
-                RejoFood menyatukan Pelanggan, Merchant, Driver, dan Admin dalam satu aplikasi
-                yang ringan, terintegrasi, dan siap dipasang di Android.
-              </motion.p>
-            </div>
+      {/* Centered content */}
+      <div className="relative z-10 flex min-h-screen flex-col items-center justify-center px-4 py-8">
+        {/* Brand logo */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="mb-6"
+        >
+          <BrandLogo size="lg" />
+        </motion.div>
 
-            <div>
-              {!isLockedRole && (
-                <RoleRail selected={role} onChange={setRole} showAdmin={showAdmin} />
-              )}
-              {isLockedRole && (
-                <div className="accent-saffron flex items-center gap-2 rounded-xl border border-role/30 bg-role-soft/40 px-3 py-2">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-role text-role-fg">
-                    {role === Role.CUSTOMER && <UtensilsCrossed className="h-4 w-4" />}
-                    {role === Role.MERCHANT && <Store className="h-4 w-4" />}
-                    {role === Role.DRIVER && <Bike className="h-4 w-4" />}
-                  </span>
-                  <div>
-                    <p className="text-sm font-700 text-primary-foreground">
-                      {role === Role.CUSTOMER && "RejoFood Customer"}
-                      {role === Role.MERCHANT && "RejoFood Merchant"}
-                      {role === Role.DRIVER && "RejoFood Driver"}
-                    </p>
-                    <p className="text-[0.65rem] text-primary-foreground/60">
-                      {role === Role.CUSTOMER && "Pesan makanan favoritmu"}
-                      {role === Role.MERCHANT && "Kelola restoran & pesanan"}
-                      {role === Role.DRIVER && "Antar pesanan dengan cepat"}
-                    </p>
-                  </div>
-                </div>
-              )}
-              {showAdmin && !isLockedRole && (
-                <div className="mt-3 flex items-center gap-2 rounded-xl border border-rose/30 bg-rose/10 px-3 py-2 text-xs text-rose">
-                  <Lock className="h-3.5 w-3.5" />
-                  <span className="font-600">Area terbatas.</span>
-                  <span className="text-rose/80">Akses admin terverifikasi 2 lapis.</span>
-                </div>
-              )}
-              <p className="mt-5 text-xs text-primary-foreground/50">
-                © {new Date().getFullYear()} RejoFood · v0.1 fondasi
-              </p>
-            </div>
-          </div>
-        </aside>
+        {/* Tagline */}
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
+          className="mb-6 max-w-md text-center text-sm text-muted-foreground"
+        >
+          {isLockedRole ? (
+            role === Role.CUSTOMER ? "Pesan makanan favoritmu, antar sampai depan pintu."
+            : role === Role.MERCHANT ? "Kelola restoran & pesanan masuk dengan mudah."
+            : role === Role.DRIVER ? "Antar pesanan, dapatkan penghasilan harian."
+            : "Panel kontrol admin RejoFood."
+          ) : (
+            "Satu ekosistem, empat peran — tanpa ribet."
+          )}
+        </motion.p>
 
-        {/* Right stage panel (always visible) */}
-        <main className="relative flex min-h-screen flex-col bg-background bg-grain lg:col-span-7 xl:col-span-8">
-          {/* Mobile brand strip */}
-          <div className="flex items-center justify-between px-5 pt-6 pb-2 lg:hidden">
-            <BrandLogo size="sm" />
-          </div>
-
-          {/* Mobile role rail (horizontal) — hidden if locked role */}
-          {!isLockedRole && (
-            <div className="px-5 py-3 lg:hidden">
-              <RoleRail selected={role} onChange={setRole} showAdmin={showAdmin} />
-              {showAdmin && (
-                <div className={cn("mt-2 flex items-center gap-2 rounded-xl border border-rose/30 bg-rose/10 px-3 py-2 text-xs text-rose")}>
-                  <Lock className="h-3.5 w-3.5" />
+        {/* Role rail (if not locked) */}
+        {!isLockedRole && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="mb-6 w-full max-w-md"
+          >
+            <RoleRail selected={role} onChange={setRole} showAdmin={showAdmin} />
+            {showAdmin && (
+              <div className="mt-3 flex items-center gap-2 rounded-xl border border-rose/30 bg-rose/10 px-3 py-2 text-xs text-rose">
+                <Lock className="h-3.5 w-3.5" />
                 <span className="font-600">Area terbatas.</span>
                 <span className="text-rose/80">Akses admin terverifikasi 2 lapis.</span>
               </div>
             )}
-            </div>
-          )}
+          </motion.div>
+        )}
 
-          <div className="flex flex-1 items-center justify-center px-5 py-8 sm:px-8">
-            <div className="glass-card relative w-full max-w-md rounded-3xl border border-border/80 p-6 shadow-2xl shadow-primary/5 sm:p-8">
-              {/* Decorative corner accents */}
-              <span className="pointer-events-none absolute -left-2 -top-2 h-6 w-6 rounded-tl-3xl border-l-2 border-t-2 border-role/40" aria-hidden />
-              <span className="pointer-events-none absolute -bottom-2 -right-2 h-6 w-6 rounded-br-3xl border-b-2 border-r-2 border-role/40" aria-hidden />
-
-              <AnimatePresence mode="wait">
-                {mode === "login" ? (
-                  <LoginForm key={`login-${role}`} role={role} onSwitchToRegister={() => setMode("register")} />
-                ) : (
-                  <RegisterForm key={`register-${role}`} role={role} onSwitchToLogin={() => setMode("login")} />
-                )}
-              </AnimatePresence>
+        {/* Locked role badge */}
+        {isLockedRole && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="mb-6 flex items-center gap-2.5 rounded-2xl border border-border bg-card/60 px-4 py-2.5 backdrop-blur-sm"
+          >
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+              {role === Role.CUSTOMER && <UtensilsCrossed className="h-4 w-4" />}
+              {role === Role.MERCHANT && <Store className="h-4 w-4" />}
+              {role === Role.DRIVER && <Bike className="h-4 w-4" />}
+            </span>
+            <div>
+              <p className="text-sm font-700 text-foreground">
+                {role === Role.CUSTOMER && "RejoFood Customer"}
+                {role === Role.MERCHANT && "RejoFood Merchant"}
+                {role === Role.DRIVER && "RejoFood Driver"}
+              </p>
+              <p className="text-[0.65rem] text-muted-foreground">
+                {role === Role.CUSTOMER && "Pesan makanan favoritmu"}
+                {role === Role.MERCHANT && "Kelola restoran & pesanan"}
+                {role === Role.DRIVER && "Antar pesanan dengan cepat"}
+              </p>
             </div>
-          </div>
-        </main>
+          </motion.div>
+        )}
+
+        {/* Glass form card */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="glass-card w-full max-w-md rounded-3xl border border-border/60 p-6 shadow-premium-lg sm:p-8"
+        >
+          <AnimatePresence mode="wait">
+            {mode === "login" ? (
+              <LoginForm key={`login-${role}`} role={role} onSwitchToRegister={() => setMode("register")} />
+            ) : (
+              <RegisterForm key={`register-${role}`} role={role} onSwitchToLogin={() => setMode("login")} />
+            )}
+          </AnimatePresence>
+        </motion.div>
+
+        {/* Footer */}
+        <p className="mt-6 text-xs text-muted-foreground/60">
+          © {new Date().getFullYear()} RejoFood · v3.0
+        </p>
       </div>
     </div>
   );

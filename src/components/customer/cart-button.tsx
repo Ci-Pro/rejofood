@@ -122,20 +122,20 @@ export function CartButton() {
                           </button>
                         </div>
                         <div className="mt-2 flex items-center justify-between">
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex items-center gap-1">
                             <button
                               type="button"
                               onClick={() => updateQuantity(item.menuItemId, item.quantity - 1)}
-                              className="flex h-7 w-7 items-center justify-center rounded-lg border border-border bg-background hover:border-saffron hover:bg-saffron/10"
+                              className="press-feedback flex h-7 w-7 items-center justify-center rounded-full bg-muted text-muted-foreground transition-tap hover:bg-rose/10 hover:text-rose"
                               aria-label="Kurangi"
                             >
                               <Minus className="h-3 w-3" />
                             </button>
-                            <span className="min-w-[2rem] text-center font-700 tabular-nums">{item.quantity}</span>
+                            <span className="min-w-[1.75rem] text-center text-sm font-700 tabular-nums">{item.quantity}</span>
                             <button
                               type="button"
                               onClick={() => updateQuantity(item.menuItemId, item.quantity + 1)}
-                              className="flex h-7 w-7 items-center justify-center rounded-lg border border-border bg-background hover:border-saffron hover:bg-saffron/10"
+                              className="press-feedback flex h-7 w-7 items-center justify-center rounded-full bg-saffron/15 text-saffron transition-tap hover:bg-saffron/30"
                               aria-label="Tambah"
                             >
                               <Plus className="h-3 w-3" />
@@ -171,7 +171,7 @@ export function CartButton() {
                   <Button
                     type="button"
                     onClick={() => setCheckoutOpen(true)}
-                    className="accent-saffron h-10 w-full bg-role text-role-fg hover:opacity-90"
+                    className="accent-saffron h-12 w-full rounded-xl bg-role text-role-fg shadow-fab press-feedback hover:opacity-90"
                   >
                     <ShoppingBag className="h-4 w-4" />
                     Checkout · {formatRupiah(total)}

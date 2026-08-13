@@ -260,11 +260,17 @@ export function RestaurantGrid() {
           ))}
         </div>
       ) : items.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border bg-muted/30 p-10 text-center">
-          <UtensilsCrossed className="mx-auto h-8 w-8 text-muted-foreground" />
-          <p className="mt-3 text-sm font-600 text-foreground">Tidak ada restoran ditemukan</p>
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="rounded-2xl border border-dashed border-border bg-muted/20 p-10 text-center"
+        >
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-saffron/10">
+            <UtensilsCrossed className="h-7 w-7 text-saffron" />
+          </div>
+          <p className="mt-3 font-display text-base font-700 text-foreground">Tidak ada restoran ditemukan</p>
           <p className="mt-1 text-xs text-muted-foreground">Coba ubah kata kunci atau filter.</p>
-        </div>
+        </motion.div>
       ) : (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
           {items.map((r, idx) => (

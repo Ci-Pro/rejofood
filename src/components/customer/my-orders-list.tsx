@@ -268,11 +268,17 @@ export function MyOrdersList() {
           ))}
         </div>
       ) : orders.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-border bg-muted/30 p-8 text-center">
-          <Package className="mx-auto h-8 w-8 text-muted-foreground" />
-          <p className="mt-2 text-sm font-600 text-foreground">Belum ada pesanan</p>
-          <p className="mt-1 text-xs text-muted-foreground">Pesan dari restoran untuk mulai.</p>
-        </div>
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="rounded-2xl border border-dashed border-border bg-muted/20 p-10 text-center"
+        >
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-saffron/10">
+            <Package className="h-7 w-7 text-saffron" />
+          </div>
+          <p className="mt-3 font-display text-base font-700 text-foreground">Belum ada pesanan</p>
+          <p className="mt-1 text-xs text-muted-foreground">Yuk pesan dari restoran favoritmu!</p>
+        </motion.div>
       ) : (
         <div className="space-y-2">
           {orders.map((o, idx) => {
