@@ -1,13 +1,13 @@
 {
   "appId": "id.rejofood.driver",
-  "appName": "RejoFood Driver",
+  "appName": "RejoFood DRIVER",
   "webDir": "out",
   "server": {
-    "url": "https://rejofood.vercel.app",
+    "url": "https://rejofood.vercel.app/?app=DRIVER",
     "cleartext": true
   },
   "android": {
     "allowMixedContent": true,
-    "webContentsDebuggingEnabled": true
+    "webContentsDebuggingEnabled": false
   }
 }

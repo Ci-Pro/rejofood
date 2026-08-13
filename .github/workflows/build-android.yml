@@ -85,9 +85,11 @@ jobs:
 
       - name: Summary
         run: |
+          ROLE_UPPER=$(echo "${{ matrix.role }}" | tr '[:lower:]' '[:upper:]')
           echo "## ${{ matrix.role }} APK Build Complete" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- App ID: \`id.rejofood.${{ matrix.role }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "- App Name: RejoFood ${{ matrix.role }}" >> $GITHUB_STEP_SUMMARY
+          echo "- App Name: RejoFood $ROLE_UPPER" >> $GITHUB_STEP_SUMMARY
           echo "- Backend: \`${{ env.REJOFOOD_BACKEND_URL }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "- Role locked: ${{ matrix.role }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Role lock: \`?app=$ROLE_UPPER\` query param (Vercel reads this)" >> $GITHUB_STEP_SUMMARY
+          echo "- Admin: NOT included in APK — admin uses web only at \`?admin=1\`" >> $GITHUB_STEP_SUMMARY

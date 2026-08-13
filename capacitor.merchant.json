@@ -1,13 +1,13 @@
 {
   "appId": "id.rejofood.merchant",
-  "appName": "RejoFood Merchant",
+  "appName": "RejoFood MERCHANT",
   "webDir": "out",
   "server": {
-    "url": "https://rejofood.vercel.app",
+    "url": "https://rejofood.vercel.app/?app=MERCHANT",
     "cleartext": true
   },
   "android": {
     "allowMixedContent": true,
-    "webContentsDebuggingEnabled": true
+    "webContentsDebuggingEnabled": false
   }
 }
