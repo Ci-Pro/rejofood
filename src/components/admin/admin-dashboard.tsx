@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useAuthStore } from "@/store/auth-store";
 import { AppShell } from "@/components/shared/app-shell";
 import {
   StatTile,
@@ -26,7 +25,6 @@ function formatRupiah(n: number): string {
 }
 
 export function AdminDashboard() {
-  const user = useAuthStore((s) => s.user);
   const [activeNav, setActiveNav] = useState("orders");
   const [stats, setStats] = useState<AdminStats | null>(null);
 
@@ -46,9 +44,8 @@ export function AdminDashboard() {
       {activeNav === "orders" && (
         <>
           <DashboardHeader
-            greeting="Admin"
-            name={user?.fullName ?? "Admin Rejo"}
-            subtitle="Pantau kesehatan ekosistem RejoFood secara real-time."
+            greeting="Dashboard Admin"
+            subtitle="Pantau ekosistem RejoFood real-time."
             accent="rose"
           />
 
@@ -104,8 +101,7 @@ export function AdminDashboard() {
         <>
           <DashboardHeader
             greeting="Audit Log"
-            name={user?.fullName ?? "Admin Rejo"}
-            subtitle="Jejak forensik semua aksi sensitif."
+            subtitle="Jejak forensik aksi sensitif."
             accent="rose"
           />
           <AuditLogViewer />
@@ -116,8 +112,7 @@ export function AdminDashboard() {
         <>
           <DashboardHeader
             greeting="Manajemen Dompet"
-            name={user?.fullName ?? "Admin Rejo"}
-            subtitle="Pantau & kelola saldo RejoPay semua user."
+            subtitle="Pantau & kelola saldo RejoPay."
             accent="rose"
           />
           <ErrorBoundary>
@@ -129,9 +124,8 @@ export function AdminDashboard() {
       {activeNav === "profile" && (
         <>
           <DashboardHeader
-            greeting="Profil"
-            name={user?.fullName ?? "Admin Rejo"}
-            subtitle="Kelola informasi akun admin."
+            greeting="Profil Admin"
+            subtitle="Kelola akun & user."
             accent="rose"
           />
           <div className="space-y-4">

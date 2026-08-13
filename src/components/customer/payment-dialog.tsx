@@ -144,7 +144,7 @@ export function PaymentDialog({
         return;
       }
       setPayment(data.payment);
-      if (data.payment.status === "SUCCESS") {
+      if (data.payment?.status === "SUCCESS") {
         const msg = selectedMethod === "WALLET"
           ? "Pembayaran RejoPay berhasil!"
           : selectedMethod === "COD"
@@ -153,7 +153,7 @@ export function PaymentDialog({
         toast.success(msg);
         onPaid?.();
       } else {
-        toast.info(`Payment ${data.payment.code} dibuat. Selesaikan pembayaran sebelum expiry.`);
+        toast.info(`Payment ${data.payment?.code ?? ""} dibuat. Selesaikan pembayaran sebelum expiry.`);
       }
     } catch {
       toast.error("Koneksi bermasalah.");
@@ -176,7 +176,7 @@ export function PaymentDialog({
         toast.error(data?.error || "Gagal simulate payment.");
         return;
       }
-      setPayment({ ...payment, status: "SUCCESS", paidAt: data.payment.paidAt });
+      setPayment({ ...payment, status: "SUCCESS", paidAt: data.payment?.paidAt });
       toast.success("Pembayaran berhasil dikonfirmasi!");
       onPaid?.();
     } catch {
@@ -272,7 +272,7 @@ export function PaymentDialog({
                       <span className="text-xs font-700 text-foreground">{m.label}</span>
                       {m.value === "WALLET" && (
                         <span className={cn(
-                          "text-[0.65rem] font-600",
+                          "block truncate text-[0.65rem] font-600",
                           walletLoading
                             ? "text-muted-foreground"
                             : walletBalance === null

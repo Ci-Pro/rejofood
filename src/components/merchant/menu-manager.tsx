@@ -277,7 +277,7 @@ export function MenuManager({ onInfoLoaded }: { onInfoLoaded?: (info: MerchantIn
                     key={item.id}
                     layout
                     className={cn(
-                      "flex items-center gap-3 rounded-xl border bg-background/60 p-2.5 transition-colors",
+                      "flex flex-wrap items-center gap-2 rounded-xl border bg-background/60 p-2.5 transition-colors sm:gap-3 sm:p-2.5",
                       item.isAvailable ? "border-border" : "border-border/50 opacity-60",
                     )}
                   >

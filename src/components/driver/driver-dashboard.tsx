@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useAuthStore } from "@/store/auth-store";
 import { AppShell } from "@/components/shared/app-shell";
 import { DashboardHeader } from "@/components/shared/dashboard-primitives";
 import { DriverOrders } from "./driver-orders";
@@ -9,10 +8,8 @@ import { DriverEarnings } from "./driver-earnings";
 import { UserProfileEditor } from "@/components/shared/user-profile-editor";
 import { WalletPanel } from "@/components/wallet/wallet-panel";
 import { ErrorBoundary } from "@/components/shared/error-boundary";
-import { Bike, User } from "lucide-react";
 
 export function DriverDashboard() {
-  const user = useAuthStore((s) => s.user);
   const [activeNav, setActiveNav] = useState("available");
 
   return (
@@ -24,9 +21,8 @@ export function DriverDashboard() {
       {activeNav !== "wallet" && activeNav !== "profile" && (
         <>
           <DashboardHeader
-            greeting="Driver"
-            name={user?.fullName ?? "Driver Rejo"}
-            subtitle="Antar dengan cepat, aman, dan dapatkan penghasilan harian."
+            greeting="Dashboard Driver"
+            subtitle="Antar cepat, aman, dapat penghasilan."
             accent="mint"
           />
 
@@ -42,8 +38,7 @@ export function DriverDashboard() {
         <>
           <DashboardHeader
             greeting="RejoPay"
-            name={user?.fullName ?? "Driver Rejo"}
-            subtitle="Penghasilanmu dari setiap pengiriman — cairkan kapan saja."
+            subtitle="Penghasilan pengiriman — cairkan kapan saja."
             accent="mint"
           />
           <ErrorBoundary>
@@ -56,8 +51,7 @@ export function DriverDashboard() {
         <>
           <DashboardHeader
             greeting="Profil"
-            name={user?.fullName ?? "Driver Rejo"}
-            subtitle="Kelola informasi akun dan kendaraan."
+            subtitle="Kelola akun & kendaraan."
             accent="mint"
           />
           <ErrorBoundary><UserProfileEditor /></ErrorBoundary>

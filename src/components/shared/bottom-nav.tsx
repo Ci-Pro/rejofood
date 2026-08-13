@@ -59,7 +59,7 @@ export function BottomNav({ active, onChange, accent, badges }: BottomNavProps) 
                 ) : null}
               </span>
               <span className={cn(
-                "text-[0.625rem] font-600 transition-premium",
+                "max-w-full truncate text-[0.625rem] font-600 transition-premium",
                 isActive ? "text-role" : "text-muted-foreground",
               )}>
                 {item.label}

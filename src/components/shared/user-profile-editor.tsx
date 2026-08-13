@@ -201,7 +201,7 @@ export function UserProfileEditor() {
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        className={cn("accent-" + accent, "rounded-2xl border border-border bg-card p-5 shadow-premium sm:p-6")}
+        className={cn("accent-" + accent, "rounded-2xl border border-border bg-card p-4 shadow-premium sm:p-5")}
       >
         <div className="flex items-center gap-4">
           {/* Avatar upload */}
@@ -265,7 +265,7 @@ export function UserProfileEditor() {
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.05 }}
-        className={cn("accent-" + accent, "rounded-2xl border border-border bg-card p-5 shadow-premium sm:p-6")}
+        className={cn("accent-" + accent, "rounded-2xl border border-border bg-card p-4 shadow-premium sm:p-5")}
       >
         <h3 className="mb-4 font-display text-lg font-700 text-foreground">Informasi Akun</h3>
 
@@ -392,7 +392,7 @@ export function UserProfileEditor() {
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="rounded-2xl border border-border bg-card p-5 shadow-premium sm:p-6"
+        className="rounded-2xl border border-border bg-card p-4 shadow-premium sm:p-5"
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -511,7 +511,7 @@ function PushNotificationSection() {
 
   if (loading) {
     return (
-      <div className="rounded-2xl border border-border bg-card p-5 shadow-card sm:p-6 animate-pulse">
+      <div className="rounded-2xl border border-border bg-card p-4 shadow-card sm:p-5 animate-pulse">
         <div className="h-6 w-48 rounded bg-muted/50" />
       </div>
     );
@@ -519,7 +519,7 @@ function PushNotificationSection() {
 
   if (!supported) {
     return (
-      <div className="rounded-2xl border border-border bg-card p-5 shadow-card sm:p-6">
+      <div className="rounded-2xl border border-border bg-card p-4 shadow-card sm:p-5">
         <div className="flex items-center gap-2">
           <BellOff className="h-5 w-5 text-muted-foreground" />
           <h3 className="font-display text-lg font-700 text-foreground">Notifikasi</h3>
@@ -533,7 +533,7 @@ function PushNotificationSection() {
 
   if (!configured) {
     return (
-      <div className="rounded-2xl border border-border bg-card p-5 shadow-card sm:p-6">
+      <div className="rounded-2xl border border-border bg-card p-4 shadow-card sm:p-5">
         <div className="flex items-center gap-2">
           <BellOff className="h-5 w-5 text-muted-foreground" />
           <h3 className="font-display text-lg font-700 text-foreground">Notifikasi</h3>
@@ -546,7 +546,7 @@ function PushNotificationSection() {
   }
 
   return (
-    <div className="rounded-2xl border border-border bg-card p-5 shadow-card sm:p-6">
+    <div className="rounded-2xl border border-border bg-card p-4 shadow-card sm:p-5">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           {subscribed ? (

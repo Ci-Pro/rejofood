@@ -11,7 +11,6 @@ import { toast } from "sonner";
 import { SessionCountdown } from "./session-countdown";
 import { BottomNav } from "./bottom-nav";
 import { SideNav } from "./side-nav";
-import { ThemeToggle } from "./theme-toggle";
 import { NotificationBell } from "./notification-bell";
 import type { NavAccent } from "./nav-types";
 
@@ -85,7 +84,6 @@ export function AppShell({
             <div className="flex items-center gap-2.5">
               <SessionCountdown />
               <NotificationBell />
-              <ThemeToggle />
               <div className="relative">
                 <button
                   type="button"

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useAuthStore } from "@/store/auth-store";
 import { AppShell } from "@/components/shared/app-shell";
 import { DashboardBanner } from "@/components/shared/dashboard-primitives";
 import { DashboardHeader } from "@/components/shared/dashboard-primitives";
@@ -12,11 +11,9 @@ import { FavoritesList } from "./favorites-list";
 import { UserProfileEditor } from "@/components/shared/user-profile-editor";
 import { WalletPanel } from "@/components/wallet/wallet-panel";
 import { ErrorBoundary } from "@/components/shared/error-boundary";
-import { UtensilsCrossed, ShoppingBag, Heart, User, Wallet } from "lucide-react";
-import type { NavAccent } from "@/components/shared/nav-types";
+import { UtensilsCrossed } from "lucide-react";
 
 export function CustomerDashboard() {
-  const user = useAuthStore((s) => s.user);
   const [activeNav, setActiveNav] = useState("restaurants");
 
   return (
@@ -28,15 +25,14 @@ export function CustomerDashboard() {
       {activeNav === "restaurants" && (
         <>
           <DashboardBanner
-            greeting="Pelanggan"
-            name={user?.fullName ?? "Sobat Rejo"}
-            subtitle="Lagi lapar? Restoran favoritmu menanti."
+            greeting="Lagi lapar?"
+            subtitle="Restoran terdekat menantimu."
             accent="saffron"
           />
           <section className="mb-5">
-            <div className="accent-saffron mb-5 flex items-center gap-2">
+            <div className="accent-saffron mb-3 flex items-center gap-2 sm:mb-4">
               <UtensilsCrossed className="h-4 w-4 text-role" />
-              <h2 className="font-display text-lg font-700 text-foreground">Restoran terdekat</h2>
+              <h2 className="font-display text-base font-700 text-foreground sm:text-lg">Restoran terdekat</h2>
             </div>
             <RestaurantGrid />
           </section>
@@ -46,9 +42,8 @@ export function CustomerDashboard() {
       {activeNav === "orders" && (
         <>
           <DashboardHeader
-            greeting="Pesanan"
-            name={user?.fullName ?? "Sobat Rejo"}
-            subtitle="Pantau status pesananmu secara real-time."
+            greeting="Pesananmu"
+            subtitle="Pantau status real-time."
             accent="saffron"
           />
           <MyOrdersList />
@@ -59,8 +54,7 @@ export function CustomerDashboard() {
         <>
           <DashboardHeader
             greeting="Favorit"
-            name={user?.fullName ?? "Sobat Rejo"}
-            subtitle="Restoran favoritmu untuk akses cepat."
+            subtitle="Restoran untuk akses cepat."
             accent="saffron"
           />
           <FavoritesList />
@@ -71,8 +65,7 @@ export function CustomerDashboard() {
         <>
           <DashboardHeader
             greeting="RejoPay"
-            name={user?.fullName ?? "Sobat Rejo"}
-            subtitle="Dompet digital RejoFood — top-up, bayar, & lacak transaksimu."
+            subtitle="Top-up, bayar, & lacak transaksi."
             accent="saffron"
           />
           <ErrorBoundary>
@@ -85,8 +78,7 @@ export function CustomerDashboard() {
         <>
           <DashboardHeader
             greeting="Profil"
-            name={user?.fullName ?? "Sobat Rejo"}
-            subtitle="Kelola informasi akunmu."
+            subtitle="Kelola akunmu."
             accent="saffron"
           />
           <ErrorBoundary><UserProfileEditor /></ErrorBoundary>

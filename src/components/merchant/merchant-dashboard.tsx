@@ -46,9 +46,8 @@ export function MerchantDashboard() {
       {activeNav === "orders" && (
         <>
           <DashboardHeader
-            greeting="Merchant"
-            name={user?.fullName ?? "Partner Rejo"}
-            subtitle="Pantau restoran dan kelola pesanan masuk di satu layar."
+            greeting="Pesanan Masuk"
+            subtitle="Pantau restoran & kelola pesanan."
             accent="lavender"
           />
           <div className="space-y-4">
@@ -63,9 +62,8 @@ export function MerchantDashboard() {
       {activeNav === "menu" && (
         <>
           <DashboardHeader
-            greeting="Menu"
-            name={user?.fullName ?? "Partner Rejo"}
-            subtitle="Kelola daftar menu restoranmu."
+            greeting="Menu Restoran"
+            subtitle="Kelola daftar menu."
             accent="lavender"
           />
           <div className="space-y-4">
@@ -79,8 +77,7 @@ export function MerchantDashboard() {
         <>
           <DashboardHeader
             greeting="RejoPay"
-            name={user?.fullName ?? "Partner Rejo"}
-            subtitle="Saldo penjualan restoranmu — cairkan kapan saja."
+            subtitle="Saldo penjualan — cairkan kapan saja."
             accent="lavender"
           />
           <ErrorBoundary>
@@ -92,9 +89,8 @@ export function MerchantDashboard() {
       {activeNav === "profile" && (
         <>
           <DashboardHeader
-            greeting="Profil"
-            name={user?.fullName ?? "Partner Rejo"}
-            subtitle="Kelola informasi akun dan restoran."
+            greeting="Profil Restoran"
+            subtitle="Kelola akun & restoran."
             accent="lavender"
           />
           <div className="space-y-4">

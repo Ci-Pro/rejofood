@@ -64,18 +64,18 @@ export function WalletPanel({ showWithdraw = false }: WalletPanelProps) {
   return (
     <div className="space-y-5">
       <WalletCard
-        balance={data?.wallet.balance ?? 0}
-        isFrozen={data?.wallet.isFrozen}
-        monthTopup={data?.summary.monthTopup ?? 0}
-        monthSpending={data?.summary.monthSpending ?? 0}
-        monthEarning={data?.summary.monthEarning ?? 0}
+        balance={data?.wallet?.balance ?? 0}
+        isFrozen={data?.wallet?.isFrozen ?? false}
+        monthTopup={data?.summary?.monthTopup ?? 0}
+        monthSpending={data?.summary?.monthSpending ?? 0}
+        monthEarning={data?.summary?.monthEarning ?? 0}
         showEarning={showWithdraw}
         onTopUp={() => setTopUpOpen(true)}
         onWithdraw={() => setWithdrawOpen(true)}
         loading={loading}
       />
 
-      {data?.wallet.isFrozen && (
+      {data?.wallet?.isFrozen && (
         <motion.div
           initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
@@ -115,7 +115,7 @@ export function WalletPanel({ showWithdraw = false }: WalletPanelProps) {
         <WithdrawDialog
           open={withdrawOpen}
           onClose={() => setWithdrawOpen(false)}
-          currentBalance={data?.wallet.balance ?? 0}
+          currentBalance={data?.wallet?.balance ?? 0}
           onSuccess={() => load()}
         />
       )}

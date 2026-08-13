@@ -177,8 +177,8 @@ export function AdminWalletManagement() {
 
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-2">
-        <div className="relative flex-1 min-w-48">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <div className="relative min-w-[8rem] flex-1">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Cari email atau nama..."
             value={search}
@@ -188,7 +188,7 @@ export function AdminWalletManagement() {
           />
         </div>
         <Select value={roleFilter} onValueChange={setRoleFilter}>
-          <SelectTrigger className="w-32">
+          <SelectTrigger className="w-[7.5rem]">
             <SelectValue placeholder="Role" />
           </SelectTrigger>
           <SelectContent>
@@ -199,7 +199,7 @@ export function AdminWalletManagement() {
           </SelectContent>
         </Select>
         <Select value={frozenFilter} onValueChange={setFrozenFilter}>
-          <SelectTrigger className="w-32">
+          <SelectTrigger className="w-[7.5rem]">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>

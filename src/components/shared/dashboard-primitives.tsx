@@ -56,8 +56,8 @@ export function DashboardHeader({
   accent,
 }: {
   greeting: string;
-  name: string;
-  subtitle: string;
+  name?: string;
+  subtitle?: string;
   accent: Accent;
 }) {
   return (
@@ -65,13 +65,14 @@ export function DashboardHeader({
       initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
-      className={cn("accent-" + accent, "mb-6")}
+      className={cn("accent-" + accent, "mb-4 sm:mb-5")}
     >
-      <p className="text-[0.65rem] font-700 uppercase tracking-[0.2em] text-role">{greeting}</p>
-      <h1 className="mt-1.5 font-display text-2xl font-700 tracking-tight text-foreground sm:text-3xl">
-        Halo, <span className="text-gradient-primary">{name}!</span>
+      <h1 className="font-display text-xl font-700 tracking-tight text-foreground sm:text-2xl">
+        {greeting}
       </h1>
-      <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>
+      {subtitle && (
+        <p className="mt-0.5 text-xs text-muted-foreground sm:text-sm">{subtitle}</p>
+      )}
     </motion.div>
   );
 }
@@ -84,8 +85,8 @@ export function DashboardBanner({
   children,
 }: {
   greeting: string;
-  name: string;
-  subtitle: string;
+  name?: string;
+  subtitle?: string;
   accent: Accent;
   children?: React.ReactNode;
 }) {
@@ -96,7 +97,7 @@ export function DashboardBanner({
       transition={{ duration: 0.4 }}
       className={cn(
         "accent-" + accent,
-        "relative mb-6 overflow-hidden rounded-2xl p-5 shadow-card sm:p-6",
+        "relative mb-4 overflow-hidden rounded-2xl p-4 shadow-card sm:mb-5 sm:p-5",
       )}
     >
       {/* Gradient background */}
@@ -114,11 +115,12 @@ export function DashboardBanner({
         aria-hidden
       />
       <div className="relative z-10 text-primary-foreground">
-        <p className="text-[0.65rem] font-700 uppercase tracking-[0.2em] text-saffron">{greeting}</p>
-        <h1 className="mt-1.5 font-display text-2xl font-700 tracking-tight sm:text-3xl">
-          Halo, {name}!
+        <h1 className="font-display text-xl font-700 tracking-tight sm:text-2xl">
+          {greeting}
         </h1>
-        <p className="mt-1 text-sm text-primary-foreground/70">{subtitle}</p>
+        {subtitle && (
+          <p className="mt-0.5 text-xs text-primary-foreground/70 sm:text-sm">{subtitle}</p>
+        )}
         {children && <div className="mt-3">{children}</div>}
       </div>
     </motion.div>
