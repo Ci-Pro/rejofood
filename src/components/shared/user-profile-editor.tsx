@@ -314,6 +314,10 @@ export function UserProfileEditor() {
             />
           </div>
 
+          {profile.role === "CUSTOMER" && (
+            <SavedAddressesManager />
+          )}
+
           {/* Customer: default address */}
           {profile.role === "CUSTOMER" && (
             <div className="space-y-1.5">
@@ -583,6 +587,113 @@ function PushNotificationSection() {
           ? "Kamu akan mendapat notifikasi saat status pesanan berubah (diterima, diproses, diantar, tiba)."
           : "Aktifkan untuk mendapat notifikasi real-time di perangkat ini saat status pesanan berubah."}
       </p>
+    </div>
+  );
+}
+
+/** Saved addresses manager for customer */
+function SavedAddressesManager() {
+  const [addresses, setAddresses] = useState<Array<{ id: string; label: string; address: string; isDefault: boolean }>>([]);
+  const [loading, setLoading] = useState(true);
+  const [newAddr, setNewAddr] = useState("");
+  const [newLabel, setNewLabel] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const fetchAddrs = useCallback(async () => {
+    try {
+      const res = await fetch("/api/profile/addresses", { cache: "no-store" });
+      const d = await res.json();
+      if (d.addresses) setAddresses(d.addresses);
+    } catch { /* silent */ }
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { fetchAddrs(); }, [fetchAddrs]);
+
+  async function addAddr() {
+    if (newAddr.trim().length < 5) return;
+    setSaving(true);
+    try {
+      const res = await fetch("/api/profile/addresses", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ address: newAddr.trim(), label: newLabel.trim() || undefined }),
+      });
+      if (res.ok) {
+        toast.success("Alamat disimpan.");
+        setNewAddr("");
+        setNewLabel("");
+        fetchAddrs();
+      }
+    } catch { /* silent */ }
+    setSaving(false);
+  }
+
+  async function deleteAddr(id: string) {
+    try {
+      await fetch(`/api/profile/addresses/${id}`, { method: "DELETE" });
+      toast.success("Alamat dihapus.");
+      fetchAddrs();
+    } catch { /* silent */ }
+  }
+
+  return (
+    <div className="rounded-xl border border-border bg-background/60 p-3">
+      <p className="mb-2 flex items-center gap-1.5 text-xs font-700 uppercase tracking-wide text-muted-foreground">
+        <MapPin className="h-3 w-3" /> Alamat Tersimpan
+      </p>
+
+      {loading ? (
+        <div className="h-12 animate-pulse rounded-lg bg-muted/50" />
+      ) : addresses.length === 0 ? (
+        <p className="text-xs text-muted-foreground">Belum ada alamat tersimpan.</p>
+      ) : (
+        <div className="space-y-1.5">
+          {addresses.map((a) => (
+            <div key={a.id} className="flex items-start gap-2 rounded-lg bg-muted/30 p-2">
+              <MapPin className="mt-0.5 h-3 w-3 shrink-0 text-muted-foreground" />
+              <div className="min-w-0 flex-1">
+                <p className="text-[0.65rem] font-700 text-foreground">{a.label}</p>
+                <p className="text-xs text-muted-foreground">{a.address}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => deleteAddr(a.id)}
+                className="text-[0.6rem] text-destructive hover:underline"
+              >
+                Hapus
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Add new */}
+      <div className="mt-2 space-y-1.5">
+        <Input
+          value={newLabel}
+          onChange={(e) => setNewLabel(e.target.value)}
+          placeholder="Label (cth: Rumah, Kantor)"
+          className="h-8 text-xs"
+        />
+        <div className="flex gap-1.5">
+          <Input
+            value={newAddr}
+            onChange={(e) => setNewAddr(e.target.value)}
+            placeholder="Alamat lengkap…"
+            className="h-8 flex-1 text-xs"
+          />
+          <Button
+            type="button"
+            size="sm"
+            onClick={addAddr}
+            disabled={saving || newAddr.trim().length < 5}
+            className="h-8 px-2 text-xs"
+          >
+            {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : "Tambah"}
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

@@ -56,6 +56,22 @@ export function CheckoutDialog({
   const [submitting, setSubmitting] = useState(false);
   const [delivery, setDelivery] = useState<DeliveryEstimate | null>(null);
   const [estimating, setEstimating] = useState(false);
+  const [savedAddresses, setSavedAddresses] = useState<Array<{ id: string; label: string; address: string; isDefault: boolean }>>([]);
+
+  // Fetch saved addresses
+  useEffect(() => {
+    if (!open) return;
+    fetch("/api/profile/addresses", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.addresses) {
+          setSavedAddresses(d.addresses);
+          const def = d.addresses.find((a: { isDefault: boolean }) => a.isDefault);
+          if (def && !address) setAddress(def.address);
+        }
+      })
+      .catch(() => {});
+  }, [open]);
 
   // Prefill address dari customer profile
   useEffect(() => {
@@ -163,6 +179,26 @@ export function CheckoutDialog({
             <Label htmlFor="address" className="flex items-center gap-1.5 text-xs font-600 uppercase tracking-wide text-muted-foreground">
               <MapPin className="h-3 w-3" /> Alamat pengantaran
             </Label>
+            {/* Saved address chips */}
+            {savedAddresses.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {savedAddresses.map((addr) => (
+                  <button
+                    key={addr.id}
+                    type="button"
+                    onClick={() => setAddress(addr.address)}
+                    className={cn(
+                      "rounded-full border px-2.5 py-1 text-[0.65rem] font-600 transition-premium press-feedback",
+                      address === addr.address
+                        ? "border-saffron bg-saffron/10 text-saffron"
+                        : "border-border bg-card text-muted-foreground hover:border-saffron/40",
+                    )}
+                  >
+                    {addr.label}
+                  </button>
+                ))}
+              </div>
+            )}
             <Textarea
               id="address"
               value={address}
