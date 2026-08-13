@@ -12,8 +12,12 @@
  *  - user:{userId}      → user spesifik (customer/merchant/driver)
  */
 
-const REALTIME_URL = process.env.REJO_REALTIME_URL || "http://localhost:3001";
+const REALTIME_URL = process.env.REJO_REALTIME_URL || "";
 const REALTIME_SECRET = process.env.REJO_REALTIME_SECRET || "dev-secret-change-in-prod";
+
+export function isRealtimeEnabled(): boolean {
+  return !!REALTIME_URL;
+}
 
 export interface RealtimeEvent {
   event: "order:created" | "order:status" | "order:driver_assigned" | "order:updated";
@@ -23,8 +27,12 @@ export interface RealtimeEvent {
 
 /**
  * Emit event ke realtime service. Non-blocking (best-effort).
+ * Jika REALTIME_URL kosong (Vercel tanpa Railway), skip tanpa error.
  */
 export async function emitRealtime(event: RealtimeEvent): Promise<void> {
+  // Skip jika realtime service tidak dikonfigurasi (production tanpa WebSocket)
+  if (!REALTIME_URL) return;
+
   try {
     await fetch(`${REALTIME_URL}/emit`, {
       method: "POST",
