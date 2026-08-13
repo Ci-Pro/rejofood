@@ -1,57 +1,53 @@
 /**
- * Cloudinary helper — server-side signed upload.
+ * Cloudinary helper — unsigned upload via upload preset.
  *
  * Flow:
  *  1. Client select file → POST /api/upload with FormData (file + folder)
- *  2. Server sign upload with CLOUDINARY_API_SECRET
- *  3. Upload directly to Cloudinary API
- *  4. Return secure URL → client store URL to DB (imageUrl/logoUrl field)
+ *  2. Server upload to Cloudinary via unsigned upload preset
+ *  3. Return secure URL → client store URL to DB
  *
  * Env vars:
  *  CLOUDINARY_CLOUD_NAME — dari Cloudinary dashboard
- *  CLOUDINARY_API_KEY
- *  CLOUDINARY_API_SECRET
+ *  CLOUDINARY_UPLOAD_PRESET — unsigned upload preset (buat di Cloudinary settings)
  *
- * Setup: https://cloudinary.com → sign up free → dashboard → copy credentials
+ * Setup:
+ *  1. Cloudinary dashboard → Settings → Upload → Upload presets
+ *  2. Add new preset → name: "rejofood" → Signing Mode: UNSIGNED
+ *  3. Set folder: "rejofood" → Save
+ *  4. Set env: CLOUDINARY_CLOUD_NAME + CLOUDINARY_UPLOAD_PRESET
  */
 
 const CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME || "";
-const API_KEY = process.env.CLOUDINARY_API_KEY || "";
-const API_SECRET = process.env.CLOUDINARY_API_SECRET || "";
+const UPLOAD_PRESET = process.env.CLOUDINARY_UPLOAD_PRESET || "rejofood";
 
 export function isCloudinaryConfigured(): boolean {
-  return !!(CLOUD_NAME && API_KEY && API_SECRET);
+  return !!(CLOUD_NAME && UPLOAD_PRESET);
 }
 
 /**
- * Upload file to Cloudinary via server-side API call.
- * Uses unsigned upload with signature for security.
+ * Upload file to Cloudinary via unsigned upload preset.
+ * Simpler + more reliable than signed upload — no API secret needed.
  */
 export async function uploadToCloudinary(
   file: File,
   folder: string = "rejofood",
 ): Promise<{ url: string; publicId: string }> {
   if (!isCloudinaryConfigured()) {
-    throw new Error("Cloudinary belum dikonfigurasi. Set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET di .env");
+    throw new Error("Cloudinary belum dikonfigurasi. Set CLOUDINARY_CLOUD_NAME dan CLOUDINARY_UPLOAD_PRESET di .env");
   }
 
-  // Convert File to base64
+  // Convert File to base64 data URI
   const arrayBuffer = await file.arrayBuffer();
   const buffer = Buffer.from(arrayBuffer);
   const base64 = buffer.toString("base64");
   const dataURI = `data:${file.type};base64,${base64}`;
 
-  // Generate timestamp + signature
-  const timestamp = Math.floor(Date.now() / 1000);
-  const signature = await generateSignature({ timestamp, folder }, API_SECRET);
-
-  // Upload via Cloudinary API
+  // Upload via Cloudinary API — unsigned upload (no signature needed)
   const formData = new FormData();
   formData.append("file", dataURI);
-  formData.append("api_key", API_KEY);
-  formData.append("timestamp", String(timestamp));
-  formData.append("signature", signature);
-  formData.append("folder", folder);
+  formData.append("upload_preset", UPLOAD_PRESET);
+  // folder is set in the preset, but override if needed
+  formData.append("folder", `rejofood/${folder}`);
 
   const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`, {
     method: "POST",
@@ -59,8 +55,15 @@ export async function uploadToCloudinary(
   });
 
   if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`Cloudinary upload failed: ${err.substring(0, 200)}`);
+    const errText = await res.text();
+    let errMsg = `Cloudinary upload failed (${res.status})`;
+    try {
+      const errJson = JSON.parse(errText);
+      errMsg = errJson.error?.message || errMsg;
+    } catch {
+      errMsg = errText.substring(0, 300);
+    }
+    throw new Error(errMsg);
   }
 
   const data = await res.json();
@@ -71,25 +74,7 @@ export async function uploadToCloudinary(
 }
 
 /**
- * Generate SHA-256 signature for Cloudinary upload.
- * Signature = SHA-256(params_to_sort_and_join + api_secret)
- */
-async function generateSignature(params: Record<string, string | number>, apiSecret: string): Promise<string> {
-  const sorted = Object.keys(params)
-    .sort()
-    .map((k) => `${k}=${params[k]}`)
-    .join("&");
-
-  const crypto = await import("node:crypto");
-  return crypto
-    .createHash("sha256")
-    .update(sorted + apiSecret)
-    .digest("hex");
-}
-
-/**
- * Build optimized URL from Cloudinary public ID.
- * Supports transformations: width, height, crop, quality, format.
+ * Build optimized URL from Cloudinary public ID or URL.
  */
 export function cloudinaryUrl(
   publicIdOrUrl: string,
@@ -102,8 +87,6 @@ export function cloudinaryUrl(
   },
 ): string {
   if (!publicIdOrUrl) return "";
-
-  // If already a full URL, return as-is (e.g., from other sources)
   if (publicIdOrUrl.startsWith("http")) return publicIdOrUrl;
   if (!CLOUD_NAME) return publicIdOrUrl;
 
