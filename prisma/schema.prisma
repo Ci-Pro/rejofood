@@ -302,6 +302,18 @@ model Favorite {
   @@index([merchantId])
 }
 
+/// Push notification subscription untuk PWA.
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
 /// Jejak forensik: siapa melakukan apa, kapan, dari mana.
 /// Setiap aksi sensitif (login, 2FA, role change, user ban, dll.) wajib dicatat.
 /// Tabel ini append-only — tidak ada UPDATE/DELETE dari aplikasi (hanya DBA untuk retensi).

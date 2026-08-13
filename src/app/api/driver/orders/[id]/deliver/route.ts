@@ -9,6 +9,7 @@ import { db } from "@/lib/db";
 import { requireRole } from "@/lib/auth/context";
 import { logAction, getRequestMeta } from "@/lib/auth/audit";
 import { emitOrderStatusChange } from "@/lib/realtime/realtime-client";
+import { sendOrderStatusPush } from "@/lib/push";
 
 export async function POST(
   req: Request,
@@ -73,6 +74,17 @@ export async function POST(
     driverUserId: driver.userId,
     actorRole: "DRIVER",
   });
+
+  // 🔔 Push notification
+  sendOrderStatusPush({
+    orderCode: order.code,
+    from: "PICKED_UP",
+    to: "DELIVERED",
+    customerUserId: updated.customer.userId,
+    merchantUserId: updated.merchant.userId,
+    driverUserId: driver.userId,
+    actorRole: "DRIVER",
+  }).catch(() => {});
 
   return NextResponse.json({
     order: {

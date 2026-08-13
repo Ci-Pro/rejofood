@@ -13,6 +13,7 @@ import { db } from "@/lib/db";
 import { requireRole } from "@/lib/auth/context";
 import { logAction, getRequestMeta } from "@/lib/auth/audit";
 import { emitOrderStatusChange } from "@/lib/realtime/realtime-client";
+import { sendOrderStatusPush } from "@/lib/push";
 import { OrderStatus } from "@prisma/client";
 
 const ALLOWED_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
@@ -165,6 +166,17 @@ export async function PATCH(
       driverUserId: orderWithUsers.driver?.userId ?? null,
       actorRole: "MERCHANT",
     });
+
+    // 🔔 Push notification
+    sendOrderStatusPush({
+      orderCode: order.code,
+      from: order.status,
+      to: newStatus,
+      customerUserId: orderWithUsers.customer.userId,
+      merchantUserId: orderWithUsers.merchant.userId,
+      driverUserId: orderWithUsers.driver?.userId ?? null,
+      actorRole: "MERCHANT",
+    }).catch(() => {});
   }
 
   return NextResponse.json({

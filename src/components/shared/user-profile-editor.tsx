@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import {
   User, Mail, Phone, MapPin, Bike, Lock, Save, Loader2,
-  CheckCircle2, AlertCircle, Eye, EyeOff, ShieldCheck,
+  CheckCircle2, AlertCircle, Eye, EyeOff, ShieldCheck, Bell, BellOff,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { useAuthStore } from "@/store/auth-store";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { usePushNotifications } from "@/hooks/use-push-notifications";
 
 interface ProfileData {
   id: string;
@@ -362,6 +363,9 @@ export function UserProfileEditor() {
         </div>
       </motion.form>
 
+      {/* Push notifications */}
+      <PushNotificationSection />
+
       {/* Password change section */}
       <motion.div
         initial={{ opacity: 0, y: 8 }}
@@ -459,6 +463,109 @@ export function UserProfileEditor() {
           </p>
         )}
       </motion.div>
+    </div>
+  );
+}
+
+/** Push notification toggle section */
+function PushNotificationSection() {
+  const { supported, configured, subscribed, loading, subscribe, unsubscribe } = usePushNotifications();
+  const [toggling, setToggling] = useState(false);
+
+  async function handleToggle() {
+    setToggling(true);
+    try {
+      if (subscribed) {
+        const ok = await unsubscribe();
+        if (ok) toast.success("Notifikasi dinonaktifkan.");
+      } else {
+        const ok = await subscribe();
+        if (ok) toast.success("Notifikasi diaktifkan! Kamu akan dapat notifikasi saat status order berubah.");
+        else toast.error("Gagal mengaktifkan notifikasi. Coba lagi.");
+      }
+    } finally {
+      setToggling(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="rounded-2xl border border-border bg-card p-5 shadow-card sm:p-6 animate-pulse">
+        <div className="h-6 w-48 rounded bg-muted/50" />
+      </div>
+    );
+  }
+
+  if (!supported) {
+    return (
+      <div className="rounded-2xl border border-border bg-card p-5 shadow-card sm:p-6">
+        <div className="flex items-center gap-2">
+          <BellOff className="h-5 w-5 text-muted-foreground" />
+          <h3 className="font-display text-lg font-700 text-foreground">Notifikasi</h3>
+        </div>
+        <p className="mt-2 text-xs text-muted-foreground">
+          Browser/device tidak mendukung push notification.
+        </p>
+      </div>
+    );
+  }
+
+  if (!configured) {
+    return (
+      <div className="rounded-2xl border border-border bg-card p-5 shadow-card sm:p-6">
+        <div className="flex items-center gap-2">
+          <BellOff className="h-5 w-5 text-muted-foreground" />
+          <h3 className="font-display text-lg font-700 text-foreground">Notifikasi</h3>
+        </div>
+        <p className="mt-2 text-xs text-muted-foreground">
+          Push notification belum dikonfigurasi di server. Hubungi admin untuk mengaktifkan.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-2xl border border-border bg-card p-5 shadow-card sm:p-6">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          {subscribed ? (
+            <Bell className="h-5 w-5 text-saffron" />
+          ) : (
+            <BellOff className="h-5 w-5 text-muted-foreground" />
+          )}
+          <h3 className="font-display text-lg font-700 text-foreground">Notifikasi</h3>
+        </div>
+        <button
+          type="button"
+          onClick={handleToggle}
+          disabled={toggling}
+          className={cn(
+            "press-feedback flex h-8 items-center gap-2 rounded-full px-3 text-xs font-700 transition-premium",
+            subscribed
+              ? "bg-saffron/10 text-saffron border border-saffron/30"
+              : "bg-primary text-primary-foreground",
+          )}
+        >
+          {toggling ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : subscribed ? (
+            <>
+              <span className="h-2 w-2 rounded-full bg-saffron" />
+              Aktif
+            </>
+          ) : (
+            <>
+              <Bell className="h-3.5 w-3.5" />
+              Aktifkan
+            </>
+          )}
+        </button>
+      </div>
+      <p className="mt-2 text-xs text-muted-foreground">
+        {subscribed
+          ? "Kamu akan mendapat notifikasi saat status pesanan berubah (diterima, diproses, diantar, tiba)."
+          : "Aktifkan untuk mendapat notifikasi real-time di perangkat ini saat status pesanan berubah."}
+      </p>
     </div>
   );
 }

@@ -17,6 +17,7 @@ import { db } from "@/lib/db";
 import { requireRole } from "@/lib/auth/context";
 import { logAction, getRequestMeta } from "@/lib/auth/audit";
 import { emitOrderCreated } from "@/lib/realtime/realtime-client";
+import { sendNewOrderPush } from "@/lib/push";
 import { estimateDeliveryFee } from "@/lib/delivery-fee";
 import { OrderStatus } from "@prisma/client";
 
@@ -166,6 +167,9 @@ export async function POST(req: Request) {
     status: "PENDING",
     itemCount: orderItems.reduce((s, i) => s + i.quantity, 0),
   });
+
+  // 🔔 Push notification: notify merchant
+  sendNewOrderPush(merchant.userId, order.code, me.fullName, total).catch(() => {});
 
   return NextResponse.json({
     order: {
