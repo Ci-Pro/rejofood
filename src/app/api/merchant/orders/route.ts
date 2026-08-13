@@ -46,6 +46,18 @@ export async function GET(req: Request) {
       customer: { select: { id: true, user: { select: { fullName: true, phone: true } } } },
       driver: { select: { id: true, user: { select: { fullName: true } } } },
       items: true,
+      payments: {
+        orderBy: { createdAt: "desc" },
+        take: 1,
+        select: {
+          id: true,
+          code: true,
+          method: true,
+          status: true,
+          amount: true,
+          createdAt: true,
+        },
+      },
     },
   });
 
@@ -72,6 +84,10 @@ export async function GET(req: Request) {
       },
       driver: o.driver ? { id: o.driver.id, name: o.driver.user.fullName } : null,
       items: o.items,
+      payment: o.payments[0] ? {
+        method: o.payments[0].method,
+        status: o.payments[0].status,
+      } : null,
       itemCount: o.items.reduce((sum, i) => sum + i.quantity, 0),
     })),
   });

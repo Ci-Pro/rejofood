@@ -38,6 +38,7 @@ interface Order {
   driver: { id: string; name: string } | null;
   items: OrderItem[];
   itemCount: number;
+  payment: { method: string; status: string } | null;
 }
 
 const STATUS_LABEL: Record<Order["status"], string> = {
@@ -262,23 +263,37 @@ export function OrderQueue({ onPendingCountChange }: { onPendingCountChange?: (c
                 <div className="mt-2 flex flex-wrap gap-1.5">
                   {o.status === "PENDING" && (
                     <>
-                      <Button
-                        size="sm"
-                        onClick={() => updateStatus(o.id, "ACCEPTED")}
-                        disabled={updating === o.id}
-                        className="accent-lavender h-7 bg-role text-role-fg hover:opacity-90"
-                      >
-                        <Check className="h-3 w-3" /> Terima
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => updateStatus(o.id, "CANCELLED", "Ditolak merchant")}
-                        disabled={updating === o.id}
-                        className="h-7 text-destructive hover:bg-destructive/10"
-                      >
-                        <X className="h-3 w-3" /> Tolak
-                      </Button>
+                      {/* Check payment status */}
+                      {o.payment?.status === "SUCCESS" ? (
+                        <>
+                          <Button
+                            size="sm"
+                            onClick={() => updateStatus(o.id, "ACCEPTED")}
+                            disabled={updating === o.id}
+                            className="accent-lavender h-7 bg-role text-role-fg hover:opacity-90"
+                          >
+                            <Check className="h-3 w-3" /> Terima
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => updateStatus(o.id, "CANCELLED", "Ditolak merchant")}
+                            disabled={updating === o.id}
+                            className="h-7 text-destructive hover:bg-destructive/10"
+                          >
+                            <X className="h-3 w-3" /> Tolak
+                          </Button>
+                        </>
+                      ) : (
+                        <div className="flex items-center gap-2 rounded-lg bg-saffron/10 px-2.5 py-1.5 text-[0.65rem] text-saffron">
+                          <Clock className="h-3 w-3" />
+                          {o.payment ? (
+                            <>Menunggu pembayaran ({o.payment.method === "COD" ? "COD" : o.payment.method})</>
+                          ) : (
+                            <>Customer belum pilih metode pembayaran</>
+                          )}
+                        </div>
+                      )}
                     </>
                   )}
                   {o.status === "ACCEPTED" && (
