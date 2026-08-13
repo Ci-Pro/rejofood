@@ -48,9 +48,12 @@ function LoadingScreen() {
 
 function HomeInner() {
   const searchParams = useSearchParams();
-  // SECURITY: Admin login entry disembunyikan. Hanya muncul saat URL berisi ?admin=1.
-  // Server tetap memverifikasi credentials, jadi ini hanya lapisan "obfuscation".
   const showAdmin = searchParams.get("admin") === "1";
+
+  // APP_ROLE: jika di-set (via NEXT_PUBLIC_APP_ROLE), app khusus untuk role tsb.
+  // Customer APK = "CUSTOMER", Merchant APK = "MERCHANT", Driver APK = "DRIVER"
+  // Admin tetap web (tidak ada APK, akses via ?admin=1)
+  const appRole = process.env.NEXT_PUBLIC_APP_ROLE || null;
 
   const user = useAuthStore((s) => s.user);
   const setUser = useAuthStore((s) => s.setUser);
@@ -80,7 +83,7 @@ function HomeInner() {
       : "auth";
 
   if (view === "loading") return <LoadingScreen />;
-  if (view === "auth") return <AuthShell showAdmin={showAdmin} />;
+  if (view === "auth") return <AuthShell showAdmin={showAdmin} appRole={appRole} />;
   if (view === "customer") return <CustomerDashboard />;
   if (view === "merchant") return <MerchantDashboard />;
   if (view === "driver") return <DriverDashboard />;

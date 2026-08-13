@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Lock } from "lucide-react";
+import { Lock, UtensilsCrossed, Store, Bike } from "lucide-react";
 import { Role } from "@/lib/auth/roles";
 import { RoleRail } from "./role-rail";
 import { LoginForm } from "./login-form";
@@ -23,9 +23,17 @@ import { cn } from "@/lib/utils";
  * SECURITY: `showAdmin` mengontrol visibilitas role Admin di RoleRail.
  * Default false → Admin tidak terlihat. Set true hanya ketika user datang dari `/?admin=1`.
  */
-export function AuthShell({ showAdmin = false }: { showAdmin?: boolean }) {
-  const [role, setRole] = useState<Role>(Role.CUSTOMER);
+export function AuthShell({ showAdmin = false, appRole = null }: { showAdmin?: boolean; appRole?: string | null }) {
+  // If appRole is set, lock to that role (separate APK per role)
+  const initialRole = appRole === "CUSTOMER" ? Role.CUSTOMER
+    : appRole === "MERCHANT" ? Role.MERCHANT
+    : appRole === "DRIVER" ? Role.DRIVER
+    : appRole === "ADMIN" ? Role.ADMIN
+    : Role.CUSTOMER;
+
+  const [role, setRole] = useState<Role>(initialRole);
   const [mode, setMode] = useState<"login" | "register">("login");
+  const isLockedRole = !!appRole; // if true, hide role rail
 
   return (
     <div className="min-h-screen w-full bg-background">
@@ -81,8 +89,31 @@ export function AuthShell({ showAdmin = false }: { showAdmin?: boolean }) {
             </div>
 
             <div>
-              <RoleRail selected={role} onChange={setRole} showAdmin={showAdmin} />
-              {showAdmin && (
+              {!isLockedRole && (
+                <RoleRail selected={role} onChange={setRole} showAdmin={showAdmin} />
+              )}
+              {isLockedRole && (
+                <div className="accent-saffron flex items-center gap-2 rounded-xl border border-role/30 bg-role-soft/40 px-3 py-2">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-role text-role-fg">
+                    {role === Role.CUSTOMER && <UtensilsCrossed className="h-4 w-4" />}
+                    {role === Role.MERCHANT && <Store className="h-4 w-4" />}
+                    {role === Role.DRIVER && <Bike className="h-4 w-4" />}
+                  </span>
+                  <div>
+                    <p className="text-sm font-700 text-primary-foreground">
+                      {role === Role.CUSTOMER && "RejoFood Customer"}
+                      {role === Role.MERCHANT && "RejoFood Merchant"}
+                      {role === Role.DRIVER && "RejoFood Driver"}
+                    </p>
+                    <p className="text-[0.65rem] text-primary-foreground/60">
+                      {role === Role.CUSTOMER && "Pesan makanan favoritmu"}
+                      {role === Role.MERCHANT && "Kelola restoran & pesanan"}
+                      {role === Role.DRIVER && "Antar pesanan dengan cepat"}
+                    </p>
+                  </div>
+                </div>
+              )}
+              {showAdmin && !isLockedRole && (
                 <div className="mt-3 flex items-center gap-2 rounded-xl border border-rose/30 bg-rose/10 px-3 py-2 text-xs text-rose">
                   <Lock className="h-3.5 w-3.5" />
                   <span className="font-600">Area terbatas.</span>
@@ -103,17 +134,19 @@ export function AuthShell({ showAdmin = false }: { showAdmin?: boolean }) {
             <BrandLogo size="sm" />
           </div>
 
-          {/* Mobile role rail (horizontal) */}
-          <div className="px-5 py-3 lg:hidden">
-            <RoleRail selected={role} onChange={setRole} showAdmin={showAdmin} />
-            {showAdmin && (
-              <div className={cn("mt-2 flex items-center gap-2 rounded-xl border border-rose/30 bg-rose/10 px-3 py-2 text-xs text-rose")}>
-                <Lock className="h-3.5 w-3.5" />
+          {/* Mobile role rail (horizontal) — hidden if locked role */}
+          {!isLockedRole && (
+            <div className="px-5 py-3 lg:hidden">
+              <RoleRail selected={role} onChange={setRole} showAdmin={showAdmin} />
+              {showAdmin && (
+                <div className={cn("mt-2 flex items-center gap-2 rounded-xl border border-rose/30 bg-rose/10 px-3 py-2 text-xs text-rose")}>
+                  <Lock className="h-3.5 w-3.5" />
                 <span className="font-600">Area terbatas.</span>
                 <span className="text-rose/80">Akses admin terverifikasi 2 lapis.</span>
               </div>
             )}
-          </div>
+            </div>
+          )}
 
           <div className="flex flex-1 items-center justify-center px-5 py-8 sm:px-8">
             <div className="glass-card relative w-full max-w-md rounded-3xl border border-border/80 p-6 shadow-2xl shadow-primary/5 sm:p-8">

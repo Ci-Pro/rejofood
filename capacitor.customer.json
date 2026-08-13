@@ -1,0 +1,13 @@
+{
+  "appId": "id.rejofood.customer",
+  "appName": "RejoFood Customer",
+  "webDir": "out",
+  "server": {
+    "url": "https://rejofood.vercel.app",
+    "cleartext": true
+  },
+  "android": {
+    "allowMixedContent": true,
+    "webContentsDebuggingEnabled": true
+  }
+}
