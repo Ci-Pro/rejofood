@@ -17,9 +17,8 @@ import { db } from "@/lib/db";
 import { requireRole } from "@/lib/auth/context";
 import { logAction, getRequestMeta } from "@/lib/auth/audit";
 import { emitOrderCreated } from "@/lib/realtime/realtime-client";
+import { estimateDeliveryFee } from "@/lib/delivery-fee";
 import { OrderStatus } from "@prisma/client";
-
-const DELIVERY_FEE = 10000;
 
 function generateOrderCode(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no confusing chars (0/O, 1/I)
@@ -94,7 +93,14 @@ export async function POST(req: Request) {
   });
 
   const subtotal = orderItems.reduce((sum, oi) => sum + oi.subtotal, 0);
-  const total = subtotal + DELIVERY_FEE;
+
+  // Calculate dynamic delivery fee based on distance
+  const deliveryEstimate = await estimateDeliveryFee(
+    merchant.address || "Jakarta",
+    body.deliveryAddress.trim(),
+  );
+  const deliveryFee = deliveryEstimate.fee;
+  const total = subtotal + deliveryFee;
 
   // Generate unique code (retry kalau collide)
   let code = generateOrderCode();
@@ -113,7 +119,7 @@ export async function POST(req: Request) {
       merchantId,
       status: OrderStatus.PENDING,
       subtotal,
-      deliveryFee: DELIVERY_FEE,
+      deliveryFee,
       total,
       deliveryAddress: body.deliveryAddress.trim(),
       notes,
@@ -142,7 +148,9 @@ export async function POST(req: Request) {
       merchantId,
       merchantName: order.merchant.restaurantName,
       subtotal,
-      deliveryFee: DELIVERY_FEE,
+      deliveryFee,
+      deliveryDistanceKm: deliveryEstimate.distanceKm,
+      deliveryMethod: deliveryEstimate.method,
       total,
       itemCount: orderItems.length,
     },
