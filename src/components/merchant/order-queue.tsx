@@ -125,7 +125,12 @@ export function OrderQueue({ onPendingCountChange }: { onPendingCountChange?: (c
       });
       const data = await res.json();
       if (!res.ok) {
-        toast.error(data?.error || "Gagal update status.");
+        // Show payment pending as info (not error)
+        if (data.code === "PAYMENT_PENDING" || data.code === "NO_PAYMENT") {
+          toast.info(data.error, { duration: 5000 });
+        } else {
+          toast.error(data?.error || "Gagal update status.");
+        }
         return;
       }
       toast.success(`Order ${status === "ACCEPTED" ? "diterima" : status === "PREPARING" ? "mulai diproses" : status === "READY" ? "siap dijemput" : status === "CANCELLED" ? "ditolak" : "diperbarui"}.`);

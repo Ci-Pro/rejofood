@@ -77,16 +77,32 @@ export async function PATCH(
     const latestPayment = order.payments[0];
     if (!latestPayment) {
       return NextResponse.json(
-        { error: "Customer belum memilih metode pembayaran. Tunggu hingga customer membayar." },
+        {
+          error: "Customer belum memilih metode pembayaran.",
+          code: "NO_PAYMENT",
+          paymentStatus: null,
+        },
         { status: 400 },
       );
     }
     if (latestPayment.status !== "SUCCESS") {
-      const methodLabel = latestPayment.method.startsWith("VA") ? "Virtual Account" : latestPayment.method;
+      const methodLabel: Record<string, string> = {
+        COD: "Cash (COD)",
+        QRIS: "QRIS",
+        VA_BCA: "VA BCA",
+        VA_MANDIRI: "VA Mandiri",
+        VA_BNI: "VA BNI",
+        EWALLET_GOPAY: "GoPay",
+        EWALLET_OVO: "OVO",
+        EWALLET_DANA: "DANA",
+      };
+      const label = methodLabel[latestPayment.method] ?? latestPayment.method;
       return NextResponse.json(
         {
-          error: `Payment status: ${latestPayment.status}. Tunggu customer menyelesaikan pembayaran via ${methodLabel}.`,
+          error: `Pembayaran via ${label} masih ${latestPayment.status}. Tunggu customer menyelesaikan pembayaran.`,
+          code: "PAYMENT_PENDING",
           paymentStatus: latestPayment.status,
+          paymentMethod: label,
         },
         { status: 400 },
       );
