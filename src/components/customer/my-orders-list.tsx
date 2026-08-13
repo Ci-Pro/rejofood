@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Package, RefreshCw, ChevronRight, Wifi, WifiOff, X, Ban, Loader2, CreditCard, Star, RotateCcw, Clock, Receipt } from "lucide-react";
+import { Package, RefreshCw, ChevronRight, Wifi, WifiOff, X, Ban, Loader2, CreditCard, Star, RotateCcw, Clock, Receipt, CheckCircle2, XCircle, ChefHat, PackageCheck, Bike, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -407,37 +407,61 @@ export function MyOrdersList() {
               </div>
 
               <div className="flex-1 overflow-y-auto scroll-slim p-4">
-                {/* Status timeline */}
-                <div className="mb-4">
-                  <Badge variant="outline" className={cn("h-6 px-2 text-xs font-700", statusBadgeClass(selected.status))}>
-                    {statusLabel(selected.status)}
-                  </Badge>
-                  {selected.status !== "CANCELLED" && (
-                    <div className="mt-3 flex items-center">
-                      {STATUS_FLOW.map((s, i) => {
+                {/* Status timeline — premium vertical stepper */}
+                <div className="mb-4 rounded-xl border border-border bg-card p-3">
+                  {selected.status === "CANCELLED" ? (
+                    <div className="flex items-center gap-2 text-sm text-rose">
+                      <XCircle className="h-5 w-5" />
+                      <span className="font-700">Pesanan dibatalkan</span>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {[
+                        { status: "PENDING", label: "Pesanan dibuat", icon: Package },
+                        { status: "ACCEPTED", label: "Diterima restoran", icon: CheckCircle2 },
+                        { status: "PREPARING", label: "Sedang diproses", icon: ChefHat },
+                        { status: "READY", label: "Siap dijemput", icon: PackageCheck },
+                        { status: "PICKED_UP", label: "Driver dalam perjalanan", icon: Bike },
+                        { status: "DELIVERED", label: "Pesanan tiba", icon: Home },
+                      ].map((step, i) => {
                         const currentIdx = STATUS_FLOW.indexOf(selected.status);
-                        const done = i <= currentIdx;
+                        const stepIdx = STATUS_FLOW.indexOf(step.status as Order["status"]);
+                        const done = stepIdx <= currentIdx;
+                        const active = stepIdx === currentIdx;
+                        const StepIcon = step.icon;
                         return (
-                          <div key={s} className="flex flex-1 items-center">
+                          <div key={step.status} className="flex items-center gap-3">
                             <div className={cn(
-                              "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[0.6rem] font-700",
+                              "flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-all",
                               done ? "bg-saffron text-saffron-foreground" : "bg-muted text-muted-foreground",
+                              active && "ring-2 ring-saffron/30 ring-offset-2 ring-offset-card",
                             )}>
-                              {i + 1}
+                              <StepIcon className="h-3.5 w-3.5" strokeWidth={2.5} />
                             </div>
-                            {i < STATUS_FLOW.length - 1 && (
-                              <div className={cn("h-0.5 flex-1", i < currentIdx ? "bg-saffron" : "bg-muted")} />
+                            <div className="flex-1">
+                              <p className={cn(
+                                "text-xs font-600 transition-colors",
+                                done ? "text-foreground" : "text-muted-foreground",
+                                active && "font-700 text-saffron",
+                              )}>
+                                {step.label}
+                              </p>
+                            </div>
+                            {active && (
+                              <motion.span
+                                initial={{ scale: 0 }}
+                                animate={{ scale: 1 }}
+                                className="h-2 w-2 animate-pulse rounded-full bg-saffron"
+                              />
+                            )}
+                            {done && !active && (
+                              <CheckCircle2 className="h-3.5 w-3.5 text-mint" />
                             )}
                           </div>
                         );
                       })}
                     </div>
                   )}
-                  <div className="mt-1.5 flex justify-between text-[0.6rem] text-muted-foreground">
-                    {["Order", "Diterima", "Diproses", "Siap", "Diantar", "Sampai"].map((label) => (
-                      <span key={label} className="flex-1 text-center">{label}</span>
-                    ))}
-                  </div>
                 </div>
 
                 {/* Items */}

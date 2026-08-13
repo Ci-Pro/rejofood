@@ -9,6 +9,7 @@ import { MenuManager } from "./menu-manager";
 import { OrderQueue } from "./order-queue";
 import { MerchantReviews } from "./merchant-reviews";
 import { RevenueSummary } from "./revenue-summary";
+import { DailyOrdersChart } from "./daily-orders-chart";
 import { UserProfileEditor } from "@/components/shared/user-profile-editor";
 import { ErrorBoundary } from "@/components/shared/error-boundary";
 import type { MerchantInfo } from "./menu-manager-bridge";
@@ -51,6 +52,7 @@ export function MerchantDashboard() {
           />
           <div className="space-y-4">
             <RevenueSummary />
+            <DailyOrdersChart />
             <ProfileEditor info={info} onUpdated={setInfo} />
             <OrderQueue onPendingCountChange={setPendingCount} />
           </div>
