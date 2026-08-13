@@ -18,7 +18,7 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-jakarta);
-  --font-display: var(--font-fraunces);
+  --font-display: var(--font-jakarta);
   --font-mono: var(--font-geist-mono);
 
   --color-sidebar-ring: var(--sidebar-ring);
@@ -171,8 +171,9 @@
     overscroll-behavior-y: none;
   }
   .font-display {
-    font-family: var(--font-display), var(--font-sans), serif;
+    font-family: var(--font-jakarta), system-ui, sans-serif;
     letter-spacing: -0.025em;
+    font-weight: 700;
   }
   /* Native-like input focus */
   input, textarea, select {
