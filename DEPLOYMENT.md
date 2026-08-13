@@ -68,20 +68,30 @@ git push
 3. **Configure Project**:
    - Framework Preset: **Next.js** (auto-detected)
    - Root Directory: `./` (default)
-   - Build Command: `prisma generate && next build` (override default)
+   - Build Command: *(default — sudah auto `prisma generate && prisma db push --accept-data-loss && next build`)*
    - Install Command: `bun install` (default)
-4. **Environment Variables** — klik "Add" untuk masing-masing:
+4. **Environment Variables** — klik "Add" untuk masing-masing.
+   Centang semua environment: **Production + Preview + Development**.
 
-   | Name | Value | Note |
-   |------|-------|------|
-   | `DATABASE_URL` | `postgresql://rejofood_owner:xxx@ep-xxx.neon.tech/rejofood?sslmode=require` | Dari Neon (Step 1) |
-   | `REJO_DEMO_MODE` | `false` | Block demo admin di production |
-   | `REJO_REALTIME_SECRET` | `35f098168c83d752e88cd8e468fa3eae6ecb7ab7fcc89810114fb3113a54d240` | Generate baru: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` |
-   | `REJO_REALTIME_URL` | *(kosongkan)* | Vercel tidak support WebSocket — app fallback ke polling 30s |
-   | `NEXT_PUBLIC_REALTIME_URL` | *(kosongkan)* | Same as above |
+   | Name | Value | Wajib? | Note |
+   |------|-------|--------|------|
+   | `DATABASE_URL` | `postgresql://rejofood_owner:xxx@ep-xxx.neon.tech/rejofood?sslmode=require` | ✅ WAJIB | Dari Neon (Step 1). Tanpa ini, build gagal. |
+   | `REJO_DEMO_MODE` | `false` | ✅ WAJIB | Block demo admin di production |
+   | `REJO_REALTIME_SECRET` | `<64-char-hex>` | ⚠️ Rekomendasi | Generate: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` |
+   | `REJO_REALTIME_URL` | *(kosongkan)* | Opsional | Vercel tidak support WebSocket — app fallback ke polling 30s |
+   | `NEXT_PUBLIC_REALTIME_URL` | *(kosongkan)* | Opsional | Same as above |
+   | `CLOUDINARY_CLOUD_NAME` | `your-cloud-name` | ⚠️ Rekomendasi | Untuk upload foto menu/logo/avatar. Daftar gratis di cloudinary.com |
+   | `CLOUDINARY_UPLOAD_PRESET` | `rejofood` | ⚠️ Rekomendasi | Buat unsigned preset di Cloudinary → Settings → Upload |
+   | `REJOFOOD_BACKEND_URL` | `https://rejofood.vercel.app` | Opsional | URL backend untuk APK Android |
+   | `VAPID_PUBLIC_KEY` | `<from npx web-push generate-vapid-keys>` | Opsional | Untuk PWA push notifications |
+   | `VAPID_PRIVATE_KEY` | `<from npx web-push generate-vapid-keys>` | Opsional | Same as above |
+   | `VAPID_SUBJECT` | `mailto:admin@rejofood.id` | Opsional | Same as above |
+   | `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | `<same as VAPID_PUBLIC_KEY>` | Opsional | Public key untuk client-side |
 
 5. Klik **Deploy**
 6. Tunggu ~3-5 menit sampai build selesai
+   - Build log akan menampilkan: `prisma generate → prisma db push (auto-migrate!) → next build`
+   - Setiap deploy otomatis sync schema ke Neon Postgres (lihat `package.json` build script)
 7. Dapat URL: `https://rejofood-xxx.vercel.app`
 
 ### Verifikasi deploy berhasil
@@ -89,6 +99,18 @@ git push
 - Buka URL Vercel → harus muncul halaman login RejoFood
 - Login sebagai customer: `customer@rejofood.id` / `rejo1234`
 - ⚠️ **Database masih kosong** — perlu seed data (Step 4)
+
+### ⚡ Auto-Migrate (NEW!)
+
+Build script di `package.json` sekarang menjalankan `prisma db push --accept-data-loss` otomatis setiap deploy. Artinya:
+
+- ✅ Setiap perubahan `prisma/schema.prisma` otomatis di-sync ke Neon Postgres
+- ✅ Tidak perlu run `prisma migrate` manual setelah deploy
+- ✅ Idempotent — kalau schema sudah sinkron, `db push` no-op
+- ⚠️ `--accept-data-loss` berisiko untuk kolom yang di-rename/drop (data hilang). Untuk MVP app baru, ini aman.
+- ⚠️ Preview deployments juga akan sync ke production DB — **hati-hati** kalau schema berubah di feature branch
+
+Untuk local dev, set `DATABASE_URL=file:./db/custom.db` di `.env` dan switch `provider = "sqlite"` di `prisma/schema.prisma`.
 
 ---
 
