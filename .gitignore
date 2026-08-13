@@ -31,7 +31,6 @@ server.log
 .zscripts/
 Caddyfile
 download/
-upload/
 skills/
 tests/
 bun.lock
