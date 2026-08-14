@@ -69,5 +69,11 @@ export async function GET(req: Request) {
     })),
     nextCursor,
     total,
+  }, {
+    headers: {
+      // Cache 30 detik di browser — restaurant list jarang berubah
+      // Stale-while-revalidate: serve cached dulu, revalidate di background
+      "Cache-Control": "public, s-maxage=30, stale-while-revalidate=60",
+    },
   });
 }

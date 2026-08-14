@@ -54,5 +54,9 @@ export async function GET(req: Request) {
       merchant: item.merchant,
     })),
     total: items.length,
+  }, {
+    headers: {
+      "Cache-Control": "public, s-maxage=30, stale-while-revalidate=60",
+    },
   });
 }

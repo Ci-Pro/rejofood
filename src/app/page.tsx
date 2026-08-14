@@ -1,18 +1,29 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useState, Suspense, lazy } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { ShieldAlert, LogOut } from "lucide-react";
 import { AuthShell } from "@/components/auth/auth-shell";
-import { CustomerDashboard } from "@/components/customer/customer-dashboard";
-import { MerchantDashboard } from "@/components/merchant/merchant-dashboard";
-import { DriverDashboard } from "@/components/driver/driver-dashboard";
-import { AdminDashboard } from "@/components/admin/admin-dashboard";
 import { useAuthStore } from "@/store/auth-store";
 import { Role } from "@/lib/auth/roles";
 import { BrandLogo } from "@/components/auth/brand-logo";
 import { Button } from "@/components/ui/button";
+
+// 🔒 Lazy load dashboards — hanya load yang dibutuhkan
+// Customer APK tidak perlu load Merchant/Driver/Admin dashboard code
+const CustomerDashboard = lazy(() =>
+  import("@/components/customer/customer-dashboard").then(m => ({ default: m.CustomerDashboard }))
+);
+const MerchantDashboard = lazy(() =>
+  import("@/components/merchant/merchant-dashboard").then(m => ({ default: m.MerchantDashboard }))
+);
+const DriverDashboard = lazy(() =>
+  import("@/components/driver/driver-dashboard").then(m => ({ default: m.DriverDashboard }))
+);
+const AdminDashboard = lazy(() =>
+  import("@/components/admin/admin-dashboard").then(m => ({ default: m.AdminDashboard }))
+);
 
 type View = "loading" | "auth" | "customer" | "merchant" | "driver" | "admin" | "mismatch";
 
@@ -226,10 +237,26 @@ function HomeInner() {
     );
   }
   if (view === "auth") return <AuthShell showAdmin={showAdmin} appRole={appRole} />;
-  if (view === "customer") return <CustomerDashboard />;
-  if (view === "merchant") return <MerchantDashboard />;
-  if (view === "driver") return <DriverDashboard />;
-  if (view === "admin") return <AdminDashboard />;
+  if (view === "customer") return (
+    <Suspense fallback={<LoadingScreen message="Memuat dashboard…" />}>
+      <CustomerDashboard />
+    </Suspense>
+  );
+  if (view === "merchant") return (
+    <Suspense fallback={<LoadingScreen message="Memuat dashboard…" />}>
+      <MerchantDashboard />
+    </Suspense>
+  );
+  if (view === "driver") return (
+    <Suspense fallback={<LoadingScreen message="Memuat dashboard…" />}>
+      <DriverDashboard />
+    </Suspense>
+  );
+  if (view === "admin") return (
+    <Suspense fallback={<LoadingScreen message="Memuat dashboard…" />}>
+      <AdminDashboard />
+    </Suspense>
+  );
   return <AuthShell showAdmin={showAdmin} />;
 }
 

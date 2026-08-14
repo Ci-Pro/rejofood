@@ -117,7 +117,13 @@ export function ProfileEditor({ info, onUpdated }: ProfileEditorProps) {
         <div className="flex items-start gap-3">
           {info.logoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={info.logoUrl} alt={info.restaurantName} className="h-12 w-12 shrink-0 rounded-xl object-cover" />
+            <img
+              src={info.logoUrl}
+              alt={info.restaurantName}
+              loading="lazy"
+              decoding="async"
+              className="h-12 w-12 shrink-0 rounded-xl object-cover"
+            />
           ) : (
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-role text-role-fg">
               <Store className="h-4.5 w-4.5" strokeWidth={2.2} />

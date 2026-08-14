@@ -219,7 +219,13 @@ export function RestaurantGrid() {
                 {/* Image or placeholder */}
                 {item.imageUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={item.imageUrl} alt={item.name} className="h-14 w-14 shrink-0 rounded-xl object-cover" />
+                  <img
+                src={item.imageUrl}
+                alt={item.name}
+                loading="lazy"
+                decoding="async"
+                className="h-14 w-14 shrink-0 rounded-xl object-cover"
+              />
                 ) : (
                   <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-saffron/10 text-saffron">
                     <Coffee className="h-5 w-5" />
@@ -254,9 +260,21 @@ export function RestaurantGrid() {
       {/* Restaurant grid (only in restaurant mode) */}
       {searchMode === "restaurants" && (
         loading ? (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="h-44 animate-pulse rounded-2xl border border-border bg-muted/50" />
+            <div key={i} className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card">
+              {/* Image skeleton */}
+              <div className="h-24 animate-pulse bg-muted/60 sm:h-28" />
+              {/* Content skeleton */}
+              <div className="flex items-start gap-3 p-3.5 sm:p-4">
+                <div className="h-12 w-12 shrink-0 animate-pulse rounded-xl bg-muted/60" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-3.5 w-3/4 animate-pulse rounded bg-muted/60" />
+                  <div className="h-2.5 w-1/2 animate-pulse rounded bg-muted/40" />
+                  <div className="h-2.5 w-2/3 animate-pulse rounded bg-muted/40" />
+                </div>
+              </div>
+            </div>
           ))}
         </div>
       ) : items.length === 0 ? (
@@ -276,10 +294,10 @@ export function RestaurantGrid() {
           {items.map((r, idx) => (
             <motion.div
               key={r.id}
-              initial={{ opacity: 0, y: 12 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.35, delay: Math.min(idx * 0.05, 0.4), ease: [0.4, 0, 0.2, 1] }}
-              whileHover={{ y: -4 }}
+              transition={{ duration: 0.25, delay: Math.min(idx * 0.03, 0.2) }}
+              whileHover={{ y: -2 }}
               whileTap={{ scale: 0.98 }}
               className="group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-card transition-premium hover:shadow-card-hover hover:border-transparent"
             >
