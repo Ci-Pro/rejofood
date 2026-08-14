@@ -16,6 +16,7 @@ export async function GET() {
   const [
     totalCustomers, totalMerchants, totalDrivers, totalAdmins,
     activeOrders, deliveredToday, gmvToday, totalReviews, avgRating,
+    flaggedCount, totalRevenue, openMerchants, activePromos,
   ] = await Promise.all([
     db.user.count({ where: { role: "CUSTOMER", isActive: true } }),
     db.user.count({ where: { role: "MERCHANT", isActive: true } }),
@@ -29,6 +30,10 @@ export async function GET() {
     }),
     db.review.count(),
     db.review.aggregate({ _avg: { rating: true } }),
+    db.user.count({ where: { isFlagged: true } }),
+    db.order.aggregate({ where: { status: "DELIVERED" }, _sum: { total: true } }),
+    db.merchant.count({ where: { isOpen: true } }),
+    db.promo.count({ where: { isActive: true } }),
   ]);
 
   return NextResponse.json({
@@ -37,11 +42,22 @@ export async function GET() {
       merchants: totalMerchants,
       drivers: totalDrivers,
       admins: totalAdmins,
+      flagged: flaggedCount,
     },
     orders: {
       active: activeOrders,
       deliveredToday,
       gmvToday: gmvToday._sum.total ?? 0,
+    },
+    revenue: {
+      total: totalRevenue._sum.total ?? 0,
+    },
+    merchants: {
+      open: openMerchants,
+      total: totalMerchants,
+    },
+    promos: {
+      active: activePromos,
     },
     reviews: {
       total: totalReviews,

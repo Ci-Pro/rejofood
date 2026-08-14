@@ -6,7 +6,7 @@ import {
   UtensilsCrossed, ShoppingBag, Heart, User, Wallet,
   Store, ClipboardList, Bell,
   Package, Bike, CheckCircle2,
-  ScrollText, Activity, ShieldCheck,
+  ScrollText, Activity, ShieldCheck, Tag,
 } from "lucide-react";
 import { useAuthStore } from "@/store/auth-store";
 import { cn } from "@/lib/utils";
@@ -54,7 +54,9 @@ export function getNavItems(role: string, badges?: Record<string, number>): NavI
 
     case "ADMIN":
       return [
-        { key: "orders", label: "Pesanan", icon: ScrollText },
+        { key: "orders", label: "Dashboard", icon: ScrollText },
+        { key: "merchants", label: "Merchant", icon: Store },
+        { key: "promos", label: "Promo", icon: Tag },
         { key: "wallets", label: "Dompet", icon: Wallet },
         { key: "audit", label: "Audit Log", icon: Activity },
         { key: "profile", label: "Profil", icon: ShieldCheck },

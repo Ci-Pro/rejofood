@@ -10,13 +10,18 @@ import { AuditLogViewer } from "./audit-log-viewer";
 import { OrderMonitor } from "./order-monitor";
 import { UserManagement } from "./user-management";
 import { AdminWalletManagement as WalletManagement } from "./wallet-management";
+import { PromoManagement } from "./promo-management";
+import { MerchantManagement } from "./merchant-management";
 import { UserProfileEditor } from "@/components/shared/user-profile-editor";
 import { ErrorBoundary } from "@/components/shared/error-boundary";
-import { Users, Store, Bike, Activity, Loader2 } from "lucide-react";
+import { Users, Store, Bike, Activity, Loader2, Tag, AlertTriangle, TrendingUp } from "lucide-react";
 
 interface AdminStats {
-  users: { customers: number; merchants: number; drivers: number; admins: number };
+  users: { customers: number; merchants: number; drivers: number; admins: number; flagged?: number };
   orders: { active: number; deliveredToday: number; gmvToday: number };
+  revenue?: { total: number };
+  merchants?: { open: number; total: number };
+  promos?: { active: number };
   reviews: { total: number; avgRating: number };
 }
 
@@ -85,15 +90,53 @@ export function AdminDashboard() {
           </div>
 
           {stats && stats.reviews.total > 0 && (
-            <div className="mt-3 flex items-center gap-4 rounded-2xl border border-border bg-card p-3 text-xs text-muted-foreground">
+            <div className="mt-3 flex flex-wrap items-center gap-4 rounded-2xl border border-border bg-card p-3 text-xs text-muted-foreground">
               <span>Total ulasan: <span className="font-700 text-foreground">{stats.reviews.total}</span></span>
               <span>Rating rata-rata: <span className="font-700 text-saffron">★ {stats.reviews.avgRating}</span></span>
+              {stats.revenue && (
+                <span>Total Revenue: <span className="font-700 text-foreground">{formatRupiah(stats.revenue.total)}</span></span>
+              )}
+              {stats.merchants && (
+                <span>Merchant Buka: <span className="font-700 text-foreground">{stats.merchants.open}/{stats.merchants.total}</span></span>
+              )}
+              {stats.promos && (
+                <span>Promo Aktif: <span className="font-700 text-primary">{stats.promos.active}</span></span>
+              )}
+              {stats.users.flagged && stats.users.flagged > 0 && (
+                <span className="font-700 text-rose">⚠ {stats.users.flagged} user flagged</span>
+              )}
             </div>
           )}
 
           <div className="mt-6">
             <OrderMonitor />
           </div>
+        </>
+      )}
+
+      {activeNav === "merchants" && (
+        <>
+          <DashboardHeader
+            greeting="Manajemen Merchant"
+            subtitle="Kelola restoran & status buka/tutup."
+            accent="rose"
+          />
+          <ErrorBoundary>
+            <MerchantManagement />
+          </ErrorBoundary>
+        </>
+      )}
+
+      {activeNav === "promos" && (
+        <>
+          <DashboardHeader
+            greeting="Manajemen Promo"
+            subtitle="Buat & kelola kode promo untuk customer."
+            accent="rose"
+          />
+          <ErrorBoundary>
+            <PromoManagement />
+          </ErrorBoundary>
         </>
       )}
 
