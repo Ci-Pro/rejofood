@@ -12,6 +12,7 @@ import { requireRole } from "@/lib/auth/context";
 import { estimateDeliveryFee, formatFee, formatDistance } from "@/lib/delivery-fee";
 
 export async function POST(req: Request) {
+  try {
   const me = await requireRole("CUSTOMER");
   if (!me) {
     return NextResponse.json({ error: "Forbidden. Hanya customer." }, { status: 403 });
@@ -69,4 +70,8 @@ export async function POST(req: Request) {
     feeFormatted: formatFee(estimate.fee),
     distanceFormatted: formatDistance(estimate.distanceKm),
   });
+  } catch (err) {
+    console.error("[delivery/estimate] error:", err);
+    return NextResponse.json({ error: "Gagal menghitung ongkir." }, { status: 500 });
+  }
 }

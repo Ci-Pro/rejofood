@@ -15,6 +15,7 @@ import { getCurrentUser } from "@/lib/auth/context";
 import { PromoType } from "@prisma/client";
 
 export async function POST(req: Request) {
+  try {
   const me = await getCurrentUser();
   if (!me) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -109,4 +110,8 @@ export async function POST(req: Request) {
     discount,
     minOrder: promo.minOrder,
   });
+  } catch (err) {
+    console.error("[promo/validate] error:", err);
+    return NextResponse.json({ valid: false, error: "Gagal validasi promo." }, { status: 500 });
+  }
 }
