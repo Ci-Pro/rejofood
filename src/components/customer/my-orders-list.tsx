@@ -263,21 +263,31 @@ export function MyOrdersList() {
 
       {loading && orders.length === 0 ? (
         <div className="space-y-2">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="h-16 animate-pulse rounded-xl border border-border bg-muted/50" />
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3">
+              <div className="h-12 w-12 shrink-0 animate-pulse rounded-xl bg-muted" />
+              <div className="flex-1 space-y-2">
+                <div className="h-3 w-1/3 animate-pulse rounded bg-muted" />
+                <div className="h-2.5 w-2/3 animate-pulse rounded bg-muted" />
+                <div className="h-2.5 w-1/2 animate-pulse rounded bg-muted" />
+              </div>
+              <div className="h-6 w-16 animate-pulse rounded-full bg-muted" />
+            </div>
           ))}
         </div>
       ) : orders.length === 0 ? (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="rounded-2xl border border-dashed border-border bg-muted/20 p-10 text-center"
+          className="flex flex-col items-center justify-center rounded-2xl border border-border bg-card p-12 text-center"
         >
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-saffron/10">
-            <Package className="h-7 w-7 text-saffron" />
+          <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-secondary">
+            <Package className="h-9 w-9 text-muted-foreground" />
           </div>
-          <p className="mt-3 font-display text-base font-700 text-foreground">Belum ada pesanan</p>
-          <p className="mt-1 text-xs text-muted-foreground">Yuk pesan dari restoran favoritmu!</p>
+          <p className="mt-4 font-display text-lg font-700 text-foreground">Belum ada pesanan</p>
+          <p className="mt-1 max-w-xs text-sm text-muted-foreground">
+            Yuk pesan dari restoran favoritmu dan nikmati makanan lezat!
+          </p>
         </motion.div>
       ) : (
         <div className="space-y-2">

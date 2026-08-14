@@ -98,17 +98,23 @@ export function FavoritesList() {
       )}
 
       {loading ? (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="h-44 animate-pulse rounded-2xl border border-border bg-muted/50" />
+            <div key={i} className="flex flex-col rounded-2xl border border-border bg-card p-4">
+              <div className="h-14 w-14 animate-pulse rounded-2xl bg-muted" />
+              <div className="mt-3 h-3.5 w-2/3 animate-pulse rounded bg-muted" />
+              <div className="mt-2 h-2.5 w-1/2 animate-pulse rounded bg-muted" />
+            </div>
           ))}
         </div>
       ) : items.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border bg-muted/30 p-10 text-center">
-          <Heart className="mx-auto h-10 w-10 text-muted-foreground" />
-          <p className="mt-3 text-sm font-600 text-foreground">Belum ada favorit</p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Tap ikon hati di restoran untuk menyimpan favoritmu.
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-border bg-card p-12 text-center">
+          <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-secondary">
+            <Heart className="h-9 w-9 text-muted-foreground" />
+          </div>
+          <p className="mt-4 font-display text-lg font-700 text-foreground">Belum ada favorit</p>
+          <p className="mt-1 max-w-xs text-sm text-muted-foreground">
+            Tap ikon hati di restoran untuk menyimpan favoritmu di sini.
           </p>
         </div>
       ) : (

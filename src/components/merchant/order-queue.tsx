@@ -253,14 +253,16 @@ export function OrderQueue({ onPendingCountChange }: { onPendingCountChange?: (c
       {loading && orders.length === 0 ? (
         <div className="space-y-2">
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="h-24 animate-pulse rounded-xl border border-border bg-muted/50" />
+            <div key={i} className="h-28 animate-pulse rounded-2xl border border-border bg-muted" />
           ))}
         </div>
       ) : orders.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-border bg-muted/30 p-8 text-center">
-          <Bell className="mx-auto h-8 w-8 text-muted-foreground" />
-          <p className="mt-2 text-sm font-600 text-foreground">Belum ada pesanan</p>
-          <p className="mt-1 text-xs text-muted-foreground">Pastikan restoran dalam status BUKA.</p>
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-border bg-card p-10 text-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-secondary">
+            <Bell className="h-8 w-8 text-muted-foreground" />
+          </div>
+          <p className="mt-3 font-display text-base font-700 text-foreground">Belum ada pesanan</p>
+          <p className="mt-1 text-sm text-muted-foreground">Pastikan restoran dalam status BUKA.</p>
         </div>
       ) : (
         <div className="space-y-2">

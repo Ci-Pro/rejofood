@@ -72,7 +72,7 @@ function initialColor(name: string): string {
   return colors[Math.abs(hash) % colors.length];
 }
 
-export function RestaurantGrid() {
+export function RestaurantGrid({ cuisineFilter }: { cuisineFilter?: string }) {
   const [items, setItems] = useState<RestaurantListItem[]>([]);
   const [menuResults, setMenuResults] = useState<MenuItemResult[]>([]);
   const [searchMode, setSearchMode] = useState<"restaurants" | "menu">("restaurants");
@@ -90,6 +90,7 @@ export function RestaurantGrid() {
       const params = new URLSearchParams();
       if (query) params.set("q", query);
       if (openOnly) params.set("openOnly", "true");
+      if (cuisineFilter) params.set("cuisine", cuisineFilter);
       params.set("limit", "50");
       const res = await fetch(`/api/restaurants?${params.toString()}`, { cache: "no-store" });
       const data = await res.json();
@@ -103,7 +104,7 @@ export function RestaurantGrid() {
     } finally {
       setLoading(false);
     }
-  }, [query, openOnly]);
+  }, [query, openOnly, cuisineFilter]);
 
   const fetchMenuItems = useCallback(async (q: string) => {
     setLoading(true);
@@ -284,13 +285,27 @@ export function RestaurantGrid() {
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="rounded-2xl border border-dashed border-border bg-muted/20 p-10 text-center"
+          className="flex flex-col items-center justify-center rounded-2xl border border-border bg-card p-12 text-center"
         >
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-saffron/10">
-            <UtensilsCrossed className="h-7 w-7 text-saffron" />
+          <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-secondary">
+            <UtensilsCrossed className="h-9 w-9 text-muted-foreground" />
           </div>
-          <p className="mt-3 font-display text-base font-700 text-foreground">Tidak ada restoran ditemukan</p>
-          <p className="mt-1 text-xs text-muted-foreground">Coba ubah kata kunci atau filter.</p>
+          <p className="mt-4 font-display text-lg font-700 text-foreground">
+            {query || cuisineFilter ? "Tidak ada hasil" : "Belum ada restoran"}
+          </p>
+          <p className="mt-1 max-w-xs text-sm text-muted-foreground">
+            {query || cuisineFilter
+              ? "Coba ubah kata kunci atau pilih kategori lain."
+              : "Restoran akan muncul di sini setelah merchant bergabung."}
+          </p>
+          {(query || cuisineFilter) && (
+            <button
+              onClick={() => { setQuery(""); }}
+              className="mt-4 rounded-xl bg-primary px-4 py-2 text-sm font-700 text-primary-foreground transition-premium active:scale-95"
+            >
+              Reset filter
+            </button>
+          )}
         </motion.div>
       ) : (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
