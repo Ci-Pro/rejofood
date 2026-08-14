@@ -25,6 +25,7 @@ import { getCurrentUser } from "@/lib/auth/context";
 import { logAction, getRequestMeta } from "@/lib/auth/audit";
 import { rateLimitResponse } from "@/lib/auth/api-rate-limiter";
 import { getOrCreateWallet, debitWallet } from "@/lib/wallet/wallet-service";
+import { verifyWalletPin, requiresPin, isPinLocked } from "@/lib/wallet/pin-service";
 
 const ALLOWED_BANKS = ["BCA", "BNI", "MANDIRI", "BRI", "PERMATA"] as const;
 type BankCode = (typeof ALLOWED_BANKS)[number];
@@ -98,6 +99,36 @@ export async function POST(req: Request) {
         { error: `Saldo tidak cukup. Saldo: Rp ${wallet.balance.toLocaleString("id-ID")}` },
         { status: 400 },
       );
+    }
+
+    // 🔒 PIN verification untuk withdrawal (selalu butuh jika PIN sudah diset)
+    const needPin = await requiresPin(me.id, amount, "WITHDRAWAL");
+    if (needPin) {
+      const lockStatus = isPinLocked(me.id);
+      if (lockStatus.locked) {
+        return NextResponse.json({
+          error: `PIN terkunci. Coba lagi dalam ${lockStatus.retryAfterSeconds} detik.`,
+          code: "PIN_LOCKED",
+          retryAfterSeconds: lockStatus.retryAfterSeconds,
+        }, { status: 429 });
+      }
+      const pin = body.pin ? String(body.pin) : "";
+      const pinResult = await verifyWalletPin(me.id, pin);
+      if (!pinResult.valid) {
+        if (pinResult.retryAfterSeconds) {
+          return NextResponse.json({
+            error: `Terlalu banyak percobaan PIN salah. Terkunci ${pinResult.retryAfterSeconds} detik.`,
+            code: "PIN_LOCKED",
+            retryAfterSeconds: pinResult.retryAfterSeconds,
+          }, { status: 429 });
+        }
+        return NextResponse.json({
+          error: `PIN salah. Sisa percobaan: ${pinResult.remaining}/${pinResult.maxAttempts}.`,
+          code: "PIN_INVALID",
+          remaining: pinResult.remaining,
+          maxAttempts: pinResult.maxAttempts,
+        }, { status: 401 });
+      }
     }
 
     // Debit atomically + create transaction record

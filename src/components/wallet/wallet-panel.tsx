@@ -2,11 +2,13 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Loader2, Receipt } from "lucide-react";
+import { Loader2, Receipt, ShieldCheck, ShieldAlert } from "lucide-react";
 import { WalletCard } from "./wallet-card";
 import { TopUpDialog } from "./topup-dialog";
 import { WithdrawDialog } from "./withdraw-dialog";
 import { WalletTransactionsList } from "./wallet-transactions-list";
+import { PinSetDialog } from "./pin-set-dialog";
+import { Button } from "@/components/ui/button";
 
 interface WalletData {
   wallet: {
@@ -43,6 +45,7 @@ export function WalletPanel({ showWithdraw = false }: WalletPanelProps) {
   const [loading, setLoading] = useState(true);
   const [topUpOpen, setTopUpOpen] = useState(false);
   const [withdrawOpen, setWithdrawOpen] = useState(false);
+  const [pinSetOpen, setPinSetOpen] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -61,6 +64,8 @@ export function WalletPanel({ showWithdraw = false }: WalletPanelProps) {
     load();
   }, [load]);
 
+  const hasPin = data?.wallet?.hasPin ?? false;
+
   return (
     <div className="space-y-5">
       <WalletCard
@@ -74,6 +79,48 @@ export function WalletPanel({ showWithdraw = false }: WalletPanelProps) {
         onWithdraw={() => setWithdrawOpen(true)}
         loading={loading}
       />
+
+      {/* PIN status banner */}
+      {!loading && (
+        <motion.div
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          className={hasPin
+            ? "flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-3 dark:border-emerald-900/50 dark:bg-emerald-950/30"
+            : "flex items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-3 dark:border-amber-900/50 dark:bg-amber-950/30"}
+        >
+          <div className={hasPin
+            ? "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600 dark:bg-emerald-900/50 dark:text-emerald-300"
+            : "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-600 dark:bg-amber-900/50 dark:text-amber-300"}>
+            {hasPin
+              ? <ShieldCheck className="h-4 w-4" />
+              : <ShieldAlert className="h-4 w-4" />}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className={hasPin
+              ? "text-sm font-700 text-emerald-700 dark:text-emerald-300"
+              : "text-sm font-700 text-amber-700 dark:text-amber-300"}>
+              {hasPin ? "PIN Aktif" : "PIN Belum Di-set"}
+            </p>
+            <p className={hasPin
+              ? "text-xs text-emerald-600 dark:text-emerald-400"
+              : "text-xs text-amber-600 dark:text-amber-400"}>
+              {hasPin
+                ? "Transaksi di atas Rp 100.000 & withdrawal dilindungi PIN."
+                : "Aktifkan PIN untuk keamanan transaksi dompet."}
+            </p>
+          </div>
+          {!hasPin && (
+            <Button
+              size="sm"
+              onClick={() => setPinSetOpen(true)}
+              className="shrink-0 bg-amber-600 text-white hover:bg-amber-700"
+            >
+              Set PIN
+            </Button>
+          )}
+        </motion.div>
+      )}
 
       {data?.wallet?.isFrozen && (
         <motion.div
@@ -116,9 +163,16 @@ export function WalletPanel({ showWithdraw = false }: WalletPanelProps) {
           open={withdrawOpen}
           onClose={() => setWithdrawOpen(false)}
           currentBalance={data?.wallet?.balance ?? 0}
+          hasPin={hasPin}
           onSuccess={() => load()}
         />
       )}
+
+      <PinSetDialog
+        open={pinSetOpen}
+        onClose={() => setPinSetOpen(false)}
+        onSuccess={() => load()}
+      />
     </div>
   );
 }

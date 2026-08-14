@@ -26,6 +26,7 @@ import { rateLimitResponse } from "@/lib/auth/api-rate-limiter";
 import { emitRealtime } from "@/lib/realtime/realtime-client";
 import { createPaymentCharge, isCOD, methodLabel } from "@/lib/payment/gateway";
 import { debitWallet } from "@/lib/wallet/wallet-service";
+import { verifyWalletPin, requiresPin, isPinLocked } from "@/lib/wallet/pin-service";
 import { PaymentMethod, PaymentStatus } from "@prisma/client";
 
 function generatePaymentCode(): string {
@@ -111,6 +112,38 @@ export async function POST(req: Request) {
   if (isCOD(method)) {
     initialStatus = PaymentStatus.SUCCESS;
   } else if (method === PaymentMethod.WALLET) {
+    // 🔒 PIN verification untuk WALLET payment (jika butuh)
+    const needPin = await requiresPin(me.id, order.total, "PAYMENT");
+    if (needPin) {
+      // Cek lockout dulu
+      const lockStatus = isPinLocked(me.id);
+      if (lockStatus.locked) {
+        return NextResponse.json({
+          error: `PIN terkunci. Coba lagi dalam ${lockStatus.retryAfterSeconds} detik.`,
+          code: "PIN_LOCKED",
+          retryAfterSeconds: lockStatus.retryAfterSeconds,
+        }, { status: 429 });
+      }
+      // Verify PIN dari body
+      const pin = body.pin ? String(body.pin) : "";
+      const pinResult = await verifyWalletPin(me.id, pin);
+      if (!pinResult.valid) {
+        if (pinResult.retryAfterSeconds) {
+          return NextResponse.json({
+            error: `Terlalu banyak percobaan PIN salah. Terkunci ${pinResult.retryAfterSeconds} detik.`,
+            code: "PIN_LOCKED",
+            retryAfterSeconds: pinResult.retryAfterSeconds,
+          }, { status: 429 });
+        }
+        return NextResponse.json({
+          error: `PIN salah. Sisa percobaan: ${pinResult.remaining}/${pinResult.maxAttempts}.`,
+          code: "PIN_INVALID",
+          remaining: pinResult.remaining,
+          maxAttempts: pinResult.maxAttempts,
+        }, { status: 401 });
+      }
+    }
+
     // Debit saldo RejoPay secara atomic
     try {
       const walletTx = await debitWallet({

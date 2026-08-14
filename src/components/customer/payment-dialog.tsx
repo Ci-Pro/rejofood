@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { useOrderSocket } from "@/hooks/use-order-socket";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { PinVerifyDialog } from "@/components/wallet/pin-verify-dialog";
 
 type PaymentMethod = "COD" | "WALLET" | "QRIS" | "VA_BCA" | "VA_MANDIRI" | "VA_BNI" | "EWALLET_GOPAY" | "EWALLET_OVO" | "EWALLET_DANA";
 type PaymentStatus = "PENDING" | "SUCCESS" | "FAILED" | "REFUNDED";
@@ -93,19 +94,29 @@ export function PaymentDialog({
   const [payment, setPayment] = useState<PaymentInfo | null>(existingPayment ?? null);
   const [simulating, setSimulating] = useState(false);
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
+  const [walletHasPin, setWalletHasPin] = useState(false);
   const [walletLoading, setWalletLoading] = useState(false);
+  const [pinPromptOpen, setPinPromptOpen] = useState(false);
 
-  // Fetch wallet balance when dialog opens (untuk display di opsi WALLET)
+  // Fetch wallet balance + PIN status when dialog opens
   useEffect(() => {
     if (!open) return;
     setWalletLoading(true);
     fetch("/api/wallet")
       .then((r) => r.json())
       .then((d) => {
-        if (d?.wallet) setWalletBalance(d.wallet.balance);
-        else setWalletBalance(null);
+        if (d?.wallet) {
+          setWalletBalance(d.wallet.balance);
+          setWalletHasPin(d.wallet.hasPin);
+        } else {
+          setWalletBalance(null);
+          setWalletHasPin(false);
+        }
       })
-      .catch(() => setWalletBalance(null))
+      .catch(() => {
+        setWalletBalance(null);
+        setWalletHasPin(false);
+      })
       .finally(() => setWalletLoading(false));
   }, [open]);
 
@@ -130,13 +141,29 @@ export function PaymentDialog({
     },
   });
 
-  async function createPayment() {
+  // Cek apakah payment butuh PIN: WALLET method + hasPin + amount >= 100000
+  const needsPin = selectedMethod === "WALLET"
+    && walletHasPin
+    && total >= 100_000;
+
+  function handlePayClick() {
+    // Jika butuh PIN, show PIN dialog dulu — bukan langsung createPayment
+    if (needsPin) {
+      setPinPromptOpen(true);
+      return;
+    }
+    createPayment();
+  }
+
+  async function createPayment(pin?: string) {
     setCreating(true);
     try {
+      const payload: Record<string, unknown> = { orderId, method: selectedMethod };
+      if (pin) payload.pin = pin;
       const res = await fetch("/api/payment/create", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ orderId, method: selectedMethod }),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -402,7 +429,7 @@ export function PaymentDialog({
                 Batal
               </Button>
               <Button
-                onClick={createPayment}
+                onClick={handlePayClick}
                 disabled={creating || (selectedMethod === "WALLET" && walletBalance !== null && walletBalance < total)}
                 className="accent-saffron bg-role text-role-fg hover:opacity-90"
               >
@@ -421,6 +448,19 @@ export function PaymentDialog({
           )}
         </DialogFooter>
       </DialogContent>
+
+      {/* PIN verification untuk WALLET payment >= Rp 100.000 */}
+      <PinVerifyDialog
+        open={pinPromptOpen}
+        onClose={() => setPinPromptOpen(false)}
+        context={`Bayar ${formatRupiah(total)} via RejoPay`}
+        onVerified={() => {
+          setPinPromptOpen(false);
+          // PIN terverifikasi di server, lanjut createPayment tanpa PIN
+          // (server-side verifyWalletPin sudah validate, tidak perlu kirim PIN lagi)
+          createPayment();
+        }}
+      />
     </Dialog>
   );
 }

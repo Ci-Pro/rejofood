@@ -16,11 +16,14 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { PinVerifyDialog } from "./pin-verify-dialog";
 
 interface WithdrawDialogProps {
   open: boolean;
   onClose: () => void;
   currentBalance: number;
+  /** Jika user sudah set PIN, withdraw butuh verifikasi */
+  hasPin?: boolean;
   onSuccess?: (amount: number) => void;
 }
 
@@ -36,13 +39,14 @@ function formatRupiah(n: number): string {
   return "Rp " + n.toLocaleString("id-ID");
 }
 
-export function WithdrawDialog({ open, onClose, currentBalance, onSuccess }: WithdrawDialogProps) {
+export function WithdrawDialog({ open, onClose, currentBalance, hasPin = false, onSuccess }: WithdrawDialogProps) {
   const [amount, setAmount] = useState<string>("");
   const [bankCode, setBankCode] = useState<string>("BCA");
   const [accountNumber, setAccountNumber] = useState<string>("");
   const [accountName, setAccountName] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState<{ amount: number; txCode: string } | null>(null);
+  const [pinPromptOpen, setPinPromptOpen] = useState(false);
 
   function reset() {
     setAmount("");
@@ -50,6 +54,7 @@ export function WithdrawDialog({ open, onClose, currentBalance, onSuccess }: Wit
     setAccountNumber("");
     setAccountName("");
     setSuccess(null);
+    setPinPromptOpen(false);
   }
 
   function handleClose() {
@@ -57,25 +62,41 @@ export function WithdrawDialog({ open, onClose, currentBalance, onSuccess }: Wit
     setTimeout(reset, 300);
   }
 
-  async function submit() {
+  // Validate form fields sebelum show PIN prompt atau submit
+  function validateForm(): boolean {
     const amt = Number(amount);
     if (!Number.isInteger(amt) || amt < 50000) {
       toast.error("Minimal withdraw Rp 50.000");
-      return;
+      return false;
     }
     if (amt > currentBalance) {
       toast.error("Saldo tidak cukup");
-      return;
+      return false;
     }
     if (!accountNumber || accountNumber.length < 6) {
       toast.error("Nomor rekening tidak valid (min 6 digit)");
-      return;
+      return false;
     }
     if (!accountName.trim()) {
       toast.error("Nama pemilik rekening wajib diisi");
-      return;
+      return false;
     }
+    return true;
+  }
 
+  function handleSubmitClick() {
+    if (!validateForm()) return;
+    if (hasPin) {
+      // Show PIN dialog dulu
+      setPinPromptOpen(true);
+    } else {
+      // Langsung submit
+      submit();
+    }
+  }
+
+  async function submit() {
+    const amt = Number(amount);
     setSubmitting(true);
     try {
       const res = await fetch("/api/wallet/withdraw", {
@@ -205,7 +226,7 @@ export function WithdrawDialog({ open, onClose, currentBalance, onSuccess }: Wit
               </div>
 
               <Button
-                onClick={submit}
+                onClick={handleSubmitClick}
                 disabled={submitting}
                 className="w-full bg-[#7C5BBF] text-white hover:bg-[#6B4FB5]"
               >
@@ -249,6 +270,17 @@ export function WithdrawDialog({ open, onClose, currentBalance, onSuccess }: Wit
           )}
         </AnimatePresence>
       </DialogContent>
+
+      {/* PIN verification dialog (modal on top of modal) */}
+      <PinVerifyDialog
+        open={pinPromptOpen}
+        onClose={() => setPinPromptOpen(false)}
+        context={`Withdraw ${formatRupiah(Number(amount))} ke ${bankCode}`}
+        onVerified={() => {
+          setPinPromptOpen(false);
+          submit();
+        }}
+      />
     </Dialog>
   );
 }
