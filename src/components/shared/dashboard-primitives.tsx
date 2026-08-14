@@ -100,12 +100,14 @@ export function DashboardBanner({
         "relative mb-4 overflow-hidden rounded-2xl p-4 shadow-card sm:mb-5 sm:p-5",
       )}
     >
-      {/* Gradient background */}
+      {/* Gradient background — modern vivid role color */}
       <div
-        className="pointer-events-none absolute inset-0 opacity-95"
-        style={{
-          background: "linear-gradient(135deg, #3D2364 0%, #2D1B4E 50%, #1C0E33 100%)",
-        }}
+        className="pointer-events-none absolute inset-0 bg-role opacity-95"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{ background: "linear-gradient(135deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.20) 100%)" }}
         aria-hidden
       />
       {/* Glow */}

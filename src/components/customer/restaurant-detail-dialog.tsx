@@ -164,17 +164,14 @@ export function RestaurantDetailDialog({
             {/* Header */}
             <div className="relative shrink-0 overflow-hidden border-b border-border/60 bg-primary">
               <div
-                className="pointer-events-none absolute inset-0 opacity-95"
-                style={{
-                  background:
-                    "linear-gradient(135deg, #3D2364 0%, #2D1B4E 40%, #1C0E33 100%)",
-                }}
+                className="pointer-events-none absolute inset-0"
+                style={{ background: "linear-gradient(135deg, #FF6B00 0%, #FF9F1C 100%)" }}
                 aria-hidden
               />
-              {/* Saffron glow */}
+              {/* White glow */}
               <div
                 className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full opacity-20 blur-3xl"
-                style={{ background: "#FF9F1C" }}
+                style={{ background: "rgba(255,255,255,0.4)" }}
                 aria-hidden
               />
               <div className="relative z-10 p-5 text-primary-foreground">

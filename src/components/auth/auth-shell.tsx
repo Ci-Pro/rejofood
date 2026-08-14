@@ -43,27 +43,23 @@ export function AuthShell({ showAdmin = false, appRole = null }: { showAdmin?: b
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-background">
-      {/* Static gradient background (CSS-only, no JS animation) — performant */}
-      <div className="pointer-events-none fixed inset-0">
-        <div
-          className="absolute -left-20 top-1/4 h-72 w-72 rounded-full opacity-20 blur-3xl"
-          style={{ background: "#7C5BBF" }}
-        />
-        <div
-          className="absolute -right-20 bottom-1/4 h-80 w-80 rounded-full opacity-15 blur-3xl"
-          style={{ background: "#FF9F1C" }}
-        />
-      </div>
+      {/* Modern clean background — subtle gradient, no blobs */}
+      <div
+        className="pointer-events-none fixed inset-0"
+        style={{
+          background: "linear-gradient(180deg, #FFFFFF 0%, #F8F9FB 100%)",
+        }}
+      />
 
       {/* Centered content */}
-      <div className="relative z-10 flex min-h-screen flex-col items-center justify-center px-4 py-8">
-        {/* Brand logo — instant render, no motion delay */}
-        <div className="mb-5">
+      <div className="relative z-10 flex min-h-screen flex-col items-center justify-center px-5 py-8">
+        {/* Brand logo — instant render */}
+        <div className="mb-6">
           <BrandLogo size="lg" />
         </div>
 
         {/* Tagline */}
-        <p className="mb-5 max-w-md text-center text-sm text-muted-foreground">
+        <p className="mb-6 max-w-md text-center text-sm text-muted-foreground">
           {isLockedRole ? (
             role === Role.CUSTOMER ? "Pesan makanan favoritmu, antar sampai depan pintu."
             : role === Role.MERCHANT ? "Kelola restoran & pesanan masuk dengan mudah."
@@ -111,12 +107,12 @@ export function AuthShell({ showAdmin = false, appRole = null }: { showAdmin?: b
           </div>
         )}
 
-        {/* Glass form card — single fade-in, no delay */}
+        {/* Form card — modern clean white card */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.2 }}
-          className="glass-card w-full max-w-md rounded-3xl border border-border/60 p-6 shadow-premium-lg sm:p-8"
+          className="w-full max-w-md rounded-3xl border border-border bg-card p-6 shadow-premium sm:p-8"
         >
           <AnimatePresence mode="wait">
             {mode === "login" ? (

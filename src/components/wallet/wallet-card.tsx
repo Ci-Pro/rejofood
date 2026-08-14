@@ -46,13 +46,16 @@ export function WalletCard({
         "accent-" + accent,
         "relative overflow-hidden rounded-3xl p-5 sm:p-6 shadow-premium text-white",
       )}
-      style={{
-        background: "linear-gradient(135deg, #3D2364 0%, #2D1B4E 50%, #1C0E33 100%)",
-      }}
     >
-      {/* Background glow — role accent color */}
-      <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full opacity-20 blur-3xl" style={{ background: "var(--role)" }} />
-      <div className="pointer-events-none absolute -bottom-12 -left-8 h-44 w-44 rounded-full opacity-15 blur-3xl" style={{ background: "var(--role)" }} />
+      {/* Background — modern vivid role color */}
+      <div className="pointer-events-none absolute inset-0 bg-role" aria-hidden />
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(0,0,0,0.20) 100%)" }}
+        aria-hidden
+      />
+      {/* Background glow — role accent */}
+      <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full opacity-30 blur-3xl" style={{ background: "rgba(255,255,255,0.3)" }} />
 
       <div className="relative">
         {/* Header */}
@@ -97,7 +100,7 @@ export function WalletCard({
           <button
             onClick={onTopUp}
             disabled={isFrozen || loading}
-            className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl bg-white py-2.5 text-sm font-700 text-[#2D1B4E] shadow-premium transition-premium hover:bg-white/95 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl bg-white py-2.5 text-sm font-700 text-foreground shadow-premium transition-premium hover:bg-white/95 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Plus className="h-4 w-4" strokeWidth={2.5} />
             Top Up

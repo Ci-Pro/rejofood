@@ -72,58 +72,63 @@
 }
 
 :root {
-  /* Surfaces — warm ivory with depth */
-  --background: #FAF6EE;
-  --foreground: #1A1426;
+  /* === Modern Mobile-Native Palette v4.0 ===
+   * Inspirasi: GoFood, GrabFood, ShopeeFood
+   * Clean white background, vivid accents, tighter spacing
+   */
+
+  /* Surfaces — pure white untuk clean mobile look */
+  --background: #FFFFFF;
+  --foreground: #0F0F12;
   --card: #FFFFFF;
-  --card-foreground: #1A1426;
+  --card-foreground: #0F0F12;
   --popover: #FFFFFF;
-  --popover-foreground: #1A1426;
+  --popover-foreground: #0F0F12;
 
-  /* Brand: Deep Aubergine */
-  --primary: #2D1B4E;
-  --primary-foreground: #FAF6EE;
+  /* Brand: Saffron Orange (primary action color) */
+  --primary: #FF6B00;
+  --primary-foreground: #FFFFFF;
 
-  /* Secondary */
-  --secondary: #EEEAF4;
-  --secondary-foreground: #3D2364;
-  --muted: #F2EFE8;
-  --muted-foreground: #6B6580;
+  /* Secondary — soft gray */
+  --secondary: #F4F5F7;
+  --secondary-foreground: #0F0F12;
+  --muted: #F4F5F7;
+  --muted-foreground: #8E8E93;
 
   /* Accent: Saffron */
-  --accent: #FF9F1C;
-  --accent-foreground: #1A1426;
+  --accent: #FF6B00;
+  --accent-foreground: #FFFFFF;
 
-  --destructive: #DC2626;
-  --border: #E4DFE8;
-  --input: #ECE8F0;
-  --ring: #5A3D8E;
+  --destructive: #FF3B30;
+  --border: #E5E5EA;
+  --input: #F4F5F7;
+  --ring: #FF6B00;
 
-  /* Role accents — vivid for status communication */
-  --saffron: #FF9F1C;
-  --saffron-foreground: #1A1426;
-  --lavender: #7C5BBF;
+  /* Role accents — vivid, mobile-native style */
+  --saffron: #FF6B00;
+  --saffron-foreground: #FFFFFF;
+  --lavender: #6C5CE7;
   --lavender-foreground: #FFFFFF;
-  --mint: #10B981;
-  --mint-foreground: #062E1B;
-  --rose: #F43F5E;
+  --mint: #00C896;
+  --mint-foreground: #FFFFFF;
+  --rose: #FF3B5C;
   --rose-foreground: #FFFFFF;
 
   /* Charts */
-  --chart-1: #2D1B4E;
-  --chart-2: #FF9F1C;
-  --chart-3: #7C5BBF;
-  --chart-4: #10B981;
-  --chart-5: #F43F5E;
+  --chart-1: #FF6B00;
+  --chart-2: #6C5CE7;
+  --chart-3: #00C896;
+  --chart-4: #FF3B5C;
+  --chart-5: #FFB347;
 
-  --sidebar: #F5F2FA;
-  --sidebar-foreground: #1A1426;
-  --sidebar-primary: #2D1B4E;
-  --sidebar-primary-foreground: #FAF6EE;
-  --sidebar-accent: #E8E4F0;
-  --sidebar-accent-foreground: #1A1426;
-  --sidebar-border: #E4DFE8;
-  --sidebar-ring: #5A3D8E;
+  --sidebar: #F8F9FB;
+  --sidebar-foreground: #0F0F12;
+  --sidebar-primary: #FF6B00;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #F0F1F4;
+  --sidebar-accent-foreground: #0F0F12;
+  --sidebar-border: #E5E5EA;
+  --sidebar-ring: #FF6B00;
 }
 
 .dark {
@@ -183,82 +188,79 @@
 }
 
 @layer utilities {
-  /* Premium layered shadows — native app depth */
+  /* Modern Mobile-Native Shadows — clean, subtle, iOS-like */
   .shadow-premium {
     box-shadow:
-      0 1px 2px rgba(45,27,78,0.05),
-      0 4px 10px rgba(45,27,78,0.06),
-      0 8px 24px rgba(45,27,78,0.05);
+      0 1px 2px rgba(0,0,0,0.04),
+      0 4px 12px rgba(0,0,0,0.06);
   }
   .shadow-premium-lg {
     box-shadow:
-      0 2px 6px rgba(45,27,78,0.08),
-      0 8px 20px rgba(45,27,78,0.10),
-      0 20px 40px rgba(45,27,78,0.12);
+      0 2px 8px rgba(0,0,0,0.08),
+      0 12px 32px rgba(0,0,0,0.10);
   }
   .shadow-card {
     box-shadow:
-      0 1px 3px rgba(45,27,78,0.06),
-      0 2px 8px rgba(45,27,78,0.04);
+      0 1px 2px rgba(0,0,0,0.04),
+      0 1px 3px rgba(0,0,0,0.03);
   }
   .shadow-card-hover {
     box-shadow:
-      0 2px 8px rgba(45,27,78,0.10),
-      0 8px 24px rgba(45,27,78,0.08);
+      0 2px 8px rgba(0,0,0,0.08),
+      0 8px 24px rgba(0,0,0,0.06);
   }
   .shadow-fab {
     box-shadow:
-      0 4px 12px rgba(255,159,28,0.30),
-      0 8px 24px rgba(255,159,28,0.20),
-      0 16px 40px rgba(45,27,78,0.10);
+      0 4px 12px rgba(255,107,0,0.35),
+      0 8px 24px rgba(255,107,0,0.20);
   }
   .shadow-glow-saffron {
-    box-shadow: 0 0 24px rgba(255,159,28,0.35);
+    box-shadow: 0 0 20px rgba(255,107,0,0.30);
   }
 
   /* Gradient text */
   .text-gradient-primary {
-    background: linear-gradient(135deg, #2D1B4E 0%, #4A2D7A 100%);
+    background: linear-gradient(135deg, #FF6B00 0%, #FF9F1C 100%);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
   }
   .text-gradient-saffron {
-    background: linear-gradient(135deg, #FFB347 0%, #FF9F1C 100%);
+    background: linear-gradient(135deg, #FFB347 0%, #FF6B00 100%);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
   }
 
-  /* Frosted glass */
+  /* Frosted glass — modern iOS style */
   .glass-card {
-    background: rgba(255,255,255,0.85);
-    backdrop-filter: blur(24px) saturate(1.3);
-    -webkit-backdrop-filter: blur(24px) saturate(1.3);
+    background: rgba(255,255,255,0.90);
+    backdrop-filter: blur(20px) saturate(1.4);
+    -webkit-backdrop-filter: blur(20px) saturate(1.4);
   }
   .glass-header {
-    background: rgba(250,246,238,0.80);
-    backdrop-filter: blur(20px) saturate(1.2);
-    -webkit-backdrop-filter: blur(20px) saturate(1.2);
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: blur(16px) saturate(1.3);
+    -webkit-backdrop-filter: blur(16px) saturate(1.3);
   }
   .glass-nav {
-    background: rgba(250,246,238,0.90);
-    backdrop-filter: blur(24px) saturate(1.3);
-    -webkit-backdrop-filter: blur(24px) saturate(1.3);
+    background: rgba(255,255,255,0.95);
+    backdrop-filter: blur(20px) saturate(1.4);
+    -webkit-backdrop-filter: blur(20px) saturate(1.4);
   }
 
-  /* Role accents */
-  .accent-saffron { --role: #FF9F1C; --role-fg: #1A1426; }
-  .accent-lavender { --role: #7C5BBF; --role-fg: #FFFFFF; }
-  .accent-mint { --role: #10B981; --role-fg: #062E1B; }
-  .accent-rose { --role: #F43F5E; --role-fg: #FFFFFF; }
+  /* Role accents — modern vivid colors */
+  .accent-saffron { --role: #FF6B00; --role-fg: #FFFFFF; }
+  .accent-lavender { --role: #6C5CE7; --role-fg: #FFFFFF; }
+  .accent-mint { --role: #00C896; --role-fg: #FFFFFF; }
+  .accent-rose { --role: #FF3B5C; --role-fg: #FFFFFF; }
 
   .text-role { color: var(--role); }
   .bg-role { background-color: var(--role); }
-  .accent-saffron .bg-role-soft { background-color: rgba(255,159,28,0.10); }
-  .accent-lavender .bg-role-soft { background-color: rgba(124,91,191,0.10); }
-  .accent-mint .bg-role-soft { background-color: rgba(16,185,129,0.10); }
-  .accent-rose .bg-role-soft { background-color: rgba(244,63,94,0.10); }
+  .accent-saffron .bg-role-soft { background-color: rgba(255,107,0,0.10); }
+  .accent-lavender .bg-role-soft { background-color: rgba(108,92,231,0.10); }
+  .accent-mint .bg-role-soft { background-color: rgba(0,200,150,0.10); }
+  .accent-rose .bg-role-soft { background-color: rgba(255,59,92,0.10); }
   .border-role { border-color: var(--role); }
   .ring-role { box-shadow: 0 0 0 2px var(--role); }
 

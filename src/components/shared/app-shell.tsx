@@ -60,10 +60,10 @@ export function AppShell({
 
       {/* Main content area */}
       <div className="flex min-h-screen flex-1 flex-col lg:pl-64">
-        {/* Top header */}
+        {/* Top header — modern clean white, no glass */}
         <header className={cn(
           "accent-" + accent,
-          "sticky top-0 z-30 glass-header border-b border-border/40",
+          "sticky top-0 z-30 bg-background/95 backdrop-blur-md border-b border-border",
         )}>
           <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8 sm:h-16">
             <div className="flex items-center gap-2.5">

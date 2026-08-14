@@ -93,13 +93,13 @@ function VerifyEmailInner() {
           animate={{ x: [0, 30, 0], y: [0, -20, 0] }}
           transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
           className="absolute -left-20 top-1/4 h-72 w-72 rounded-full opacity-20 blur-3xl"
-          style={{ background: "#7C5BBF" }}
+          style={{ background: "var(--primary)" }}
         />
         <motion.div
           animate={{ x: [0, -40, 0], y: [0, 30, 0] }}
           transition={{ duration: 25, repeat: Infinity, ease: "easeInOut" }}
           className="absolute -right-20 bottom-1/4 h-80 w-80 rounded-full opacity-15 blur-3xl"
-          style={{ background: "#FF9F1C" }}
+          style={{ background: "var(--accent)" }}
         />
       </div>
 
@@ -121,7 +121,7 @@ function VerifyEmailInner() {
         >
           {status === "loading" && (
             <div className="flex flex-col items-center py-6 text-center">
-              <Loader2 className="h-12 w-12 animate-spin text-[#7C5BBF]" />
+              <Loader2 className="h-12 w-12 animate-spin text-primary" />
               <p className="mt-4 font-display text-lg font-700">Memverifikasi email…</p>
               <p className="mt-1 text-sm text-muted-foreground">Mohon tunggu sebentar.</p>
             </div>
@@ -142,7 +142,7 @@ function VerifyEmailInner() {
                 Akun Anda sudah aktif. Sekarang Anda bisa login dan mulai menggunakan RejoFood.
               </p>
               <Link href="/" className="mt-6 w-full">
-                <Button className="w-full bg-[#7C5BBF] text-white hover:bg-[#6B4FB5]">
+                <Button className="w-full bg-primary text-primary-foreground hover:opacity-90">
                   Masuk ke RejoFood
                 </Button>
               </Link>
@@ -164,7 +164,7 @@ function VerifyEmailInner() {
                 Email Anda sudah terverifikasi sebelumnya. Silakan langsung login.
               </p>
               <Link href="/" className="mt-6 w-full">
-                <Button className="w-full bg-[#7C5BBF] text-white hover:bg-[#6B4FB5]">
+                <Button className="w-full bg-primary text-primary-foreground hover:opacity-90">
                   Masuk ke RejoFood
                 </Button>
               </Link>
@@ -208,7 +208,7 @@ function VerifyEmailInner() {
                   <Button
                     onClick={resendVerification}
                     disabled={resending || !resendEmail.trim()}
-                    className="w-full bg-[#7C5BBF] text-white hover:bg-[#6B4FB5]"
+                    className="w-full bg-primary text-primary-foreground hover:opacity-90"
                   >
                     {resending ? (
                       <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Mengirim…</>

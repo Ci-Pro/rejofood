@@ -29,7 +29,7 @@ export function BottomNav({ active, onChange, accent, badges }: BottomNavProps) 
     <nav
       className={cn(
         "accent-" + accent,
-        "fixed inset-x-0 bottom-0 z-40 lg:hidden glass-nav border-t border-border/50",
+        "fixed inset-x-0 bottom-0 z-40 lg:hidden bg-background/95 backdrop-blur-md border-t border-border",
         "pb-[env(safe-area-inset-bottom)]",
       )}
       aria-label="Navigasi utama"
@@ -43,17 +43,27 @@ export function BottomNav({ active, onChange, accent, badges }: BottomNavProps) 
               key={item.key}
               type="button"
               onClick={() => onChange(item.key)}
-              className="press-feedback relative flex flex-1 flex-col items-center gap-0.5 py-2 transition-tap"
+              className="relative flex flex-1 flex-col items-center gap-0.5 py-2 transition-tap"
               aria-current={isActive ? "page" : undefined}
               aria-label={item.label}
             >
+              {/* Active indicator — top bar, modern native style */}
+              {isActive && (
+                <motion.span
+                  layoutId="bottom-nav-active"
+                  className="absolute top-0 h-0.5 w-8 rounded-full bg-role"
+                  transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                />
+              )}
               <span className={cn(
-                "relative flex h-8 w-8 items-center justify-center rounded-xl transition-premium",
-                isActive ? "bg-role-soft" : "",
+                "relative flex h-7 w-7 items-center justify-center transition-premium",
               )}>
-                <Icon className={cn("h-5 w-5 transition-premium", isActive ? "text-role" : "text-muted-foreground")} strokeWidth={isActive ? 2.5 : 2} />
+                <Icon
+                  className={cn("h-5 w-5 transition-premium", isActive ? "text-role" : "text-muted-foreground")}
+                  strokeWidth={isActive ? 2.5 : 2}
+                />
                 {item.badge && item.badge > 0 ? (
-                  <span className="absolute -right-1 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose px-1 text-[0.55rem] font-700 text-rose-foreground shadow-sm">
+                  <span className="absolute -right-1.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose px-1 text-[0.55rem] font-700 text-rose-foreground">
                     {item.badge > 99 ? "99+" : item.badge}
                   </span>
                 ) : null}
