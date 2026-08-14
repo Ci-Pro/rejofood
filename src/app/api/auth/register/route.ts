@@ -12,6 +12,11 @@ import { generateToken, setSessionCookie } from "@/lib/auth/session";
 import { logAction, getRequestMeta } from "@/lib/auth/audit";
 import { computeAbsoluteExpiry } from "@/lib/auth/session-config";
 import { validatePassword } from "@/lib/auth/password-policy";
+import {
+  generateVerificationToken,
+  hashToken,
+  sendVerificationEmail,
+} from "@/lib/email/service";
 import { Role } from "@prisma/client";
 import type { SafeUser } from "@/types/auth";
 
@@ -97,6 +102,24 @@ export async function POST(req: Request) {
       return u;
     });
 
+    // 🔒 Email verification: generate token + kirim email
+    // User tidak bisa login sampai email diverifikasi (kecuali ADMIN)
+    const verifyToken = generateVerificationToken();
+    const verifyTokenHash = hashToken(verifyToken);
+    await db.emailVerification.create({
+      data: {
+        userId: user.id,
+        token: verifyToken,
+        tokenHash: verifyTokenHash,
+        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 jam
+      },
+    });
+
+    // Kirim email (best effort — jangan block registrasi kalau email gagal)
+    const emailResult = await sendVerificationEmail(user.email, user.fullName, verifyToken);
+
+    // Auto-login user (session dibuat), tapi user tetap butuh verify email sebelum bisa akses fitur
+    // Login API akan check emailVerifiedAt dan reject kalau belum verified
     const token = generateToken();
     await db.session.create({
       data: {
@@ -115,13 +138,17 @@ export async function POST(req: Request) {
       actorRole: user.role,
       category: "auth",
       action: "auth.register.success",
-      description: `Registrasi berhasil: ${user.email} sebagai ${user.role}.`,
+      description: `Registrasi berhasil: ${user.email} sebagai ${user.role}. Email verifikasi ${emailResult.success ? "terkirim" : "GAGAL: " + (emailResult.error || "unknown")}.`,
       targetId: user.id,
       targetType: "user",
       outcome: "success",
       ipAddress: meta.ipAddress,
       userAgent: meta.userAgent,
-      metadata: { role: user.role },
+      metadata: {
+        role: user.role,
+        emailSent: emailResult.success,
+        emailError: emailResult.error,
+      },
     });
 
     const safe: SafeUser = {
@@ -134,7 +161,14 @@ export async function POST(req: Request) {
       isActive: user.isActive,
     };
 
-    return NextResponse.json({ user: safe });
+    return NextResponse.json({
+      user: safe,
+      emailVerificationSent: emailResult.success,
+      emailVerificationError: emailResult.error,
+      message: emailResult.success
+        ? "Registrasi berhasil! Cek email Anda untuk verifikasi (berlaku 24 jam)."
+        : "Registrasi berhasil, tapi email verifikasi gagal dikirim. Hubungi support.",
+    });
   } catch (err) {
     console.error("[register] error", err);
     return NextResponse.json({ error: "Terjadi kesalahan. Coba lagi." }, { status: 500 });

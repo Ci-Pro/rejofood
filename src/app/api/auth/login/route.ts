@@ -32,6 +32,16 @@ import type { SafeUser } from "@/types/auth";
 
 const DEMO_BLOCKED_EMAILS = new Set(["admin@rejofood.id"]);
 
+// === Admin IP Whitelist ===
+// Daftar IP yang boleh login sebagai ADMIN. Dipisah dengan koma.
+// Contoh: "203.142.88.10,180.250.100.50"
+// Jika kosong (default), admin bisa login dari IP manapun (kurang aman).
+// Set ADMIN_IP_WHITELIST di env untuk mengaktifkan.
+const ADMIN_IP_WHITELIST_RAW = process.env.ADMIN_IP_WHITELIST || "";
+const ADMIN_IP_WHITELIST = ADMIN_IP_WHITELIST_RAW
+  ? new Set(ADMIN_IP_WHITELIST_RAW.split(",").map((s) => s.trim()).filter(Boolean))
+  : null; // null = whitelist disabled (any IP allowed)
+
 function isDemoMode(): boolean {
   return process.env.REJO_DEMO_MODE === "true";
 }
@@ -194,6 +204,80 @@ export async function POST(req: Request) {
 
     // ✅ Password verified — factor 1 complete. Reset rate limit bucket.
     recordSuccess(ip, email);
+
+    // 🔒 Email verification check (kecuali ADMIN — admin bisa login tanpa verify)
+    // Admin dibuat via seed script, bukan self-register, jadi tidak butuh email verify
+    if (user.role !== "ADMIN" && !user.emailVerifiedAt) {
+      await logAction({
+        actorId: user.id,
+        actorEmail: user.email,
+        actorRole: user.role,
+        category: "auth",
+        action: "auth.login.email_not_verified",
+        description: `Login ditolak: email ${user.email} belum diverifikasi.`,
+        outcome: "denied",
+        ipAddress: meta.ipAddress,
+        userAgent: meta.userAgent,
+      });
+      return NextResponse.json(
+        {
+          error: "Email Anda belum diverifikasi. Cek email Anda untuk link verifikasi.",
+          code: "EMAIL_NOT_VERIFIED",
+          email: user.email,
+          canResend: true,
+        },
+        { status: 403 },
+      );
+    }
+
+    // 🔒 Suspicious activity check — user flagged tidak bisa login sampai admin unflag
+    if (user.isFlagged) {
+      await logAction({
+        actorId: user.id,
+        actorEmail: user.email,
+        actorRole: user.role,
+        category: "security",
+        action: "auth.login.flagged_blocked",
+        description: `Login ditolak: akun ${user.email} di-flag (${user.flagReason || "no reason"}).`,
+        outcome: "denied",
+        ipAddress: meta.ipAddress,
+        userAgent: meta.userAgent,
+      });
+      return NextResponse.json(
+        {
+          error: "Akun Anda sedang dalam peninjauan keamanan. Hubungi support@rejofood.id.",
+          code: "ACCOUNT_FLAGGED",
+        },
+        { status: 403 },
+      );
+    }
+
+    // 🔒 Admin IP whitelist — hanya IP tertentu yang bisa login sebagai ADMIN
+    // Jika ADMIN_IP_WHITELIST diset di env, IP harus ada di whitelist
+    // Jika tidak diset (null), semua IP diizinkan (kurang aman, tapi default)
+    if (user.role === "ADMIN" && ADMIN_IP_WHITELIST !== null) {
+      if (!ADMIN_IP_WHITELIST.has(ip)) {
+        await logAction({
+          actorId: user.id,
+          actorEmail: user.email,
+          actorRole: user.role,
+          category: "security",
+          action: "auth.login.admin_ip_blocked",
+          description: `Login admin dari IP tidak diizinkan: ${ip} (email: ${user.email}).`,
+          outcome: "denied",
+          ipAddress: meta.ipAddress,
+          userAgent: meta.userAgent,
+          metadata: { blockedIp: ip, whitelist: Array.from(ADMIN_IP_WHITELIST) },
+        });
+        return NextResponse.json(
+          {
+            error: "Akses admin dari IP ini tidak diizinkan. Hubungi administrator sistem.",
+            code: "ADMIN_IP_NOT_ALLOWED",
+          },
+          { status: 403 },
+        );
+      }
+    }
 
     // 🔒 2FA: WAJIB untuk ADMIN.
     if (user.role === "ADMIN") {

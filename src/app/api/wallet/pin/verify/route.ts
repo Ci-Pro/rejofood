@@ -17,6 +17,7 @@ import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth/context";
 import { logAction, getRequestMeta } from "@/lib/auth/audit";
 import { verifyWalletPin, isPinLocked } from "@/lib/wallet/pin-service";
+import { recordPinFailure, resetFailures } from "@/lib/auth/suspicious-activity";
 
 export async function POST(req: Request) {
   const me = await getCurrentUser();
@@ -43,27 +44,38 @@ export async function POST(req: Request) {
 
   const result = await verifyWalletPin(me.id, String(body.pin));
 
-  // Audit log hanya untuk failed attempt (sukses tidak perlu — terlalu noisy)
-  if (!result.valid) {
-    await logAction({
-      actorId: me.id,
-      actorEmail: me.email,
-      actorRole: me.role,
-      category: "wallet",
-      action: "wallet.pin.verify_failed",
-      description: `Verifikasi PIN gagal. Sisa percobaan: ${result.remaining ?? 0}/${result.maxAttempts}.`,
-      outcome: "failure",
-      ipAddress: meta.ipAddress,
-      userAgent: meta.userAgent,
-      metadata: {
-        remaining: result.remaining ?? 0,
-        locked: !!result.retryAfterSeconds,
-      },
-    });
+  if (result.valid) {
+    // Reset failure counters saat sukses
+    resetFailures(me.id);
+    return NextResponse.json({ valid: true });
   }
 
-  if (result.valid) {
-    return NextResponse.json({ valid: true });
+  // Failed: log + record suspicious activity
+  await logAction({
+    actorId: me.id,
+    actorEmail: me.email,
+    actorRole: me.role,
+    category: "wallet",
+    action: "wallet.pin.verify_failed",
+    description: `Verifikasi PIN gagal. Sisa percobaan: ${result.remaining ?? 0}/${result.maxAttempts}.`,
+    outcome: "failure",
+    ipAddress: meta.ipAddress,
+    userAgent: meta.userAgent,
+    metadata: {
+      remaining: result.remaining ?? 0,
+      locked: !!result.retryAfterSeconds,
+    },
+  });
+
+  // Record suspicious activity — auto-flag kalau exceed threshold
+  const suspicion = await recordPinFailure(me.id, meta.ipAddress);
+
+  if (suspicion.flagged) {
+    return NextResponse.json({
+      valid: false,
+      flagged: true,
+      message: "Akun di-flag karena aktivitas mencurigakan. Hubungi support@rejofood.id.",
+    }, { status: 403 });
   }
 
   if (result.retryAfterSeconds) {
