@@ -75,7 +75,7 @@ function statusLabel(s: Order["status"]): string {
 function statusBadgeClass(s: Order["status"]): string {
   if (s === "DELIVERED") return "bg-mint/15 text-mint border-mint/30";
   if (s === "CANCELLED") return "bg-rose/15 text-rose border-rose/30";
-  if (s === "PENDING") return "bg-saffron/15 text-saffron border-saffron/30";
+  if (s === "PENDING") return "bg-primary/15 text-primary border-primary/30";
   if (s === "READY" || s === "PICKED_UP") return "bg-lavender/15 text-lavender border-lavender/30";
   return "bg-muted text-muted-foreground border-border";
 }
@@ -320,7 +320,7 @@ export function MyOrdersList() {
                     {o.payment && o.payment.status !== "SUCCESS" && o.status !== "CANCELLED" && (
                       <Badge variant="outline" className={cn(
                         "h-4 px-1.5 text-[0.55rem] font-700",
-                        o.payment.status === "PENDING" && "border-saffron/40 bg-saffron/10 text-saffron",
+                        o.payment.status === "PENDING" && "border-primary/40 bg-primary/10 text-primary",
                         o.payment.status === "FAILED" && "border-rose/40 bg-rose/10 text-rose",
                         o.payment.status === "REFUNDED" && "border-lavender/40 bg-lavender/10 text-lavender",
                       )}>
@@ -328,8 +328,8 @@ export function MyOrdersList() {
                       </Badge>
                     )}
                     {o.review && (
-                      <Badge variant="outline" className="h-4 border-saffron/40 bg-saffron/10 px-1.5 text-[0.55rem] font-700 text-saffron">
-                        <Star className="mr-0.5 h-2 w-2 fill-saffron" />
+                      <Badge variant="outline" className="h-4 border-primary/40 bg-primary/10 px-1.5 text-[0.55rem] font-700 text-primary">
+                        <Star className="mr-0.5 h-2 w-2 fill-primary" />
                         {o.review.rating}
                       </Badge>
                     )}
@@ -338,7 +338,7 @@ export function MyOrdersList() {
                   <p className="mt-0.5 text-xs text-muted-foreground">
                     {o.itemCount} item · {formatTime(o.createdAt)}
                     {o.status !== "DELIVERED" && o.status !== "CANCELLED" && (
-                      <span className="ml-1 inline-flex items-center gap-0.5 text-saffron">
+                      <span className="ml-1 inline-flex items-center gap-0.5 text-primary">
                         · <Clock className="h-2 w-2" /> {elapsedTime(o.createdAt)}
                       </span>
                     )}
@@ -361,7 +361,7 @@ export function MyOrdersList() {
                   </p>
                 </button>
                 <div className="shrink-0 text-right">
-                  <p className="font-display text-sm font-700 text-saffron">{formatRupiah(o.total)}</p>
+                  <p className="font-display text-sm font-700 text-primary">{formatRupiah(o.total)}</p>
                   {needsPayment ? (
                     <button
                       type="button"
@@ -375,7 +375,7 @@ export function MyOrdersList() {
                     <button
                       type="button"
                       onClick={(e) => { e.stopPropagation(); setReviewTarget(o); }}
-                      className="mt-0.5 inline-flex items-center gap-1 rounded-full border border-saffron/40 bg-saffron/10 px-2 py-0.5 text-[0.65rem] font-700 text-saffron hover:bg-saffron/20"
+                      className="mt-0.5 inline-flex items-center gap-1 rounded-full border border-primary/40 bg-primary/10 px-2 py-0.5 text-[0.65rem] font-700 text-primary hover:bg-primary/20"
                     >
                       <Star className="h-2.5 w-2.5" />
                       Beri Penilaian
@@ -461,7 +461,7 @@ export function MyOrdersList() {
                           <div key={step.status} className="flex items-center gap-3">
                             <div className={cn(
                               "flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-all",
-                              done ? "bg-saffron text-saffron-foreground" : "bg-muted text-muted-foreground",
+                              done ? "bg-primary text-primary-foreground-foreground" : "bg-muted text-muted-foreground",
                               active && "ring-2 ring-saffron/30 ring-offset-2 ring-offset-card",
                             )}>
                               <StepIcon className="h-3.5 w-3.5" strokeWidth={2.5} />
@@ -470,7 +470,7 @@ export function MyOrdersList() {
                               <p className={cn(
                                 "text-xs font-600 transition-colors",
                                 done ? "text-foreground" : "text-muted-foreground",
-                                active && "font-700 text-saffron",
+                                active && "font-700 text-primary",
                               )}>
                                 {step.label}
                               </p>
@@ -479,7 +479,7 @@ export function MyOrdersList() {
                               <motion.span
                                 initial={{ scale: 0 }}
                                 animate={{ scale: 1 }}
-                                className="h-2 w-2 animate-pulse rounded-full bg-saffron"
+                                className="h-2 w-2 animate-pulse rounded-full bg-primary"
                               />
                             )}
                             {done && !active && (
@@ -499,7 +499,7 @@ export function MyOrdersList() {
                     {selected.items.map((item) => (
                       <div key={item.id} className="flex items-start justify-between rounded-lg border border-border bg-card p-2.5 text-sm">
                         <div className="flex items-start gap-2">
-                          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-saffron/15 text-xs font-700 text-saffron">
+                          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-primary/15 text-xs font-700 text-primary">
                             {item.quantity}×
                           </span>
                           <div>
@@ -629,7 +629,7 @@ export function MyOrdersList() {
             <DialogDescription>
               Pesanan ke <span className="font-700 text-foreground">{cancelTarget?.merchant.restaurantName}</span> akan dibatalkan.
               {cancelTarget?.status === "PREPARING" && (
-                <span className="mt-2 block rounded-lg bg-saffron/10 p-2 text-xs text-saffron">
+                <span className="mt-2 block rounded-lg bg-primary/10 p-2 text-xs text-primary">
                   ⚠️ Restoran sudah mulai memproses pesanan ini. Pembatalan sekarang mungkin
                   menyebabkan kerugian untuk merchant.
                 </span>

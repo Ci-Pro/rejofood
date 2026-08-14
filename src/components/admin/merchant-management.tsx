@@ -114,7 +114,7 @@ export function MerchantManagement() {
                   </div>
                   <p className="mt-0.5 text-xs text-muted-foreground">{m.cuisine ?? "—"} · {m.user.email}</p>
                   <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                    <span className="flex items-center gap-0.5"><Star className="h-3 w-3 fill-saffron text-saffron" />{m.rating.toFixed(1)}</span>
+                    <span className="flex items-center gap-0.5"><Star className="h-3 w-3 fill-primary text-primary" />{m.rating.toFixed(1)}</span>
                     <span>{m.menuCount} menu</span>
                     <span>{m.orderCount} order</span>
                     <span>{m.reviewCount} review</span>

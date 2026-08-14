@@ -116,7 +116,7 @@ export function ImageUploader({
           className={cn(
             "relative flex shrink-0 cursor-pointer items-center justify-center overflow-hidden border-2 border-dashed transition-premium press-feedback",
             shape === "rounded" ? "rounded-full" : "rounded-xl",
-            dragOver ? "border-saffron bg-saffron/5" : "border-border bg-muted/30 hover:border-saffron/40",
+            dragOver ? "border-saffron bg-primary/5" : "border-border bg-muted/30 hover:border-primary/40",
             uploading && "cursor-wait",
           )}
           style={{ width: size, height: size }}

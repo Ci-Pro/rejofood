@@ -90,63 +90,63 @@
 }
 
 :root {
-  /* === Modern Mobile-Native Palette v4.0 ===
-   * Inspirasi: GoFood, GrabFood, ShopeeFood
-   * Clean white background, vivid accents, tighter spacing
+  /* === RejoFood Brand Identity v5.0 ===
+   * Deep Teal + Orange Accent + Warm Cream
+   * "Makanan lebih dekat, rezeki bergerak bersama."
    */
 
-  /* Surfaces — pure white untuk clean mobile look */
-  --background: #FFFFFF;
-  --foreground: #0F0F12;
+  /* Surfaces — warm cream untuk warmth */
+  --background: #FFF8EE;
+  --foreground: #123333;
   --card: #FFFFFF;
-  --card-foreground: #0F0F12;
+  --card-foreground: #123333;
   --popover: #FFFFFF;
-  --popover-foreground: #0F0F12;
+  --popover-foreground: #123333;
 
-  /* Brand: Saffron Orange (primary action color) */
-  --primary: #FF6B00;
+  /* Brand: Deep Teal — dominant identity */
+  --primary: #003F3F;
   --primary-foreground: #FFFFFF;
 
-  /* Secondary — soft gray */
-  --secondary: #F4F5F7;
-  --secondary-foreground: #0F0F12;
-  --muted: #F4F5F7;
-  --muted-foreground: #8E8E93;
+  /* Secondary — soft teal-tinted */
+  --secondary: #E8F0EE;
+  --secondary-foreground: #003F3F;
+  --muted: #F0EBE3;
+  --muted-foreground: #607474;
 
-  /* Accent: Saffron */
-  --accent: #FF6B00;
+  /* Accent: Orange — CTA highlights only */
+  --accent: #FF6B22;
   --accent-foreground: #FFFFFF;
 
-  --destructive: #FF3B30;
-  --border: #E5E5EA;
-  --input: #F4F5F7;
-  --ring: #FF6B00;
+  --destructive: #D64545;
+  --border: #E3EAE7;
+  --input: #FFFFFF;
+  --ring: #003F3F;
 
-  /* Role accents — vivid, mobile-native style */
-  --saffron: #FF6B00;
+  /* Role accents — all teal-based dengan perbedaan subtle */
+  --saffron: #003F3F;
   --saffron-foreground: #FFFFFF;
-  --lavender: #6C5CE7;
+  --lavender: #1A5757;
   --lavender-foreground: #FFFFFF;
-  --mint: #00C896;
+  --mint: #2F8F6B;
   --mint-foreground: #FFFFFF;
-  --rose: #FF3B5C;
+  --rose: #D64545;
   --rose-foreground: #FFFFFF;
 
   /* Charts */
-  --chart-1: #FF6B00;
-  --chart-2: #6C5CE7;
-  --chart-3: #00C896;
-  --chart-4: #FF3B5C;
-  --chart-5: #FFB347;
+  --chart-1: #003F3F;
+  --chart-2: #FF6B22;
+  --chart-3: #2F8F6B;
+  --chart-4: #1A5757;
+  --chart-5: #D64545;
 
-  --sidebar: #F8F9FB;
-  --sidebar-foreground: #0F0F12;
-  --sidebar-primary: #FF6B00;
+  --sidebar: #F5F1E8;
+  --sidebar-foreground: #123333;
+  --sidebar-primary: #003F3F;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #F0F1F4;
-  --sidebar-accent-foreground: #0F0F12;
-  --sidebar-border: #E5E5EA;
-  --sidebar-ring: #FF6B00;
+  --sidebar-accent: #E8F0EE;
+  --sidebar-accent-foreground: #003F3F;
+  --sidebar-border: #E3EAE7;
+  --sidebar-ring: #003F3F;
 }
 
 .dark {
@@ -206,79 +206,69 @@
 }
 
 @layer utilities {
-  /* Modern Mobile-Native Shadows — clean, subtle, iOS-like */
+  /* RejoFood Shadows — subtle teal-tinted, premium */
   .shadow-premium {
-    box-shadow:
-      0 1px 2px rgba(0,0,0,0.04),
-      0 4px 12px rgba(0,0,0,0.06);
+    box-shadow: 0 4px 16px rgba(0, 63, 63, 0.06);
   }
   .shadow-premium-lg {
-    box-shadow:
-      0 2px 8px rgba(0,0,0,0.08),
-      0 12px 32px rgba(0,0,0,0.10);
+    box-shadow: 0 8px 32px rgba(0, 63, 63, 0.10);
   }
   .shadow-card {
-    box-shadow:
-      0 1px 2px rgba(0,0,0,0.04),
-      0 1px 3px rgba(0,0,0,0.03);
+    box-shadow: 0 2px 8px rgba(0, 63, 63, 0.04);
   }
   .shadow-card-hover {
-    box-shadow:
-      0 2px 8px rgba(0,0,0,0.08),
-      0 8px 24px rgba(0,0,0,0.06);
+    box-shadow: 0 4px 16px rgba(0, 63, 63, 0.08);
   }
   .shadow-fab {
-    box-shadow:
-      0 4px 12px rgba(255,107,0,0.35),
-      0 8px 24px rgba(255,107,0,0.20);
+    box-shadow: 0 4px 16px rgba(255, 107, 34, 0.30);
   }
   .shadow-glow-saffron {
-    box-shadow: 0 0 20px rgba(255,107,0,0.30);
+    box-shadow: 0 0 20px rgba(255, 107, 34, 0.25);
   }
 
   /* Gradient text */
   .text-gradient-primary {
-    background: linear-gradient(135deg, #FF6B00 0%, #FF9F1C 100%);
+    background: linear-gradient(135deg, #003F3F 0%, #1A5757 100%);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
   }
   .text-gradient-saffron {
-    background: linear-gradient(135deg, #FFB347 0%, #FF6B00 100%);
+    background: linear-gradient(135deg, #FF6B22 0%, #FF8C4D 100%);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
   }
 
-  /* Frosted glass — modern iOS style */
+  /* Frosted glass — warm cream tint */
   .glass-card {
-    background: rgba(255,255,255,0.90);
-    backdrop-filter: blur(20px) saturate(1.4);
-    -webkit-backdrop-filter: blur(20px) saturate(1.4);
+    background: rgba(255, 248, 238, 0.90);
+    backdrop-filter: blur(20px) saturate(1.3);
+    -webkit-backdrop-filter: blur(20px) saturate(1.3);
   }
   .glass-header {
-    background: rgba(255,255,255,0.85);
-    backdrop-filter: blur(16px) saturate(1.3);
-    -webkit-backdrop-filter: blur(16px) saturate(1.3);
+    background: rgba(255, 248, 238, 0.85);
+    backdrop-filter: blur(16px) saturate(1.2);
+    -webkit-backdrop-filter: blur(16px) saturate(1.2);
   }
   .glass-nav {
-    background: rgba(255,255,255,0.95);
-    backdrop-filter: blur(20px) saturate(1.4);
-    -webkit-backdrop-filter: blur(20px) saturate(1.4);
+    background: rgba(255, 248, 238, 0.95);
+    backdrop-filter: blur(20px) saturate(1.3);
+    -webkit-backdrop-filter: blur(20px) saturate(1.3);
   }
 
-  /* Role accents — modern vivid colors */
-  .accent-saffron { --role: #FF6B00; --role-fg: #FFFFFF; }
-  .accent-lavender { --role: #6C5CE7; --role-fg: #FFFFFF; }
-  .accent-mint { --role: #00C896; --role-fg: #FFFFFF; }
-  .accent-rose { --role: #FF3B5C; --role-fg: #FFFFFF; }
+  /* Role accents — RejoFood teal-based system */
+  .accent-saffron { --role: #003F3F; --role-fg: #FFFFFF; --role-accent: #FF6B22; }
+  .accent-lavender { --role: #1A5757; --role-fg: #FFFFFF; --role-accent: #FF6B22; }
+  .accent-mint { --role: #2F8F6B; --role-fg: #FFFFFF; --role-accent: #FF6B22; }
+  .accent-rose { --role: #D64545; --role-fg: #FFFFFF; --role-accent: #FF6B22; }
 
   .text-role { color: var(--role); }
   .bg-role { background-color: var(--role); }
-  .accent-saffron .bg-role-soft { background-color: rgba(255,107,0,0.10); }
-  .accent-lavender .bg-role-soft { background-color: rgba(108,92,231,0.10); }
-  .accent-mint .bg-role-soft { background-color: rgba(0,200,150,0.10); }
-  .accent-rose .bg-role-soft { background-color: rgba(255,59,92,0.10); }
+  .accent-saffron .bg-role-soft { background-color: rgba(0, 63, 63, 0.08); }
+  .accent-lavender .bg-role-soft { background-color: rgba(26, 87, 87, 0.08); }
+  .accent-mint .bg-role-soft { background-color: rgba(47, 143, 107, 0.08); }
+  .accent-rose .bg-role-soft { background-color: rgba(214, 69, 69, 0.08); }
   .border-role { border-color: var(--role); }
   .ring-role { box-shadow: 0 0 0 2px var(--role); }
 

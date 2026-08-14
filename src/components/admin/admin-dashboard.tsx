@@ -93,7 +93,7 @@ export function AdminDashboard() {
           {stats && stats.reviews.total > 0 && (
             <div className="mt-3 flex flex-wrap items-center gap-4 rounded-2xl border border-border bg-card p-3 text-xs text-muted-foreground">
               <span>Total ulasan: <span className="font-700 text-foreground">{stats.reviews.total}</span></span>
-              <span>Rating rata-rata: <span className="font-700 text-saffron">★ {stats.reviews.avgRating}</span></span>
+              <span>Rating rata-rata: <span className="font-700 text-primary">★ {stats.reviews.avgRating}</span></span>
               {stats.revenue && (
                 <span>Total Revenue: <span className="font-700 text-foreground">{formatRupiah(stats.revenue.total)}</span></span>
               )}

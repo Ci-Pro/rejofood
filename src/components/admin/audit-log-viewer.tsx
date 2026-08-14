@@ -46,7 +46,7 @@ function outcomeIcon(outcome: string) {
     case "success":
       return <CheckCircle2 className="h-3.5 w-3.5 text-mint" />;
     case "failure":
-      return <XCircle className="h-3.5 w-3.5 text-saffron" />;
+      return <XCircle className="h-3.5 w-3.5 text-primary" />;
     case "denied":
       return <Ban className="h-3.5 w-3.5 text-rose" />;
     default:
@@ -59,7 +59,7 @@ function outcomeBadgeClass(outcome: string) {
     case "success":
       return "bg-mint/15 text-mint border-mint/30";
     case "failure":
-      return "bg-saffron/15 text-saffron border-saffron/30";
+      return "bg-primary/15 text-primary border-primary/30";
     case "denied":
       return "bg-rose/15 text-rose border-rose/30";
     default:
@@ -73,7 +73,7 @@ function roleBadgeClass(role: string | null) {
     ADMIN: "bg-rose/15 text-rose",
     DRIVER: "bg-mint/15 text-mint",
     MERCHANT: "bg-lavender/15 text-lavender",
-    CUSTOMER: "bg-saffron/15 text-saffron",
+    CUSTOMER: "bg-primary/15 text-primary",
   };
   return map[role] ?? "bg-muted text-muted-foreground";
 }

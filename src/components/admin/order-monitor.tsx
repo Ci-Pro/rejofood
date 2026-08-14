@@ -39,7 +39,7 @@ const STATUS_LABEL: Record<AdminOrder["status"], string> = {
 function statusBadgeClass(s: AdminOrder["status"]): string {
   if (s === "DELIVERED") return "bg-mint/15 text-mint border-mint/30";
   if (s === "CANCELLED") return "bg-rose/15 text-rose border-rose/30";
-  if (s === "PENDING") return "bg-saffron/15 text-saffron border-saffron/30";
+  if (s === "PENDING") return "bg-primary/15 text-primary border-primary/30";
   if (s === "READY" || s === "PICKED_UP") return "bg-lavender/15 text-lavender border-lavender/30";
   return "bg-muted text-muted-foreground border-border";
 }

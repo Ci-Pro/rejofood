@@ -32,7 +32,7 @@ interface InvoiceData {
 const STATUS_ICON: Record<string, React.ReactNode> = {
   DELIVERED: <CheckCircle2 className="h-4 w-4 text-mint" />,
   CANCELLED: <XCircle className="h-4 w-4 text-rose" />,
-  PENDING: <Clock className="h-4 w-4 text-saffron" />,
+  PENDING: <Clock className="h-4 w-4 text-primary" />,
 };
 
 function formatRupiah(n: number): string {
@@ -121,7 +121,7 @@ export function InvoiceDialog({
                 {invoice.items.map((item, i) => (
                   <div key={i} className="flex items-center justify-between text-xs">
                     <span className="text-foreground">
-                      <span className="font-700 text-saffron">{item.quantity}×</span> {item.name}
+                      <span className="font-700 text-primary">{item.quantity}×</span> {item.name}
                     </span>
                     <span className="tabular-nums text-muted-foreground">{formatRupiah(item.subtotal)}</span>
                   </div>
@@ -161,7 +161,7 @@ export function InvoiceDialog({
                     "h-4 px-1.5 text-[0.55rem] font-700",
                     invoice.payment.status === "SUCCESS" && "border-mint/40 bg-mint/10 text-mint",
                     invoice.payment.status === "REFUNDED" && "border-lavender/40 bg-lavender/10 text-lavender",
-                    invoice.payment.status === "PENDING" && "border-saffron/40 bg-saffron/10 text-saffron",
+                    invoice.payment.status === "PENDING" && "border-primary/40 bg-primary/10 text-primary",
                     invoice.payment.status === "FAILED" && "border-rose/40 bg-rose/10 text-rose",
                   )}>
                     {invoice.payment.status}
@@ -192,7 +192,7 @@ export function InvoiceDialog({
               <div>
                 <p className="text-[0.6rem] font-700 uppercase tracking-wide text-muted-foreground">Ulasan Anda</p>
                 <div className="flex items-center gap-1 text-xs">
-                  <span className="font-700 text-saffron">★ {invoice.review.rating}</span>
+                  <span className="font-700 text-primary">★ {invoice.review.rating}</span>
                   {invoice.review.comment && (
                     <span className="text-muted-foreground">— "{invoice.review.comment.slice(0, 80)}"</span>
                   )}

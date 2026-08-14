@@ -11,7 +11,7 @@ export default function NotFound() {
     <div className="relative min-h-screen w-full overflow-hidden bg-background">
       <div
         className="pointer-events-none fixed inset-0"
-        style={{ background: "linear-gradient(180deg, #FFFFFF 0%, #F8F9FB 100%)" }}
+        style={{ background: "linear-gradient(180deg, #FFF8EE 0%, #FFFFFF 100%)" }}
       />
       <div className="relative z-10 flex min-h-screen flex-col items-center justify-center px-5 py-8">
         <div className="mb-6">

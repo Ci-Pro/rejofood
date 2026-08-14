@@ -50,7 +50,7 @@ const ROLE_LABEL: Record<string, string> = {
 
 function initialColor(name: string, role: string): string {
   const accentMap: Record<string, string> = {
-    saffron: "bg-saffron text-saffron-foreground",
+    saffron: "bg-primary text-primary-foreground-foreground",
     lavender: "bg-lavender text-lavender-foreground",
     mint: "bg-mint text-mint-foreground",
     rose: "bg-rose text-rose-foreground",
@@ -247,7 +247,7 @@ export function UserProfileEditor() {
                 </Badge>
               )}
               {profile.role === "DRIVER" && typeof profile.rating === "number" && (
-                <Badge variant="outline" className="h-5 border-saffron/40 bg-saffron/10 px-1.5 text-[0.55rem] font-700 text-saffron">
+                <Badge variant="outline" className="h-5 border-primary/40 bg-primary/10 px-1.5 text-[0.55rem] font-700 text-primary">
                   ★ {profile.rating.toFixed(1)}
                 </Badge>
               )}
@@ -550,7 +550,7 @@ function PushNotificationSection() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           {subscribed ? (
-            <Bell className="h-5 w-5 text-saffron" />
+            <Bell className="h-5 w-5 text-primary" />
           ) : (
             <BellOff className="h-5 w-5 text-muted-foreground" />
           )}
@@ -563,7 +563,7 @@ function PushNotificationSection() {
           className={cn(
             "press-feedback flex h-8 items-center gap-2 rounded-full px-3 text-xs font-700 transition-premium",
             subscribed
-              ? "bg-saffron/10 text-saffron border border-saffron/30"
+              ? "bg-primary/10 text-primary border border-primary/30"
               : "bg-primary text-primary-foreground",
           )}
         >
@@ -571,7 +571,7 @@ function PushNotificationSection() {
             <Loader2 className="h-3.5 w-3.5 animate-spin" />
           ) : subscribed ? (
             <>
-              <span className="h-2 w-2 rounded-full bg-saffron" />
+              <span className="h-2 w-2 rounded-full bg-primary" />
               Aktif
             </>
           ) : (

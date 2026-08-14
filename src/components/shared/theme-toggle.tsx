@@ -25,7 +25,7 @@ export function ThemeToggle() {
         onClick={() => setTheme("light")}
         className={cn(
           "flex h-7 w-7 items-center justify-center rounded-full transition-premium press-feedback",
-          !isDark && !isSystem ? "bg-saffron text-saffron-foreground" : "text-muted-foreground",
+          !isDark && !isSystem ? "bg-primary text-primary-foreground-foreground" : "text-muted-foreground",
         )}
         aria-label="Mode terang"
       >

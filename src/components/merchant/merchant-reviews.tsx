@@ -118,7 +118,7 @@ export function MerchantReviews() {
           <div>
             <h3 className="font-display text-lg font-700 text-foreground">Ulasan Pelanggan</h3>
             <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <Star className="h-3 w-3 fill-saffron text-saffron" />
+              <Star className="h-3 w-3 fill-primary text-primary" />
               <span className="font-700 text-foreground">{avgRating}</span>
               · {reviews.length} ulasan
             </p>
@@ -174,7 +174,7 @@ export function MerchantReviews() {
                         key={s}
                         className={cn(
                           "h-3 w-3",
-                          s <= r.rating ? "fill-saffron text-saffron" : "fill-muted text-muted-foreground",
+                          s <= r.rating ? "fill-primary text-primary" : "fill-muted text-muted-foreground",
                         )}
                       />
                     ))}

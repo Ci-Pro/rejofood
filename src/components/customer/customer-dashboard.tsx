@@ -19,19 +19,19 @@ const PROMO_BANNERS = [
     title: "Diskon 10%",
     subtitle: "Pesanan pertama kamu",
     code: "REJO10",
-    gradient: "linear-gradient(135deg, #FF6B00 0%, #FF9F1C 100%)",
+    gradient: "linear-gradient(135deg, #003F3F 0%, #1A5757 100%)",
   },
   {
     title: "Gratis Ongkir",
     subtitle: "Min. belanja Rp 30.000",
     code: "GRATISONGKIR",
-    gradient: "linear-gradient(135deg, #6C5CE7 0%, #8B7FE8 100%)",
+    gradient: "linear-gradient(135deg, #1A5757 0%, #2F8F6B 100%)",
   },
   {
     title: "Hemat 25%",
     subtitle: "Maks. Rp 50.000",
     code: "REJOFOOD25",
-    gradient: "linear-gradient(135deg, #00C896 0%, #00E5AC 100%)",
+    gradient: "linear-gradient(135deg, #003F3F 0%, #FF6B22 100%)",
   },
 ];
 
@@ -141,7 +141,7 @@ export function CustomerDashboard() {
                     className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-2 text-xs font-700 transition-premium active:scale-95 ${
                       isActive
                         ? "border-primary bg-primary text-primary-foreground"
-                        : "border-border bg-card text-muted-foreground hover:border-primary/30 hover:text-foreground"
+                        : "border-border bg-card text-secondary-foreground hover:border-primary/30"
                     }`}
                   >
                     <Icon className="h-3.5 w-3.5" />

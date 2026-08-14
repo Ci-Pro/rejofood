@@ -49,7 +49,7 @@ function formatRupiah(n: number): string {
 function cuisineColor(cuisine: string | null): string {
   if (!cuisine) return "bg-muted text-muted-foreground";
   const map: Record<string, string> = {
-    Indonesia: "bg-saffron/15 text-saffron",
+    Indonesia: "bg-primary/15 text-primary",
     Padang: "bg-rose/15 text-rose",
     Chinese: "bg-lavender/15 text-lavender",
     Cafe: "bg-mint/15 text-mint",
@@ -64,7 +64,7 @@ function initial(name: string): string {
 
 function initialColor(name: string): string {
   const colors = [
-    "bg-saffron text-saffron-foreground",
+    "bg-primary text-primary-foreground",
     "bg-lavender text-lavender-foreground",
     "bg-mint text-mint-foreground",
     "bg-rose text-rose-foreground",
@@ -161,7 +161,7 @@ export function RestaurantGrid({ cuisineFilter }: { cuisineFilter?: string }) {
               className="h-10 rounded-xl bg-card pl-9 pr-9"
             />
             {loading && query && (
-              <span className="absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 animate-spin rounded-full border-2 border-saffron border-t-transparent" />
+              <span className="absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 animate-spin rounded-full border-2 border-primary border-t-transparent" />
             )}
 
             {/* Recent search dropdown */}
@@ -289,7 +289,7 @@ export function RestaurantGrid({ cuisineFilter }: { cuisineFilter?: string }) {
                 className="h-14 w-14 shrink-0 rounded-xl object-cover"
               />
                 ) : (
-                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-saffron/10 text-saffron">
+                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
                     <Coffee className="h-5 w-5" />
                   </div>
                 )}
@@ -303,7 +303,7 @@ export function RestaurantGrid({ cuisineFilter }: { cuisineFilter?: string }) {
                     <p className="truncate text-xs text-muted-foreground">{item.description}</p>
                   )}
                   <div className="mt-1 flex items-center gap-2">
-                    <span className="font-display text-sm font-700 text-saffron">{formatRupiah(item.price)}</span>
+                    <span className="font-display text-sm font-700 text-primary">{formatRupiah(item.price)}</span>
                     <span className="text-[0.6rem] text-muted-foreground">·</span>
                     <span className="text-[0.65rem] text-muted-foreground">{item.merchant.restaurantName}</span>
                     {item.merchant.isOpen ? (
@@ -447,7 +447,7 @@ export function RestaurantGrid({ cuisineFilter }: { cuisineFilter?: string }) {
                 {/* Footer: rating + address + menu count */}
                 <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-border pt-3 text-xs text-muted-foreground">
                   <span className="flex items-center gap-1">
-                    <Star className="h-3.5 w-3.5 fill-saffron text-saffron" />
+                    <Star className="h-3.5 w-3.5 fill-primary text-primary" />
                     <span className="font-700 text-foreground">{r.rating.toFixed(1)}</span>
                   </span>
                   {r.address && (

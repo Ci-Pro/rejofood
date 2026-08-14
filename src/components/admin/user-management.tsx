@@ -22,7 +22,7 @@ interface AdminUser {
 }
 
 const ROLE_BADGE: Record<string, string> = {
-  CUSTOMER: "bg-saffron/15 text-saffron border-saffron/30",
+  CUSTOMER: "bg-primary/15 text-primary border-primary/30",
   MERCHANT: "bg-lavender/15 text-lavender border-lavender/30",
   DRIVER: "bg-mint/15 text-mint border-mint/30",
   ADMIN: "bg-rose/15 text-rose border-rose/30",

@@ -140,7 +140,7 @@ export function ReviewDialog({
                         className={cn(
                           "h-9 w-9 transition-colors",
                           star <= displayRating
-                            ? "fill-saffron text-saffron"
+                            ? "fill-primary text-primary"
                             : "fill-muted text-muted-foreground",
                         )}
                       />
@@ -152,7 +152,7 @@ export function ReviewDialog({
                     key={displayRating}
                     initial={{ opacity: 0, y: -4 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="mt-2 font-display text-sm font-700 text-saffron"
+                    className="mt-2 font-display text-sm font-700 text-primary"
                   >
                     {RATING_LABELS[displayRating]}
                   </motion.p>

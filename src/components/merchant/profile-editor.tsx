@@ -149,7 +149,7 @@ export function ProfileEditor({ info, onUpdated }: ProfileEditorProps) {
             <h3 className="font-display text-lg font-700 text-foreground">{info.restaurantName}</h3>
             <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
               <span className="flex items-center gap-1">
-                <Star className="h-3 w-3 fill-saffron text-saffron" />
+                <Star className="h-3 w-3 fill-primary text-primary" />
                 <span className="font-700 text-foreground">{info.rating.toFixed(1)}</span>
               </span>
               {info.cuisine && <span>· {info.cuisine}</span>}

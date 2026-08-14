@@ -218,12 +218,12 @@ export function PaymentDialog({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <CreditCard className="h-5 w-5 text-saffron" />
+            <CreditCard className="h-5 w-5 text-primary" />
             Pembayaran
           </DialogTitle>
           <DialogDescription>
             Order <span className="font-700 text-foreground">{orderCode}</span> · Total{" "}
-            <span className="font-display font-700 text-saffron">{formatRupiah(total)}</span>
+            <span className="font-display font-700 text-primary">{formatRupiah(total)}</span>
           </DialogDescription>
         </DialogHeader>
 
@@ -351,7 +351,7 @@ export function PaymentDialog({
                     {methodIcon(payment.method)}
                     {methodLabel(payment.method)}
                   </span>
-                  <Badge variant="outline" className="h-5 border-saffron/40 bg-saffron/10 px-1.5 text-[0.6rem] font-700 text-saffron">
+                  <Badge variant="outline" className="h-5 border-primary/40 bg-primary/10 px-1.5 text-[0.6rem] font-700 text-primary">
                     <Clock className="h-2.5 w-2.5" /> MENUNGGU
                   </Badge>
                 </div>
@@ -392,7 +392,7 @@ export function PaymentDialog({
                   href={payment.paymentUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-1.5 rounded-xl border border-saffron/40 bg-saffron/10 px-3 py-2 text-xs font-700 text-saffron hover:bg-saffron/20"
+                  className="flex items-center justify-center gap-1.5 rounded-xl border border-primary/40 bg-primary/10 px-3 py-2 text-xs font-700 text-primary hover:bg-primary/20"
                 >
                   <ExternalLink className="h-3 w-3" />
                   Buka halaman pembayaran (mock gateway)
@@ -400,8 +400,8 @@ export function PaymentDialog({
               )}
 
               {/* DEV: Mock simulator — di production, ini otomatis dari gateway webhook */}
-              <div className="rounded-xl border border-dashed border-saffron/40 bg-saffron/5 p-3">
-                <p className="flex items-center gap-1.5 text-xs font-700 text-saffron">
+              <div className="rounded-xl border border-dashed border-primary/40 bg-primary/5 p-3">
+                <p className="flex items-center gap-1.5 text-xs font-700 text-primary">
                   <AlertCircle className="h-3 w-3" />
                   Dev Mode: Simulasi konfirmasi pembayaran
                 </p>

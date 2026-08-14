@@ -43,11 +43,11 @@ export function AuthShell({ showAdmin = false, appRole = null }: { showAdmin?: b
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-background">
-      {/* Modern clean background — subtle gradient, no blobs */}
+      {/* RejoFood background — warm cream gradient */}
       <div
         className="pointer-events-none fixed inset-0"
         style={{
-          background: "linear-gradient(180deg, #FFFFFF 0%, #F8F9FB 100%)",
+          background: "linear-gradient(180deg, #FFF8EE 0%, #FFFFFF 100%)",
         }}
       />
 

@@ -68,7 +68,7 @@ function Wordmark({ size, onLight }: { size: "sm" | "md" | "lg"; onLight: boolea
         onLight ? "text-primary-foreground" : "text-foreground",
       )}
     >
-      Rejo<span className="text-saffron">Food</span>
+      Rejo<span className="text-primary">Food</span>
     </p>
   );
 }
@@ -83,7 +83,7 @@ function LogoBadge({ dim }: { dim: number }) {
       <LogoMark dim={dim * 0.62} />
       {/* Saffron spark dot */}
       <span
-        className="rejo-dot absolute -right-0.5 -top-0.5 rounded-full bg-saffron ring-2 ring-background"
+        className="rejo-dot absolute -right-0.5 -top-0.5 rounded-full bg-primary ring-2 ring-background"
         style={{ width: dim * 0.18, height: dim * 0.18 }}
         aria-hidden
       />

@@ -152,7 +152,7 @@ export function NotificationBell() {
                     <button
                       type="button"
                       onClick={markAllRead}
-                      className="text-[0.65rem] font-600 text-saffron hover:underline"
+                      className="text-[0.65rem] font-600 text-primary hover:underline"
                     >
                       Tandai dibaca
                     </button>

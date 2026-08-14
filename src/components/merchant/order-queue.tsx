@@ -54,7 +54,7 @@ const STATUS_LABEL: Record<Order["status"], string> = {
 function statusBadgeClass(s: Order["status"]): string {
   if (s === "DELIVERED") return "bg-mint/15 text-mint border-mint/30";
   if (s === "CANCELLED") return "bg-rose/15 text-rose border-rose/30";
-  if (s === "PENDING") return "bg-saffron/15 text-saffron border-saffron/30 animate-pulse";
+  if (s === "PENDING") return "bg-primary/15 text-primary border-primary/30 animate-pulse";
   if (s === "READY" || s === "PICKED_UP") return "bg-lavender/15 text-lavender border-lavender/30";
   return "bg-muted text-muted-foreground border-border";
 }
@@ -276,7 +276,7 @@ export function OrderQueue({ onPendingCountChange }: { onPendingCountChange?: (c
                 exit={{ opacity: 0, scale: 0.97 }}
                 className={cn(
                   "rounded-xl border bg-background/60 p-3 transition-colors",
-                  o.status === "PENDING" ? "border-saffron/40" : "border-border",
+                  o.status === "PENDING" ? "border-primary/40" : "border-border",
                 )}
               >
                 <div className="flex items-start justify-between gap-2">
@@ -353,7 +353,7 @@ export function OrderQueue({ onPendingCountChange }: { onPendingCountChange?: (c
                           </Button>
                         </>
                       ) : (
-                        <div className="flex items-center gap-2 rounded-lg bg-saffron/10 px-2.5 py-1.5 text-[0.65rem] text-saffron">
+                        <div className="flex items-center gap-2 rounded-lg bg-primary/10 px-2.5 py-1.5 text-[0.65rem] text-primary">
                           <Clock className="h-3 w-3" />
                           {o.payment ? (
                             <>Menunggu pembayaran ({o.payment.method === "COD" ? "COD" : o.payment.method})</>

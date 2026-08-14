@@ -27,7 +27,7 @@ interface FavoriteItem {
 function cuisineColor(cuisine: string | null): string {
   if (!cuisine) return "bg-muted text-muted-foreground";
   const map: Record<string, string> = {
-    Indonesia: "bg-saffron/15 text-saffron",
+    Indonesia: "bg-primary/15 text-primary",
     Padang: "bg-rose/15 text-rose",
     Chinese: "bg-lavender/15 text-lavender",
     Cafe: "bg-mint/15 text-mint",
@@ -38,7 +38,7 @@ function cuisineColor(cuisine: string | null): string {
 
 function initialColor(name: string): string {
   const colors = [
-    "bg-saffron text-saffron-foreground",
+    "bg-primary text-primary-foreground-foreground",
     "bg-lavender text-lavender-foreground",
     "bg-mint text-mint-foreground",
     "bg-rose text-rose-foreground",
@@ -158,7 +158,7 @@ export function FavoritesList() {
 
                   <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-border/60 pt-3 text-[0.7rem] text-muted-foreground">
                     <span className="flex items-center gap-1">
-                      <Star className="h-3 w-3 fill-saffron text-saffron" />
+                      <Star className="h-3 w-3 fill-primary text-primary" />
                       <span className="font-700 text-foreground">{r.rating.toFixed(1)}</span>
                     </span>
                     {r.address && (

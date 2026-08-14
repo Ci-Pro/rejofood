@@ -240,8 +240,8 @@ export function CheckoutDialog({
                     className={cn(
                       "rounded-full border px-2.5 py-1 text-[0.65rem] font-600 transition-premium press-feedback",
                       address === addr.address
-                        ? "border-saffron bg-saffron/10 text-saffron"
-                        : "border-border bg-card text-muted-foreground hover:border-saffron/40",
+                        ? "border-saffron bg-primary/10 text-primary"
+                        : "border-border bg-card text-muted-foreground hover:border-primary/40",
                     )}
                   >
                     {addr.label}
@@ -286,7 +286,7 @@ export function CheckoutDialog({
                 ) : null}
               </div>
               {delivery && (
-                <p className="mt-1.5 text-sm font-700 text-saffron">
+                <p className="mt-1.5 text-sm font-700 text-primary">
                   Ongkir: {delivery.feeFormatted}
                 </p>
               )}

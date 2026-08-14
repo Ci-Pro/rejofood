@@ -80,13 +80,13 @@ export function DailyOrdersChart() {
                   transition={{ duration: 0.4, delay: i * 0.05, ease: "easeOut" }}
                   className={cn(
                     "w-full rounded-t-lg transition-premium",
-                    isToday ? "bg-saffron" : "bg-lavender/30",
+                    isToday ? "bg-primary" : "bg-lavender/30",
                   )}
                   style={{ minHeight: 4 }}
                 />
                 <span className={cn(
                   "text-[0.6rem] font-600",
-                  isToday ? "text-saffron" : "text-muted-foreground",
+                  isToday ? "text-primary" : "text-muted-foreground",
                 )}>
                   {day.label}
                 </span>

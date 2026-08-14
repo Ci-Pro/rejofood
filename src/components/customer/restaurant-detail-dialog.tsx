@@ -40,7 +40,7 @@ function formatRupiah(n: number): string {
 
 function initialColor(name: string): string {
   const colors = [
-    "bg-saffron text-saffron-foreground",
+    "bg-primary text-primary-foreground-foreground",
     "bg-lavender text-lavender-foreground",
     "bg-mint text-mint-foreground",
     "bg-rose text-rose-foreground",
@@ -166,13 +166,13 @@ export function RestaurantDetailDialog({
             <div className="relative shrink-0 overflow-hidden border-b border-border/60 bg-primary">
               <div
                 className="pointer-events-none absolute inset-0"
-                style={{ background: "linear-gradient(135deg, #FF6B00 0%, #FF9F1C 100%)" }}
+                style={{ background: "linear-gradient(135deg, #003F3F 0%, #1A5757 100%)" }}
                 aria-hidden
               />
-              {/* White glow */}
+              {/* Orange glow accent */}
               <div
                 className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full opacity-20 blur-3xl"
-                style={{ background: "rgba(255,255,255,0.4)" }}
+                style={{ background: "#FF6B22" }}
                 aria-hidden
               />
               <div className="relative z-10 p-5 text-primary-foreground">
@@ -213,9 +213,9 @@ export function RestaurantDetailDialog({
                     )}
                     <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-primary-foreground/80">
                       {data && (
-                        <span className="flex items-center gap-1 rounded-full bg-saffron/20 px-2 py-0.5">
-                          <Star className="h-3 w-3 fill-saffron text-saffron" />
-                          <span className="font-700 text-saffron">{data.rating.toFixed(1)}</span>
+                        <span className="flex items-center gap-1 rounded-full bg-primary/20 px-2 py-0.5">
+                          <Star className="h-3 w-3 fill-primary text-primary" />
+                          <span className="font-700 text-primary">{data.rating.toFixed(1)}</span>
                         </span>
                       )}
                       {data?.address && (
@@ -299,8 +299,8 @@ export function RestaurantDetailDialog({
                             className="h-14 w-14 shrink-0 rounded-xl object-cover"
                           />
                         ) : (
-                          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-saffron/8">
-                            <UtensilsCrossed className="h-5 w-5 text-saffron/40" />
+                          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-primary/8">
+                            <UtensilsCrossed className="h-5 w-5 text-primary/40" />
                           </div>
                         )}
                         <div className="min-w-0 flex-1">
@@ -308,7 +308,7 @@ export function RestaurantDetailDialog({
                           {item.description && (
                             <p className="mt-0.5 line-clamp-2 text-[0.7rem] leading-relaxed text-muted-foreground">{item.description}</p>
                           )}
-                          <p className="mt-1.5 font-display text-sm font-700 text-saffron">
+                          <p className="mt-1.5 font-display text-sm font-700 text-primary">
                             {formatRupiah(item.price)}
                           </p>
                         </div>
@@ -354,7 +354,7 @@ export function RestaurantDetailDialog({
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-saffron" />
+              <AlertTriangle className="h-5 w-5 text-primary" />
               Ganti restoran?
             </DialogTitle>
             <DialogDescription>
@@ -449,14 +449,14 @@ function ReviewsSection({ merchantId, rating }: { merchantId: string; rating: nu
       {/* Rating summary */}
       <div className="mb-3 flex items-center gap-3 rounded-xl border border-border bg-card p-3">
         <div className="text-center">
-          <p className="font-display text-2xl font-700 text-saffron">{rating.toFixed(1)}</p>
+          <p className="font-display text-2xl font-700 text-primary">{rating.toFixed(1)}</p>
           <div className="flex justify-center">
             {[1, 2, 3, 4, 5].map((s) => (
               <Star
                 key={s}
                 className={cn(
                   "h-3 w-3",
-                  s <= Math.round(rating) ? "fill-saffron text-saffron" : "fill-muted text-muted-foreground",
+                  s <= Math.round(rating) ? "fill-primary text-primary" : "fill-muted text-muted-foreground",
                 )}
               />
             ))}
@@ -470,9 +470,9 @@ function ReviewsSection({ merchantId, rating }: { merchantId: string; rating: nu
             return (
               <div key={star} className="flex items-center gap-1.5 text-[0.65rem]">
                 <span className="w-3 text-muted-foreground">{star}</span>
-                <Star className="h-2 w-2 fill-saffron text-saffron" />
+                <Star className="h-2 w-2 fill-primary text-primary" />
                 <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
-                  <div className="h-full bg-saffron" style={{ width: `${pct}%` }} />
+                  <div className="h-full bg-primary" style={{ width: `${pct}%` }} />
                 </div>
                 <span className="w-4 text-right tabular-nums text-muted-foreground">{count}</span>
               </div>
@@ -493,7 +493,7 @@ function ReviewsSection({ merchantId, rating }: { merchantId: string; rating: nu
                     key={s}
                     className={cn(
                       "h-2.5 w-2.5",
-                      s <= r.rating ? "fill-saffron text-saffron" : "fill-muted text-muted-foreground",
+                      s <= r.rating ? "fill-primary text-primary" : "fill-muted text-muted-foreground",
                     )}
                   />
                 ))}
