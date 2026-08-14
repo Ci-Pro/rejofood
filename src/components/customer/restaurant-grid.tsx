@@ -302,13 +302,13 @@ export function RestaurantGrid() {
               transition={{ duration: 0.25, delay: Math.min(idx * 0.03, 0.2) }}
               whileHover={{ y: -2 }}
               whileTap={{ scale: 0.98 }}
-              className="group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-card transition-premium hover:shadow-card-hover hover:border-transparent"
+              className="group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card transition-premium hover:shadow-card-hover"
             >
-              {/* Heart toggle (top right) — floating glass */}
+              {/* Heart toggle (top right) — clean white circle */}
               <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); toggle(r.id, r.restaurantName); }}
-                className="absolute right-2.5 top-2.5 z-10 flex h-9 w-9 items-center justify-center rounded-full glass-card border border-border/30 transition-tap press-feedback hover:scale-110"
+                className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-background/90 backdrop-blur-sm border border-border transition-tap hover:scale-110 active:scale-95"
                 aria-label={isFavorited(r.id) ? "Hapus dari favorit" : "Tambah ke favorit"}
               >
                 <Heart
@@ -323,58 +323,62 @@ export function RestaurantGrid() {
               <button
                 type="button"
                 onClick={() => setSelectedId(r.id)}
-                className="flex flex-1 flex-col p-3.5 text-left sm:p-4"
+                className="flex flex-1 flex-col p-4 text-left"
               >
-              {/* Header: avatar + name + open status */}
-              <div className="flex items-start gap-3">
-                <div className={cn("flex h-12 w-12 shrink-0 items-center justify-center rounded-xl font-display text-xl font-700", initialColor(r.restaurantName))}>
-                  {initial(r.restaurantName)}
-                </div>
-                <div className="min-w-0 flex-1 pr-8">
-                  <div className="flex items-center gap-2">
-                    <h3 className="truncate font-display text-base font-700 text-foreground">{r.restaurantName}</h3>
-                    {r.isOpen ? (
-                      <Badge variant="outline" className="h-5 shrink-0 border-mint/40 bg-mint/10 px-1.5 text-[0.6rem] font-700 text-mint">
-                        BUKA
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline" className="h-5 shrink-0 border-border bg-muted px-1.5 text-[0.6rem] font-700 text-muted-foreground">
-                        TUTUP
-                      </Badge>
-                    )}
+                {/* Header: avatar + name + status */}
+                <div className="flex items-start gap-3">
+                  <div className={cn("flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl font-display text-xl font-700", initialColor(r.restaurantName))}>
+                    {initial(r.restaurantName)}
                   </div>
-                  {r.cuisine && (
-                    <Badge variant="outline" className={cn("mt-1 h-5 border-transparent px-1.5 text-[0.6rem] font-700", cuisineColor(r.cuisine))}>
-                      {r.cuisine}
-                    </Badge>
-                  )}
+                  <div className="min-w-0 flex-1 pr-8">
+                    <h3 className="truncate font-display text-base font-700 leading-tight text-foreground">
+                      {r.restaurantName}
+                    </h3>
+                    {r.cuisine && (
+                      <p className="mt-0.5 truncate text-xs font-500 text-muted-foreground">
+                        {r.cuisine}
+                      </p>
+                    )}
+                    <div className="mt-1.5 flex items-center gap-1.5">
+                      {r.isOpen ? (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-mint/10 px-2 py-0.5 text-[0.65rem] font-700 text-mint">
+                          <span className="h-1.5 w-1.5 rounded-full bg-mint" />
+                          Buka
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[0.65rem] font-700 text-muted-foreground">
+                          <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground" />
+                          Tutup
+                        </span>
+                      )}
+                    </div>
+                  </div>
                 </div>
-              </div>
 
-              {/* Description */}
-              {r.description && (
-                <p className="mt-3 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
-                  {r.description}
-                </p>
-              )}
-
-              {/* Footer: rating + address + menu count */}
-              <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-border/60 pt-3 text-[0.7rem] text-muted-foreground">
-                <span className="flex items-center gap-1">
-                  <Star className="h-3 w-3 fill-saffron text-saffron" />
-                  <span className="font-700 text-foreground">{r.rating.toFixed(1)}</span>
-                </span>
-                {r.address && (
-                  <span className="flex items-center gap-1 truncate">
-                    <MapPin className="h-3 w-3" />
-                    <span className="truncate">{r.address.split(",")[0]}</span>
-                  </span>
+                {/* Description */}
+                {r.description && (
+                  <p className="mt-3 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+                    {r.description}
+                  </p>
                 )}
-                <span className="flex items-center gap-1">
-                  <UtensilsCrossed className="h-3 w-3" />
-                  {r.menuCount} menu
-                </span>
-              </div>
+
+                {/* Footer: rating + address + menu count */}
+                <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-border pt-3 text-xs text-muted-foreground">
+                  <span className="flex items-center gap-1">
+                    <Star className="h-3.5 w-3.5 fill-saffron text-saffron" />
+                    <span className="font-700 text-foreground">{r.rating.toFixed(1)}</span>
+                  </span>
+                  {r.address && (
+                    <span className="flex items-center gap-1 truncate">
+                      <MapPin className="h-3.5 w-3.5" />
+                      <span className="truncate">{r.address.split(",")[0]}</span>
+                    </span>
+                  )}
+                  <span className="flex items-center gap-1">
+                    <UtensilsCrossed className="h-3.5 w-3.5" />
+                    {r.menuCount} menu
+                  </span>
+                </div>
               </button>
             </motion.div>
           ))}
