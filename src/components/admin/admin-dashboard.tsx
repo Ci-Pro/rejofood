@@ -12,6 +12,7 @@ import { UserManagement } from "./user-management";
 import { AdminWalletManagement as WalletManagement } from "./wallet-management";
 import { PromoManagement } from "./promo-management";
 import { MerchantManagement } from "./merchant-management";
+import { RevenueChart } from "./revenue-chart";
 import { UserProfileEditor } from "@/components/shared/user-profile-editor";
 import { ErrorBoundary } from "@/components/shared/error-boundary";
 import { Users, Store, Bike, Activity, Loader2, Tag, AlertTriangle, TrendingUp } from "lucide-react";
@@ -107,6 +108,13 @@ export function AdminDashboard() {
               )}
             </div>
           )}
+
+          {/* Revenue chart */}
+          <div className="mt-4">
+            <ErrorBoundary>
+              <RevenueChart />
+            </ErrorBoundary>
+          </div>
 
           <div className="mt-6">
             <OrderMonitor />

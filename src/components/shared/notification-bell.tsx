@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Bell, CheckCircle2, X, Clock } from "lucide-react";
+import { Bell, CheckCircle2, X, Clock, ChefHat, Bike, Home, CreditCard, Package } from "lucide-react";
 import { useAuthStore } from "@/store/auth-store";
 import { cn } from "@/lib/utils";
 
@@ -68,7 +68,37 @@ export function NotificationBell() {
       }
     };
     window.addEventListener("rejofood:notification", handler);
-    return () => window.removeEventListener("rejofood:notification", handler);
+
+    // Also listen for order:status events from useOrderSocket
+    const statusHandler = (e: Event) => {
+      const data = (e as CustomEvent).detail;
+      if (!data?.code || !data?.to) return;
+
+      const statusMessages: Record<string, { title: string; body: string }> = {
+        ACCEPTED: { title: "Pesanan diterima!", body: `Order ${data.code} sedang diproses` },
+        PREPARING: { title: "Mulai dimasak", body: `Order ${data.code} sedang disiapkan` },
+        READY: { title: "Pesanan siap!", body: `Order ${data.code} menunggu driver` },
+        PICKED_UP: { title: "Driver dalam perjalanan", body: `Order ${data.code} sedang diantar` },
+        DELIVERED: { title: "Pesanan tiba!", body: `Order ${data.code} telah sampai` },
+        CANCELLED: { title: "Pesanan dibatalkan", body: `Order ${data.code} dibatalkan` },
+        PAID: { title: "Pembayaran berhasil", body: `Order ${data.code} sudah dibayar` },
+      };
+
+      const msg = statusMessages[data.to];
+      if (msg) {
+        addNotification({
+          title: msg.title,
+          body: msg.body,
+          type: "order_status",
+        });
+      }
+    };
+    window.addEventListener("rejofood:order-status", statusHandler);
+
+    return () => {
+      window.removeEventListener("rejofood:notification", handler);
+      window.removeEventListener("rejofood:order-status", statusHandler);
+    };
   }, [user]);
 
   if (!user) return null;
@@ -146,20 +176,30 @@ export function NotificationBell() {
                     <p className="mt-2 text-xs text-muted-foreground">Belum ada notifikasi</p>
                   </div>
                 ) : (
-                  notifications.map((n) => (
+                  notifications.map((n) => {
+                    const icon = n.type === "order_status" && n.title.includes("diterima") ? CheckCircle2
+                      : n.title.includes("dimasak") ? ChefHat
+                      : n.title.includes("siap") ? Package
+                      : n.title.includes("dalam perjalanan") ? Bike
+                      : n.title.includes("tiba") ? Home
+                      : n.title.includes("Pembayaran") ? CreditCard
+                      : n.title.includes("dibatalkan") ? X
+                      : Bell;
+                    const Icon = icon;
+                    return (
                     <div
                       key={n.id}
                       className={cn(
                         "border-b border-border/60 p-3 transition-colors",
-                        !n.read && "bg-saffron/5",
+                        !n.read && "bg-primary/5",
                       )}
                     >
                       <div className="flex items-start gap-2">
                         <span className={cn(
                           "mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full",
-                          n.read ? "bg-muted" : "bg-saffron/15",
+                          n.read ? "bg-muted" : "bg-primary/15",
                         )}>
-                          <CheckCircle2 className={cn("h-3 w-3", n.read ? "text-muted-foreground" : "text-saffron")} />
+                          <Icon className={cn("h-3 w-3", n.read ? "text-muted-foreground" : "text-primary")} />
                         </span>
                         <div className="min-w-0 flex-1">
                           <p className="text-xs font-700 text-foreground">{n.title}</p>
@@ -169,11 +209,12 @@ export function NotificationBell() {
                           </p>
                         </div>
                         {!n.read && (
-                          <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-saffron" />
+                          <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
                         )}
                       </div>
                     </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
             </motion.div>
