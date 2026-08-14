@@ -109,7 +109,7 @@ export async function sendVerificationEmail(
     <tr><td align="center">
       <table width="480" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.05);">
         <tr>
-          <td style="background:linear-gradient(135deg,#7C5BBF 0%,#4C3A8E 100%);padding:32px 24px;text-align:center;">
+          <td style="background:linear-gradient(135deg,#003F3F 0%,#1A5757 100%);padding:32px 24px;text-align:center;">
             <h1 style="margin:0;color:#ffffff;font-size:24px;font-weight:700;">RejoFood</h1>
             <p style="margin:4px 0 0;color:rgba(255,255,255,0.8);font-size:13px;">Pesan, Masak, Antar, Atur</p>
           </td>
@@ -123,14 +123,14 @@ export async function sendVerificationEmail(
             </p>
             <table width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0;">
               <tr><td align="center">
-                <a href="${verifyUrl}" style="display:inline-block;background:#7C5BBF;color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:12px;font-weight:700;font-size:14px;">
+                <a href="${verifyUrl}" style="display:inline-block;background:#003F3F;color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:12px;font-weight:700;font-size:14px;">
                   Verifikasi Email Saya
                 </a>
               </td></tr>
             </table>
             <p style="margin:0 0 8px;color:#4A4458;font-size:14px;line-height:1.6;">Atau salin link ini ke browser:</p>
-            <p style="margin:0 0 16px;color:#7C5BBF;font-size:12px;word-break:break-all;">${verifyUrl}</p>
-            <div style="background:#FFF8E7;border-left:3px solid #FF9F1C;padding:12px 16px;border-radius:8px;margin:16px 0;">
+            <p style="margin:0 0 16px;color:#003F3F;font-size:12px;word-break:break-all;">${verifyUrl}</p>
+            <div style="background:#FFF8EE;border-left:3px solid #FF6B22;padding:12px 16px;border-radius:8px;margin:16px 0;">
               <p style="margin:0;color:#8B6914;font-size:12px;line-height:1.5;">
                 Link ini berlaku 24 jam. Jika tidak verifikasi dalam waktu tersebut,
                 Anda perlu meminta link verifikasi baru.

@@ -274,7 +274,7 @@
 
   /* Scrollbar */
   .scroll-slim::-webkit-scrollbar { width: 4px; height: 4px; }
-  .scroll-slim::-webkit-scrollbar-thumb { background: rgba(45,27,78,0.15); border-radius: 999px; }
+  .scroll-slim::-webkit-scrollbar-thumb { background: rgba(0, 63, 63, 0.15); border-radius: 999px; }
   .scroll-slim::-webkit-scrollbar-track { background: transparent; }
   .scroll-hidden::-webkit-scrollbar { display: none; }
   .scroll-hidden { -ms-overflow-style: none; scrollbar-width: none; }

@@ -3,15 +3,20 @@
 import { cn } from "@/lib/utils";
 
 /**
- * RejoFood brand mark — v2.0 premium.
+ * RejoFood brand mark — v5.0 RejoFood Identity.
  *
- * Logo concept: fork (left) + arrow (right, pointing right = delivery direction)
- * + saffron dot (spark of warmth).
+ * Logo concept: Circular bowl/plate mark (deep teal) dengan orange dot accent.
+ * Wordmark: "RejoFood" deep teal dengan orange dot di huruf 'j'.
+ *
+ * Color system:
+ *  - Deep Teal #003F3F (mark background + wordmark)
+ *  - Orange #FF6B22 (dot accent)
+ *  - White #FFFFFF (mark icon on teal bg)
  *
  * Variants:
- *  - full: logo + wordmark "RejoFood" + tagline
- *  - compact: logo only (untuk header)
- *  - mark: logo only, no rounded background (untuk inline use)
+ *  - full: mark + wordmark + tagline
+ *  - compact: mark + wordmark (untuk header)
+ *  - mark: mark only (untuk inline/app icon)
  */
 export function BrandLogo({
   className,
@@ -22,7 +27,7 @@ export function BrandLogo({
   className?: string;
   size?: "sm" | "md" | "lg";
   variant?: "full" | "compact" | "mark";
-  onLight?: boolean; // render di background terang (header light mode)
+  onLight?: boolean;
 }) {
   const dim = size === "sm" ? 32 : size === "lg" ? 56 : 44;
 
@@ -49,7 +54,7 @@ export function BrandLogo({
           <Wordmark size={size} onLight={onLight} />
           <p className={cn(
             "text-[0.625rem] uppercase tracking-[0.2em]",
-            onLight ? "text-primary-foreground/60" : "text-muted-foreground",
+            onLight ? "text-white/60" : "text-muted-foreground",
           )}>
             Pesan · Masak · Antar
           </p>
@@ -61,69 +66,101 @@ export function BrandLogo({
 
 function Wordmark({ size, onLight }: { size: "sm" | "md" | "lg"; onLight: boolean }) {
   return (
-    <p
+    <span
       className={cn(
-        "font-display font-700 tracking-tight leading-none",
+        "font-display font-800 tracking-tight leading-none",
         size === "lg" ? "text-2xl" : size === "md" ? "text-lg" : "text-base",
-        onLight ? "text-primary-foreground" : "text-foreground",
+        onLight ? "text-white" : "text-primary",
       )}
     >
-      Rejo<span className="text-primary">Food</span>
-    </p>
+      Rejo
+      <span className="relative">
+        Food
+        {/* Orange dot accent di atas huruf 'o' terakhir */}
+        <span
+          className="absolute -right-1 -top-0.5 rounded-full bg-accent"
+          style={{ width: size === "lg" ? 5 : 4, height: size === "lg" ? 5 : 4 }}
+          aria-hidden
+        />
+      </span>
+    </span>
   );
 }
 
-/** Logo dengan rounded badge background (untuk header/sidebar). */
+/** Logo badge — rounded teal square dengan white mark + orange dot. */
 function LogoBadge({ dim }: { dim: number }) {
   return (
     <div
       className="relative flex items-center justify-center rounded-2xl bg-primary shadow-premium"
       style={{ width: dim, height: dim }}
     >
-      <LogoMark dim={dim * 0.62} />
-      {/* Saffron spark dot */}
+      <LogoMarkInner dim={dim * 0.55} />
+      {/* Orange dot accent */}
       <span
-        className="rejo-dot absolute -right-0.5 -top-0.5 rounded-full bg-primary ring-2 ring-background"
-        style={{ width: dim * 0.18, height: dim * 0.18 }}
+        className="absolute -right-0.5 -top-0.5 rounded-full bg-accent ring-2 ring-background"
+        style={{ width: dim * 0.2, height: dim * 0.2 }}
         aria-hidden
       />
     </div>
   );
 }
 
-/** SVG logo mark only — fork + arrow. */
+/** Standalone mark — for inline use or app icon (no badge background). */
 function LogoMark({ dim, className }: { dim: number; className?: string }) {
+  return (
+    <div
+      className={cn("relative flex items-center justify-center rounded-2xl bg-primary shadow-premium", className)}
+      style={{ width: dim, height: dim }}
+    >
+      <LogoMarkInner dim={dim * 0.55} />
+      <span
+        className="absolute -right-0.5 -top-0.5 rounded-full bg-accent ring-2 ring-background"
+        style={{ width: dim * 0.2, height: dim * 0.2 }}
+        aria-hidden
+      />
+    </div>
+  );
+}
+
+/**
+ * Inner mark — bowl/plate icon (white) inside teal badge.
+ * Represents: food + delivery (circular motion).
+ */
+function LogoMarkInner({ dim }: { dim: number }) {
   return (
     <svg
       width={dim}
       height={dim}
-      viewBox="0 0 100 100"
+      viewBox="0 0 48 48"
       fill="none"
-      className={className}
       aria-hidden
     >
-      {/* Fork (left) */}
-      <g transform="translate(28 50)">
-        {/* Tines */}
-        <rect x="-10" y="-32" width="3.5" height="14" rx="1.5" fill="#FBF7F0" />
-        <rect x="-1.75" y="-32" width="3.5" height="14" rx="1.5" fill="#FBF7F0" />
-        <rect x="6.5" y="-32" width="3.5" height="14" rx="1.5" fill="#FBF7F0" />
-        {/* Body */}
-        <path d="M -7 -18 Q -7 -12 0 -12 Q 7 -12 7 -18 L 7 -6 Q 7 0 0 0 Q -7 0 -7 -6 Z" fill="#FBF7F0" />
-        {/* Handle */}
-        <rect x="-2.5" y="0" width="5" height="32" rx="2.5" fill="#FBF7F0" />
-      </g>
-      {/* Arrow (right) */}
-      <g transform="translate(56 50)">
-        <defs>
-          <linearGradient id="arrow-grad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#FFB347" />
-            <stop offset="100%" stopColor="#FF9F1C" />
-          </linearGradient>
-        </defs>
-        <rect x="-18" y="-3" width="22" height="6" rx="3" fill="url(#arrow-grad)" />
-        <path d="M 4 -10 L 18 0 L 4 10 L 8 0 Z" fill="url(#arrow-grad)" />
-      </g>
+      {/* Bowl/plate circle */}
+      <circle
+        cx="24"
+        cy="24"
+        r="16"
+        stroke="white"
+        strokeWidth="3.5"
+        strokeLinecap="round"
+        strokeDasharray="75 25"
+        transform="rotate(-30 24 24)"
+      />
+      {/* Steam lines (food warmth) */}
+      <path
+        d="M20 14 Q19 11 21 9 Q23 7 22 4"
+        stroke="white"
+        strokeWidth="2"
+        strokeLinecap="round"
+        opacity="0.7"
+      />
+      <path
+        d="M27 14 Q26 11 28 9 Q30 7 29 4"
+        stroke="white"
+        strokeWidth="2"
+        strokeLinecap="round"
+        opacity="0.5"
+      />
     </svg>
   );
 }
