@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Users, RefreshCw, Search, Ban, CheckCircle2, ShieldCheck } from "lucide-react";
+import { Users, RefreshCw, Search, Ban, CheckCircle2, ShieldCheck, AlertTriangle, Unlock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -16,6 +16,8 @@ interface AdminUser {
   fullName: string;
   role: string;
   isActive: boolean;
+  isFlagged?: boolean;
+  flagReason?: string | null;
   createdAt: string;
 }
 
@@ -44,6 +46,8 @@ export function UserManagement() {
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
   const [toggling, setToggling] = useState<string | null>(null);
+  const [flaggedOnly, setFlaggedOnly] = useState(false);
+  const [unflagging, setUnflagging] = useState<string | null>(null);
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
@@ -88,6 +92,28 @@ export function UserManagement() {
       toast.error("Koneksi bermasalah.");
     } finally {
       setToggling(null);
+    }
+  }
+
+  async function unflagUser(user: AdminUser) {
+    setUnflagging(user.id);
+    try {
+      const res = await fetch(`/api/admin/users/${user.id}/unflag`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ reason: "Manual unflag by admin" }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data?.error || "Gagal unflag user.");
+        return;
+      }
+      toast.success(`${user.fullName} berhasil di-unflag.`);
+      setUsers((prev) => prev.map((u) => u.id === user.id ? { ...u, isFlagged: false, flagReason: null } : u));
+    } catch {
+      toast.error("Koneksi bermasalah.");
+    } finally {
+      setUnflagging(null);
     }
   }
 
@@ -136,6 +162,19 @@ export function UserManagement() {
               {r ? ROLE_LABEL[r] : "Semua"}
             </button>
           ))}
+          <button
+            type="button"
+            onClick={() => setFlaggedOnly(!flaggedOnly)}
+            className={cn(
+              "flex items-center gap-1 rounded-full border px-2.5 py-1 text-[0.65rem] font-700 uppercase transition-premium",
+              flaggedOnly
+                ? "border-rose bg-rose/10 text-rose"
+                : "border-border bg-card text-muted-foreground hover:border-rose/40",
+            )}
+          >
+            <AlertTriangle className="h-3 w-3" />
+            Flagged
+          </button>
         </div>
       </div>
 
@@ -147,13 +186,13 @@ export function UserManagement() {
               <div key={i} className="h-14 animate-pulse rounded-xl bg-muted/50" />
             ))}
           </div>
-        ) : users.length === 0 ? (
+        ) : (flaggedOnly ? users.filter((u) => u.isFlagged) : users).length === 0 ? (
           <div className="py-8 text-center text-sm text-muted-foreground">
             <Users className="mx-auto h-8 w-8" />
             <p className="mt-2 font-600">Tidak ada user ditemukan</p>
           </div>
         ) : (
-          users.map((u, idx) => (
+          (flaggedOnly ? users.filter((u) => u.isFlagged) : users).map((u, idx) => (
             <motion.div
               key={u.id}
               initial={{ opacity: 0, y: 4 }}
@@ -174,12 +213,37 @@ export function UserManagement() {
                 <div className="flex items-center gap-2">
                   <p className="truncate text-sm font-700 text-foreground">{u.fullName}</p>
                   {u.role === "ADMIN" && <ShieldCheck className="h-3 w-3 text-rose" />}
+                  {u.isFlagged && (
+                    <Badge variant="outline" className="border-rose/40 bg-rose/10 px-1.5 text-[0.55rem] font-700 text-rose">
+                      <AlertTriangle className="mr-0.5 h-2 w-2" /> FLAGGED
+                    </Badge>
+                  )}
                 </div>
                 <p className="truncate text-xs text-muted-foreground">{u.email} · {formatTime(u.createdAt)}</p>
+                {u.isFlagged && u.flagReason && (
+                  <p className="mt-0.5 truncate text-[0.65rem] text-rose/80">{u.flagReason}</p>
+                )}
               </div>
               <Badge variant="outline" className={cn("h-5 px-1.5 text-[0.55rem] font-700", ROLE_BADGE[u.role])}>
                 {ROLE_LABEL[u.role] ?? u.role}
               </Badge>
+              {u.isFlagged && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => unflagUser(u)}
+                  disabled={unflagging === u.id}
+                  className="h-8 w-8 p-0 text-mint hover:bg-mint/10"
+                  title="Unflag user"
+                >
+                  {unflagging === u.id ? (
+                    <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Unlock className="h-3.5 w-3.5" />
+                  )}
+                </Button>
+              )}
               <Button
                 type="button"
                 variant="ghost"

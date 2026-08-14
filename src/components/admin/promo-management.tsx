@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Tag, Plus, Trash2, Loader2, RefreshCw, Power, Inbox } from "lucide-react";
+import { Tag, Plus, Trash2, Loader2, RefreshCw, Power, Inbox, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -104,6 +104,18 @@ export function PromoManagement() {
     );
   }
 
+  async function seedDefaults() {
+    try {
+      const res = await fetch("/api/promo/seed-defaults", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      toast.success(`${data.created} promo dibuat, ${data.skipped} sudah ada.`);
+      load(true);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Gagal seed promo");
+    }
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -112,6 +124,9 @@ export function PromoManagement() {
           <p className="text-xs text-muted-foreground">{promos.length} promo terdaftar</p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={seedDefaults} className="h-9">
+            <Sparkles className="h-3.5 w-3.5" /> Seed Default
+          </Button>
           <Button variant="outline" size="icon" onClick={() => load(true)} disabled={refreshing}>
             <RefreshCw className={cn("h-4 w-4", refreshing && "animate-spin")} />
           </Button>

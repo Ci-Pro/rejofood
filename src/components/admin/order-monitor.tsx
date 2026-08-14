@@ -3,12 +3,13 @@
 import { useEffect, useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import {
-  ScrollText, RefreshCw, ChevronRight, Wifi, WifiOff,
+  ScrollText, RefreshCw, ChevronRight, Wifi, WifiOff, Ban, Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useOrderSocket } from "@/hooks/use-order-socket";
+import { toast } from "sonner";
 
 interface AdminOrder {
   id: string;
@@ -59,6 +60,27 @@ export function OrderMonitor() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>("");
+  const [cancelling, setCancelling] = useState<string | null>(null);
+
+  async function cancelOrder(orderId: string, code: string) {
+    if (!confirm(`Batalkan order ${code}? Refund otomatis jika sudah dibayar.`)) return;
+    setCancelling(orderId);
+    try {
+      const res = await fetch(`/api/admin/orders/${orderId}/cancel`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ reason: "Cancelled by admin" }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      toast.success(`Order ${code} dibatalkan.${data.refunded ? " Refund diproses." : ""}`);
+      setOrders((prev) => prev.filter((o) => o.id !== orderId));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Gagal membatalkan order");
+    } finally {
+      setCancelling(null);
+    }
+  }
 
   const fetchOrders = useCallback(async () => {
     setLoading(true);
@@ -202,6 +224,18 @@ export function OrderMonitor() {
                 </p>
               </div>
               <p className="font-display text-sm font-700 text-rose">{formatRupiah(o.total)}</p>
+              {o.status !== "DELIVERED" && o.status !== "CANCELLED" && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => cancelOrder(o.id, o.code)}
+                  disabled={cancelling === o.id}
+                  className="h-7 w-7 p-0 text-destructive hover:bg-destructive/10"
+                  title="Batalkan order"
+                >
+                  {cancelling === o.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Ban className="h-3.5 w-3.5" />}
+                </Button>
+              )}
               <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
             </motion.div>
           ))}

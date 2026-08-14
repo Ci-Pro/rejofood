@@ -43,6 +43,8 @@ export async function GET(req: Request) {
         fullName: true,
         role: true,
         isActive: true,
+        isFlagged: true,
+        flagReason: true,
         avatarUrl: true,
         createdAt: true,
       },
