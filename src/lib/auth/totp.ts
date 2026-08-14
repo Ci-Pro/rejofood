@@ -34,7 +34,6 @@ export function buildOtpAuthUrl(email: string, secret: string): string {
     secret,
     label: email,
     issuer: TOTP_ISSUER,
-    type: "totp",
     algorithm: "sha1",
     digits: DIGITS,
     period: STEP,

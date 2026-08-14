@@ -19,23 +19,24 @@ export function DailyOrdersChart() {
   useEffect(() => {
     fetch("/api/merchant/stats", { cache: "no-store" })
       .then((r) => r.json())
-      .then((d) => {
-        if (d.today) {
+      .then((stats) => {
+        if (stats.today) {
           // Build 7-day mock from stats (real chart needs daily breakdown API)
-          // For now, use today + mock for previous days
-          const today = new Date();
           const days: DayData[] = [];
           const dayNames = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
+          const todayRevenue = stats.today.revenue ?? 0;
+          const todayOrders = stats.today.orders ?? 0;
+          const weekRevenue = stats.week?.revenue ?? todayRevenue * 7;
+          const weekOrders = stats.week?.orders ?? todayOrders * 7;
           for (let i = 6; i >= 0; i--) {
-            const d = new Date();
-            d.setDate(d.getDate() - i);
-            const dayIdx = d.getDay();
+            const date = new Date();
+            date.setDate(date.getDate() - i);
+            const dayIdx = date.getDay();
             const isToday = i === 0;
-            // Distribute week revenue across days with some variance
-            const baseRevenue = isToday ? d.today.revenue : Math.round((d.week?.revenue ?? 0) / 7 * (0.7 + Math.random() * 0.6));
-            const baseOrders = isToday ? d.today.orders : Math.round((d.week?.orders ?? 0) / 7 * (0.7 + Math.random() * 0.6));
+            const baseRevenue = isToday ? todayRevenue : Math.round(weekRevenue / 7 * (0.7 + Math.random() * 0.6));
+            const baseOrders = isToday ? todayOrders : Math.round(weekOrders / 7 * (0.7 + Math.random() * 0.6));
             days.push({
-              date: d.toISOString().split("T")[0],
+              date: date.toISOString().split("T")[0],
               label: dayNames[dayIdx],
               orders: baseOrders,
               revenue: baseRevenue,

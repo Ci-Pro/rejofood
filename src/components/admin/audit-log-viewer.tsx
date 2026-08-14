@@ -323,7 +323,7 @@ export function AuditLogViewer() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => fetchLogs(data.nextCursor)}
+            onClick={() => fetchLogs(data.nextCursor ?? undefined)}
             disabled={loading}
             className="h-8"
           >

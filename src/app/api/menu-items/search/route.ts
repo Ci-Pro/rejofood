@@ -22,9 +22,9 @@ export async function GET(req: Request) {
     where: {
       isAvailable: true,
       OR: [
-        { name: { contains: q, mode: "insensitive" } },
-        { description: { contains: q, mode: "insensitive" } },
-        { category: { contains: q, mode: "insensitive" } },
+        { name: { contains: q } },
+        { description: { contains: q } },
+        { category: { contains: q } },
       ],
     },
     orderBy: [{ name: "asc" }],

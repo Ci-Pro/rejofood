@@ -129,28 +129,28 @@ export function DriverOrders() {
   async function pickup(orderId: string) {
     setBusy(orderId);
     // 🔥 Optimistic: pindahkan dari available ke active
-    const originalAvailable = availableOrders;
-    const originalActive = activeOrders;
-    const order = availableOrders.find((o) => o.id === orderId);
+    const originalAvailable = available;
+    const originalActive = active;
+    const order = available.find((o) => o.id === orderId);
     if (order) {
-      setAvailableOrders((prev) => prev.filter((o) => o.id !== orderId));
-      setActiveOrders((prev) => [...prev, { ...order, status: "PICKED_UP" as const, pickedUpAt: new Date().toISOString() }]);
+      setAvailable((prev) => prev.filter((o) => o.id !== orderId));
+      setActive((prev) => [...prev, { ...order, status: "PICKED_UP" as const, pickedUpAt: new Date().toISOString() }]);
     }
     try {
       const res = await fetch(`/api/driver/orders/${orderId}/pickup`, { method: "POST" });
       const data = await res.json();
       if (!res.ok) {
         // Rollback
-        setAvailableOrders(originalAvailable);
-        setActiveOrders(originalActive);
+        setAvailable(originalAvailable);
+        setActive(originalActive);
         toast.error(data?.error || "Gagal mengambil order.");
         return;
       }
       toast.success("Order diambil! Antar ke pelanggan.");
       fetchOrders(); // background sync
     } catch {
-      setAvailableOrders(originalAvailable);
-      setActiveOrders(originalActive);
+      setAvailable(originalAvailable);
+      setActive(originalActive);
       toast.error("Koneksi bermasalah.");
     } finally {
       setBusy(null);
@@ -160,21 +160,21 @@ export function DriverOrders() {
   async function deliver(orderId: string) {
     setBusy(orderId);
     // 🔥 Optimistic: hapus dari active orders
-    const originalActive = activeOrders;
-    setActiveOrders((prev) => prev.filter((o) => o.id !== orderId));
+    const originalActive = active;
+    setActive((prev) => prev.filter((o) => o.id !== orderId));
     try {
       const res = await fetch(`/api/driver/orders/${orderId}/deliver`, { method: "POST" });
       const data = await res.json();
       if (!res.ok) {
         // Rollback
-        setActiveOrders(originalActive);
+        setActive(originalActive);
         toast.error(data?.error || "Gagal menyelesaikan order.");
         return;
       }
       toast.success("Pesanan selesai diantar!");
       fetchOrders(); // background sync
     } catch {
-      setActiveOrders(originalActive);
+      setActive(originalActive);
       toast.error("Koneksi bermasalah.");
     } finally {
       setBusy(null);

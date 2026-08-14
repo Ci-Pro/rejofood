@@ -75,7 +75,7 @@ export function usePushNotifications() {
 
       const sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey,
+        applicationServerKey: applicationServerKey as unknown as BufferSource,
       });
 
       // Save to server

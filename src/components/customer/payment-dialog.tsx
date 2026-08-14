@@ -363,24 +363,28 @@ export function PaymentDialog({
               </div>
 
               {/* Method-specific instructions */}
-              {payment.metadata?.instruction && (
+              {(() => {
+                const meta = payment.metadata as { instruction?: string; vaNumber?: string; qrString?: string } | null;
+                if (!meta?.instruction) return null;
+                return (
                 <div className="rounded-xl border border-border bg-card p-3 text-xs">
                   <p className="font-700 text-foreground">Instruksi:</p>
-                  <p className="mt-1 text-muted-foreground">{payment.metadata.instruction as string}</p>
-                  {payment.metadata.vaNumber && (
+                  <p className="mt-1 text-muted-foreground">{meta.instruction}</p>
+                  {meta.vaNumber && (
                     <div className="mt-2 flex items-center justify-between rounded-lg bg-muted/50 p-2">
                       <span className="text-[0.65rem] text-muted-foreground">Nomor VA:</span>
-                      <code className="font-mono text-sm font-700 text-foreground">{payment.metadata.vaNumber as string}</code>
+                      <code className="font-mono text-sm font-700 text-foreground">{meta.vaNumber}</code>
                     </div>
                   )}
-                  {payment.metadata.qrString && (
+                  {meta.qrString && (
                     <div className="mt-2 flex flex-col items-center rounded-lg bg-muted/50 p-3">
                       <QrCode className="h-16 w-16 text-foreground" />
                       <p className="mt-1 text-[0.65rem] text-muted-foreground">Scan QR dengan e-wallet/m-banking</p>
                     </div>
                   )}
                 </div>
-              )}
+                );
+              })()}
 
               {/* Payment URL */}
               {payment.paymentUrl && (

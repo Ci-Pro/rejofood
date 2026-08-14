@@ -31,6 +31,7 @@ interface RestaurantDetail {
   rating: number;
   isOpen: boolean;
   menuItems: MenuItem[];
+  reviewCount?: number;
 }
 
 function formatRupiah(n: number): string {
@@ -381,7 +382,7 @@ export function RestaurantDetailDialog({
 /** Sub-component: reviews section di drawer detail. */
 function ReviewsSection({ merchantId, rating }: { merchantId: string; rating: number }) {
   const [reviews, setReviews] = useState<{
-    items: Array<{ id: string; rating: number; comment: string | null; customerName: string; createdAt: string }>;
+    items: Array<{ id: string; rating: number; comment: string | null; customerName: string; createdAt: string; merchantReply?: string | null; merchantReplyAt?: string | null }>;
     total: number;
     distribution: Record<number, number>;
   } | null>(null);

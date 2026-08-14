@@ -143,9 +143,10 @@ export async function listAuditLogs(query: AuditLogQuery): Promise<AuditLogListR
   if (query.outcome) where.outcome = query.outcome;
   if (query.email) where.actorEmail = { contains: query.email };
   if (query.from || query.to) {
-    where.createdAt = {};
-    if (query.from) where.createdAt.gte = new Date(query.from);
-    if (query.to) where.createdAt.lte = new Date(query.to);
+    const dateFilter: { gte?: Date; lte?: Date } = {};
+    if (query.from) dateFilter.gte = new Date(query.from);
+    if (query.to) dateFilter.lte = new Date(query.to);
+    where.createdAt = dateFilter;
   }
 
   const [items, total] = await Promise.all([

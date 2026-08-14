@@ -200,7 +200,7 @@ export function ProfileEditor({ info, onUpdated }: ProfileEditorProps) {
           <ImageUploader
             value={info.logoUrl}
             onChange={(url) => {
-              onUpdated({ ...info, logoUrl: url });
+              onUpdated?.({ ...info, logoUrl: url });
             }}
             folder="logo"
             shape="rounded"
