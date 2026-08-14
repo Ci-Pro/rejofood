@@ -121,7 +121,7 @@ export function WalletTransactionsList({
       const res = await fetch(`/api/wallet/transactions?${params}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-      setItems(data.items);
+      setItems(data.items ?? []);
       setPage(data.page);
       setTotalPages(data.totalPages);
     } catch (err) {

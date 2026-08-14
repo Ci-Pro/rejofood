@@ -131,8 +131,8 @@ export function MyOrdersList() {
         setError(data?.error || "Gagal memuat pesanan.");
         return;
       }
-      setOrders(data.items);
-      setHasMore(data.items.length >= 10);
+      setOrders(data.items ?? []);
+      setHasMore((data.items ?? []).length >= 10);
     } catch {
       setError("Koneksi bermasalah.");
     } finally {
@@ -148,8 +148,9 @@ export function MyOrdersList() {
       const res = await fetch(`/api/orders?limit=10&cursor=${lastOrder.id}`, { cache: "no-store" });
       const data = await res.json();
       if (res.ok) {
-        setOrders((prev) => [...prev, ...data.items]);
-        setHasMore(data.items.length >= 10);
+        const newItems = data.items ?? [];
+        setOrders((prev) => [...prev, ...newItems]);
+        setHasMore(newItems.length >= 10);
       }
     } catch { /* silent */ } finally {
       setLoadingMore(false);

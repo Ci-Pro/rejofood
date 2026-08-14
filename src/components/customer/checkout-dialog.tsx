@@ -82,7 +82,7 @@ export function CheckoutDialog({
         const res = await fetch("/api/profile", { cache: "no-store" });
         const data = await res.json();
         if (cancelled) return;
-        if (data.defaultAddress) setAddress(data.defaultAddress);
+        if (res.ok && data?.defaultAddress) setAddress(data.defaultAddress);
       } catch { /* ignore */ }
     })();
     return () => { cancelled = true; };

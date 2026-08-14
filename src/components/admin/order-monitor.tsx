@@ -72,7 +72,7 @@ export function OrderMonitor() {
         setError(data?.error || "Gagal memuat orders.");
         return;
       }
-      setOrders(data.items);
+      setOrders(data.items ?? []);
       setTotal(data.total);
     } catch {
       setError("Koneksi bermasalah.");

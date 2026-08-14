@@ -69,7 +69,7 @@ export function FavoritesList() {
         setError(data?.error || "Gagal memuat favorit.");
         return;
       }
-      setItems(data.items);
+      setItems(data.items ?? []);
     } catch {
       setError("Koneksi bermasalah.");
     } finally {

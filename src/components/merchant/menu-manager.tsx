@@ -86,7 +86,7 @@ export function MenuManager({ onInfoLoaded }: { onInfoLoaded?: (info: MerchantIn
         return;
       }
       setInfo(data.merchant);
-      setItems(data.items);
+      setItems(data.items ?? []);
       onInfoLoaded?.(data.merchant);
     } catch {
       setError("Koneksi bermasalah.");

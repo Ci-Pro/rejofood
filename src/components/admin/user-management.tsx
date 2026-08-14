@@ -54,7 +54,7 @@ export function UserManagement() {
       const res = await fetch(`/api/admin/users?${params}`, { cache: "no-store" });
       const data = await res.json();
       if (!res.ok) { toast.error(data?.error || "Gagal memuat users."); return; }
-      setUsers(data.items);
+      setUsers(data.items ?? []);
       setTotal(data.total);
     } catch {
       toast.error("Koneksi bermasalah.");

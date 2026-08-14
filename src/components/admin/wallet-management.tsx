@@ -87,7 +87,7 @@ export function AdminWalletManagement() {
       const res = await fetch(`/api/admin/wallets?${params}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-      setItems(data.items);
+      setItems(data.items ?? []);
       setStats(data.stats);
       setPage(data.page);
       setTotalPages(data.totalPages);

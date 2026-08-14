@@ -103,7 +103,7 @@ export function RestaurantGrid({ cuisineFilter }: { cuisineFilter?: string }) {
         setError(data?.error || "Gagal memuat restoran.");
         return;
       }
-      setItems(data.items);
+      setItems(data.items ?? []);
     } catch {
       setError("Koneksi bermasalah.");
     } finally {
@@ -121,7 +121,7 @@ export function RestaurantGrid({ cuisineFilter }: { cuisineFilter?: string }) {
         setError(data?.error || "Gagal mencari menu.");
         return;
       }
-      setMenuResults(data.items);
+      setMenuResults(data.items ?? []);
     } catch {
       setError("Koneksi bermasalah.");
     } finally {

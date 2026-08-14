@@ -90,7 +90,7 @@ export function OrderQueue({ onPendingCountChange }: { onPendingCountChange?: (c
         setError(data?.error || "Gagal memuat pesanan.");
         return;
       }
-      setOrders(data.items);
+      setOrders(data.items ?? []);
       setError(null);
     } catch {
       setError("Koneksi bermasalah.");

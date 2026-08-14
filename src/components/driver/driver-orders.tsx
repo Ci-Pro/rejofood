@@ -100,8 +100,8 @@ export function DriverOrders() {
         setError(data?.error || "Gagal memuat pesanan.");
         return;
       }
-      setAvailable(data.available);
-      setActive(data.active);
+      setAvailable(data.available ?? []);
+      setActive(data.active ?? []);
       setError(null);
     } catch {
       setError("Koneksi bermasalah.");
