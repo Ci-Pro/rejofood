@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { calculateOrderETA, formatETA } from "@/lib/order-eta";
 import { useOrderSocket } from "@/hooks/use-order-socket";
 import { toast } from "sonner";
 import { PaymentDialog } from "./payment-dialog";
@@ -340,6 +341,22 @@ export function MyOrdersList() {
                         · <Clock className="h-2 w-2" /> {elapsedTime(o.createdAt)}
                       </span>
                     )}
+                    {o.status !== "DELIVERED" && o.status !== "CANCELLED" && (() => {
+                      const eta = calculateOrderETA({
+                        status: o.status,
+                        createdAt: o.createdAt,
+                        acceptedAt: o.acceptedAt,
+                        readyAt: o.readyAt,
+                        pickedUpAt: o.pickedUpAt,
+                        deliveredAt: o.deliveredAt,
+                        cancelledAt: o.cancelledAt,
+                      });
+                      return eta.minutesRemaining !== null ? (
+                        <span className="ml-1 inline-flex items-center gap-0.5 font-600 text-primary">
+                          · ETA ~{formatETA(eta.minutesRemaining)}
+                        </span>
+                      ) : null;
+                    })()}
                   </p>
                 </button>
                 <div className="shrink-0 text-right">

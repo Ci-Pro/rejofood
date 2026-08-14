@@ -114,6 +114,10 @@ model Merchant {
   cuisine        String?
   rating         Float    @default(0)
   isOpen         Boolean  @default(false)
+  /// Promo tag untuk display di card (mis. "Diskon 20%", "Beli 1 Gratis 1")
+  promoTag       String?
+  /// Estimasi waktu masak (menit) — untuk ETA calculation
+  prepTime       Int      @default(15)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
@@ -121,6 +125,7 @@ model Merchant {
   orders         Order[]
   reviews        Review[]
   favorites      Favorite[]
+  promos         Promo[]
 }
 
 /// Item menu milik merchant. Item boleh unavailable tanpa hapus (untuk stok habis sementara).
@@ -243,6 +248,10 @@ model Order {
   subtotal        Int
   /// Flat fee untuk MVP — nantinya dihitung dari jarak.
   deliveryFee     Int         @default(10000)
+  /// Diskon dari promo code (0 jika tidak pakai promo)
+  discountAmount  Int         @default(0)
+  /// Promo code yang dipakai (null jika tidak ada)
+  promoCode       String?
   total           Int
   deliveryAddress String
   notes           String?
@@ -458,4 +467,44 @@ model WalletTransaction {
   @@index([status])
   @@index([orderId])
   @@index([createdAt])
+}
+
+/// Promo/voucher code — diskon untuk customer.
+/// Bisa global (merchantId null) atau spesifik merchant.
+model Promo {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  /// Deskripsi untuk display
+  description String
+  /// Tipe diskon: PERCENTAGE (persen) atau FLAT (rupiah)
+  type        PromoType
+  /// Nilai diskon: persen (1-100) atau rupiah (dalam Rupiah)
+  value       Int
+  /// Minimum order subtotal untuk promo berlaku (0 = tidak ada min)
+  minOrder    Int      @default(0)
+  /// Maksimum diskon (untuk PERCENTAGE, 0 = tanpa batas)
+  maxDiscount Int      @default(0)
+  /// Berlaku untuk merchant tertentu (null = semua merchant)
+  merchantId  String?
+  merchant    Merchant? @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  /// Kuota penggunaan total (0 = unlimited)
+  quota       Int      @default(0)
+  /// Jumlah sudah dipakai
+  usedCount   Int      @default(0)
+  /// Berlaku mulai
+  startsAt    DateTime @default(now())
+  /// Berlaku sampai
+  endsAt      DateTime
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([merchantId])
+  @@index([isActive])
+  @@index([endsAt])
+}
+
+enum PromoType {
+  PERCENTAGE
+  FLAT
 }

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Loader2, MapPin, MessageSquare, ShoppingBag, Route, Navigation } from "lucide-react";
+import { Loader2, MapPin, MessageSquare, ShoppingBag, Route, Navigation, X } from "lucide-react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
@@ -120,7 +120,56 @@ export function CheckoutDialog({
   }, [address, merchantId, estimateDelivery]);
 
   const deliveryFee = delivery?.fee ?? 8000; // fallback flat fee
-  const total = subtotal + deliveryFee;
+  const [promoInput, setPromoInput] = useState("");
+  const [promoValidating, setPromoValidating] = useState(false);
+  const [appliedPromo, setAppliedPromo] = useState<{
+    code: string;
+    discount: number;
+    description: string;
+  } | null>(null);
+  const [promoError, setPromoError] = useState<string | null>(null);
+
+  const discountAmount = appliedPromo?.discount ?? 0;
+  const total = subtotal + deliveryFee - discountAmount;
+
+  async function validatePromo() {
+    if (!promoInput.trim()) return;
+    setPromoValidating(true);
+    setPromoError(null);
+    try {
+      const res = await fetch("/api/promo/validate", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          code: promoInput.trim(),
+          subtotal,
+          merchantId,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.valid) {
+        setPromoError(data.error || "Kode promo tidak valid.");
+        setAppliedPromo(null);
+        return;
+      }
+      setAppliedPromo({
+        code: data.code,
+        discount: data.discount,
+        description: data.description,
+      });
+      toast.success(`Promo ${data.code} diterapkan! Hemat ${formatRupiah(data.discount)}`);
+    } catch {
+      setPromoError("Gagal validasi promo. Coba lagi.");
+    } finally {
+      setPromoValidating(false);
+    }
+  }
+
+  function removePromo() {
+    setAppliedPromo(null);
+    setPromoInput("");
+    setPromoError(null);
+  }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -137,6 +186,7 @@ export function CheckoutDialog({
           items: items.map((i) => ({ menuItemId: i.menuItemId, quantity: i.quantity })),
           deliveryAddress: address.trim(),
           notes: notes.trim() || undefined,
+          promoCode: appliedPromo?.code,
         }),
       });
       const data = await res.json();
@@ -262,6 +312,54 @@ export function CheckoutDialog({
             />
           </div>
 
+          {/* Promo code input */}
+          <div className="space-y-2">
+            <label className="text-xs font-600 uppercase tracking-wide text-muted-foreground">
+              Kode Promo
+            </label>
+            {appliedPromo ? (
+              <div className="flex items-center justify-between rounded-xl border border-mint/40 bg-mint/10 p-3">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-700 text-mint">{appliedPromo.code}</p>
+                  <p className="truncate text-xs text-muted-foreground">{appliedPromo.description}</p>
+                </div>
+                <div className="flex shrink-0 items-center gap-2">
+                  <span className="text-sm font-700 text-mint">-{formatRupiah(appliedPromo.discount)}</span>
+                  <button
+                    type="button"
+                    onClick={removePromo}
+                    className="rounded-lg p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <Input
+                  type="text"
+                  value={promoInput}
+                  onChange={(e) => { setPromoInput(e.target.value.toUpperCase()); setPromoError(null); }}
+                  placeholder="REJO10"
+                  className="h-10 flex-1 font-mono uppercase"
+                  maxLength={20}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={validatePromo}
+                  disabled={promoValidating || !promoInput.trim()}
+                  className="h-10 shrink-0"
+                >
+                  {promoValidating ? <Loader2 className="h-4 w-4 animate-spin" /> : "Pakai"}
+                </Button>
+              </div>
+            )}
+            {promoError && (
+              <p className="text-xs font-600 text-destructive">{promoError}</p>
+            )}
+          </div>
+
           {/* Price breakdown */}
           <div className="space-y-1 rounded-xl border border-border bg-card p-3 text-sm">
             <div className="flex justify-between text-muted-foreground">
@@ -278,6 +376,12 @@ export function CheckoutDialog({
                 ) : formatRupiah(8000)}
               </span>
             </div>
+            {discountAmount > 0 && (
+              <div className="flex justify-between text-mint">
+                <span>Diskon {appliedPromo?.code}</span>
+                <span className="tabular-nums">-{formatRupiah(discountAmount)}</span>
+              </div>
+            )}
             <div className="flex justify-between border-t border-border pt-1 font-700 text-foreground">
               <span>Total</span>
               <span className="font-display tabular-nums">{formatRupiah(total)}</span>

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { AppShell } from "@/components/shared/app-shell";
 import { DashboardHeader } from "@/components/shared/dashboard-primitives";
 import { RestaurantGrid } from "./restaurant-grid";
@@ -12,7 +12,28 @@ import { UserProfileEditor } from "@/components/shared/user-profile-editor";
 import { WalletPanel } from "@/components/wallet/wallet-panel";
 import { ErrorBoundary } from "@/components/shared/error-boundary";
 import { useAuthStore } from "@/store/auth-store";
-import { UtensilsCrossed, Coffee, Pizza, Soup, Cake, Fish, Wheat } from "lucide-react";
+import { UtensilsCrossed, Coffee, Pizza, Soup, Cake, Fish, Wheat, Sparkles } from "lucide-react";
+
+const PROMO_BANNERS = [
+  {
+    title: "Diskon 10%",
+    subtitle: "Pesanan pertama kamu",
+    code: "REJO10",
+    gradient: "linear-gradient(135deg, #FF6B00 0%, #FF9F1C 100%)",
+  },
+  {
+    title: "Gratis Ongkir",
+    subtitle: "Min. belanja Rp 30.000",
+    code: "GRATISONGKIR",
+    gradient: "linear-gradient(135deg, #6C5CE7 0%, #8B7FE8 100%)",
+  },
+  {
+    title: "Hemat 25%",
+    subtitle: "Maks. Rp 50.000",
+    code: "REJOFOOD25",
+    gradient: "linear-gradient(135deg, #00C896 0%, #00E5AC 100%)",
+  },
+];
 
 const CATEGORIES = [
   { icon: UtensilsCrossed, label: "Semua", value: "" },
@@ -28,6 +49,16 @@ export function CustomerDashboard() {
   const [activeNav, setActiveNav] = useState("restaurants");
   const user = useAuthStore((s) => s.user);
   const [activeCategory, setActiveCategory] = useState("");
+  const [bannerIdx, setBannerIdx] = useState(0);
+
+  // Auto-rotate promo banner setiap 4 detik
+  useEffect(() => {
+    if (activeNav !== "restaurants") return;
+    const t = setInterval(() => {
+      setBannerIdx((prev) => (prev + 1) % PROMO_BANNERS.length);
+    }, 4000);
+    return () => clearInterval(t);
+  }, [activeNav]);
 
   return (
     <AppShell
@@ -52,6 +83,50 @@ export function CustomerDashboard() {
               Lagi lapar? Restoran terdekat menantimu.
             </p>
           </motion.div>
+
+          {/* Promo banner carousel — auto-rotate */}
+          <div className="mb-5 overflow-hidden rounded-2xl">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={bannerIdx}
+                initial={{ opacity: 0, x: 30 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -30 }}
+                transition={{ duration: 0.4 }}
+                className="relative flex items-center justify-between p-4 text-white"
+                style={{ background: PROMO_BANNERS[bannerIdx].gradient }}
+              >
+                <div className="relative z-10">
+                  <div className="flex items-center gap-1.5">
+                    <Sparkles className="h-3.5 w-3.5" />
+                    <span className="text-[0.65rem] font-700 uppercase tracking-wider opacity-90">
+                      Promo
+                    </span>
+                  </div>
+                  <p className="mt-1 font-display text-lg font-700">
+                    {PROMO_BANNERS[bannerIdx].title}
+                  </p>
+                  <p className="text-xs opacity-90">
+                    {PROMO_BANNERS[bannerIdx].subtitle}
+                  </p>
+                  <div className="mt-2 inline-flex items-center rounded-full bg-white/20 px-2.5 py-1 text-xs font-700 backdrop-blur">
+                    Kode: {PROMO_BANNERS[bannerIdx].code}
+                  </div>
+                </div>
+                {/* Dots indicator */}
+                <div className="absolute bottom-2 right-3 flex gap-1">
+                  {PROMO_BANNERS.map((_, i) => (
+                    <span
+                      key={i}
+                      className={`h-1.5 rounded-full transition-all ${
+                        i === bannerIdx ? "w-4 bg-white" : "w-1.5 bg-white/50"
+                      }`}
+                    />
+                  ))}
+                </div>
+              </motion.div>
+            </AnimatePresence>
+          </div>
 
           {/* Category chips — horizontal scroll, GoFood style */}
           <div className="mb-5 -mx-4 px-4 overflow-x-auto scroll-slim">

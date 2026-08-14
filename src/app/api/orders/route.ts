@@ -106,7 +106,40 @@ export async function POST(req: Request) {
     body.deliveryAddress.trim(),
   );
   const deliveryFee = deliveryEstimate.fee;
-  const total = subtotal + deliveryFee;
+
+  // === Promo validation (jika ada promoCode) ===
+  let discountAmount = 0;
+  let promoCode: string | null = null;
+  if (body.promoCode && typeof body.promoCode === "string") {
+    const codeInput = String(body.promoCode).trim().toUpperCase();
+    const promo = await db.promo.findUnique({ where: { code: codeInput } });
+    if (promo && promo.isActive) {
+      const now = new Date();
+      const inWindow = now >= promo.startsAt && now <= promo.endsAt;
+      const quotaOk = promo.quota === 0 || promo.usedCount < promo.quota;
+      const merchantOk = !promo.merchantId || promo.merchantId === merchantId;
+      const minOk = subtotal >= promo.minOrder;
+      if (inWindow && quotaOk && merchantOk && minOk) {
+        if (promo.type === "PERCENTAGE") {
+          discountAmount = Math.floor((subtotal * promo.value) / 100);
+          if (promo.maxDiscount > 0 && discountAmount > promo.maxDiscount) {
+            discountAmount = promo.maxDiscount;
+          }
+        } else {
+          discountAmount = promo.value;
+        }
+        if (discountAmount > subtotal) discountAmount = subtotal;
+        promoCode = promo.code;
+        // Increment usedCount
+        await db.promo.update({
+          where: { id: promo.id },
+          data: { usedCount: { increment: 1 } },
+        });
+      }
+    }
+  }
+
+  const total = subtotal + deliveryFee - discountAmount;
 
   // Generate unique code (retry kalau collide)
   let code = generateOrderCode();
@@ -126,6 +159,8 @@ export async function POST(req: Request) {
       status: OrderStatus.PENDING,
       subtotal,
       deliveryFee,
+      discountAmount,
+      promoCode,
       total,
       deliveryAddress: body.deliveryAddress.trim(),
       notes,
@@ -155,6 +190,8 @@ export async function POST(req: Request) {
       merchantName: order.merchant.restaurantName,
       subtotal,
       deliveryFee,
+      discountAmount,
+      promoCode,
       deliveryDistanceKm: deliveryEstimate.distanceKm,
       deliveryMethod: deliveryEstimate.method,
       total,
@@ -183,6 +220,8 @@ export async function POST(req: Request) {
       status: order.status,
       subtotal: order.subtotal,
       deliveryFee: order.deliveryFee,
+      discountAmount: order.discountAmount,
+      promoCode: order.promoCode,
       total: order.total,
       deliveryAddress: order.deliveryAddress,
       notes: order.notes,

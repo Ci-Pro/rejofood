@@ -49,6 +49,8 @@ export async function GET(req: Request) {
         cuisine: true,
         rating: true,
         isOpen: true,
+        promoTag: true,
+        prepTime: true,
         _count: { select: { menuItems: { where: { isAvailable: true } } } },
       },
     }),

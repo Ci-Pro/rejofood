@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Search, Star, MapPin, Clock, UtensilsCrossed, ChevronRight, Heart, Coffee } from "lucide-react";
+import { Search, Star, MapPin, Clock, UtensilsCrossed, ChevronRight, Heart, Coffee, Tag } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +20,8 @@ interface RestaurantListItem {
   rating: number;
   isOpen: boolean;
   menuCount: number;
+  promoTag?: string | null;
+  prepTime?: number | null;
 }
 
 interface MenuItemResult {
@@ -353,6 +355,15 @@ export function RestaurantGrid({ cuisineFilter }: { cuisineFilter?: string }) {
                       <p className="mt-0.5 truncate text-xs font-500 text-muted-foreground">
                         {r.cuisine}
                       </p>
+                    )}
+                    {/* Promo tag badge */}
+                    {r.promoTag && (
+                      <div className="mt-1">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[0.65rem] font-700 text-primary">
+                          <Tag className="h-3 w-3" />
+                          {r.promoTag}
+                        </span>
+                      </div>
                     )}
                     <div className="mt-1.5 flex items-center gap-1.5">
                       {r.isOpen ? (
