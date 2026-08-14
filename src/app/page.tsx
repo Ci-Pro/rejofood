@@ -25,24 +25,31 @@ function viewForRole(role: Role): Exclude<View, "loading" | "auth" | "mismatch">
   }
 }
 
-function LoadingScreen() {
+function LoadingScreen({ message = "Memuat RejoFood…", slow = false }: { message?: string; slow?: boolean }) {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background">
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.4 }}
+        transition={{ duration: 0.3 }}
       >
         <BrandLogo size="md" />
       </motion.div>
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 0.2 }}
-        className="flex items-center gap-2 text-xs text-muted-foreground"
+        transition={{ delay: 0.1 }}
+        className="flex flex-col items-center gap-2"
       >
-        <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-        Memuat RejoFood…
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+          {message}
+        </div>
+        {slow && (
+          <p className="text-[0.65rem] text-amber-600 dark:text-amber-400">
+            Jaringan lambat, mohon tunggu…
+          </p>
+        )}
       </motion.div>
     </div>
   );
@@ -133,9 +140,23 @@ function HomeInner() {
   const user = useAuthStore((s) => s.user);
   const setUser = useAuthStore((s) => s.setUser);
   const [booted, setBooted] = useState(false);
+  const [slowNetwork, setSlowNetwork] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
+    // Slow network detection: jika session check > 2.5 detik, tampilkan warning
+    const slowTimer = setTimeout(() => {
+      if (!cancelled && !booted) setSlowNetwork(true);
+    }, 2500);
+
+    // Hard timeout: jika > 8 detik, langsung show auth screen (jangan block user)
+    const hardTimeout = setTimeout(() => {
+      if (!cancelled) {
+        console.warn("[boot] Session check timeout — showing auth screen");
+        setBooted(true);
+      }
+    }, 8000);
+
     (async () => {
       try {
         const res = await fetch("/api/auth/session", { cache: "no-store" });
@@ -145,11 +166,19 @@ function HomeInner() {
       } catch {
         // network errors → just show auth screen
       } finally {
-        if (!cancelled) setBooted(true);
+        if (!cancelled) {
+          clearTimeout(slowTimer);
+          clearTimeout(hardTimeout);
+          setBooted(true);
+        }
       }
     })();
-    return () => { cancelled = true; };
-  }, [setUser]);
+    return () => {
+      cancelled = true;
+      clearTimeout(slowTimer);
+      clearTimeout(hardTimeout);
+    };
+  }, [setUser, booted]);
 
   // Role mismatch check — APK locked to specific role
   // Jika user login dengan role lain (mis. admin di APK Customer), auto-logout
@@ -186,7 +215,7 @@ function HomeInner() {
         ? viewForRole(user.role as Role)
         : "auth";
 
-  if (view === "loading") return <LoadingScreen />;
+  if (view === "loading") return <LoadingScreen slow={slowNetwork} />;
   if (view === "mismatch" && user && appRole) {
     return (
       <MismatchScreen

@@ -29,11 +29,17 @@ export function RegisterForm({
   const [vehicleType, setVehicleType] = useState<"motorcycle" | "car" | "bicycle">("motorcycle");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [slowRegister, setSlowRegister] = useState(false);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setSlowRegister(false);
     setLoading(true);
+
+    // Slow network detection
+    const slowTimer = setTimeout(() => setSlowRegister(true), 2000);
+
     try {
       const body: Record<string, unknown> = {
         email: email.trim(),
@@ -56,10 +62,17 @@ export function RegisterForm({
         return;
       }
       setUser(data.user);
-      toast.success(`Akun ${meta.label} berhasil dibuat!`);
+      // Tampilkan info email verification jika dikirim
+      if (data.emailVerificationSent) {
+        toast.success(`Akun dibuat! Cek email untuk verifikasi.`);
+      } else {
+        toast.success(`Akun ${meta.label} berhasil dibuat!`);
+      }
     } catch {
-      setError("Koneksi bermasalah. Coba lagi.");
+      setError("Koneksi bermasalah. Periksa internet Anda.");
     } finally {
+      clearTimeout(slowTimer);
+      setSlowRegister(false);
       setLoading(false);
     }
   }
@@ -227,12 +240,15 @@ export function RegisterForm({
         <Button
           type="submit"
           disabled={loading}
-          className={cn("accent-" + meta.accent, "h-11 w-full rounded-xl bg-role text-role-fg hover:opacity-90")}
+          className={cn(
+            "accent-" + meta.accent,
+            "h-11 w-full rounded-xl bg-role text-role-fg hover:opacity-90 transition-premium active:scale-[0.98]",
+          )}
         >
           {loading ? (
             <span className="flex items-center gap-2">
               <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-              Mendaftarkan…
+              {slowRegister ? "Mendaftarkan… (jaringan lambat)" : "Mendaftarkan…"}
             </span>
           ) : (
             <span className="flex items-center gap-2">
@@ -241,6 +257,13 @@ export function RegisterForm({
             </span>
           )}
         </Button>
+
+        {slowRegister && (
+          <div className="flex items-center justify-center gap-1.5 rounded-xl bg-amber-50 p-2 text-xs text-amber-700 dark:bg-amber-950/30 dark:text-amber-300">
+            <span className="h-3 w-3 animate-spin rounded-full border-2 border-amber-500 border-t-transparent" />
+            Jaringan lambat — mohon tunggu sebentar…
+          </div>
+        )}
       </form>
 
       <p className="mt-6 text-center text-sm text-muted-foreground">

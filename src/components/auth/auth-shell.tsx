@@ -11,13 +11,16 @@ import { BrandLogo } from "./brand-logo";
 import { cn } from "@/lib/utils";
 
 /**
- * AuthShell v3.1 — premium centered layout with strict role lock.
+ * AuthShell v3.2 — performance optimized.
  *
- * Lock behavior:
- *  - Jika appRole diset (APK Customer/Merchant/Driver), role TIDAK BISA diubah sama sekali
+ * Optimization:
+ *  - Animated blobs diganti dengan CSS-only static gradient (no JS animation loop)
+ *  - Motion animation reduced: hanya initial fade-in, no infinite loops
+ *  - Defer motion untuk non-critical elements
+ *
+ * Lock behavior tetap sama:
+ *  - Jika appRole diset (APK), role TIDAK BISA diubah
  *  - RoleRail disembunyikan, hanya role badge yang tampil
- *  - LoginForm/RegisterForm menerima role hardcode dari appRole
- *  - Tidak ada cara UI untuk switch role
  */
 export function AuthShell({ showAdmin = false, appRole = null }: { showAdmin?: boolean; appRole?: string | null }) {
   const initialRole = appRole === "CUSTOMER" ? Role.CUSTOMER
@@ -30,60 +33,37 @@ export function AuthShell({ showAdmin = false, appRole = null }: { showAdmin?: b
   const [mode, setMode] = useState<"login" | "register">("login");
   const isLockedRole = !!appRole;
 
-  // 🔒 Defense in depth: paksa role tetap = appRole meskipun state berubah
-  // Kalau appRole set, override role dengan appRole (tidak bisa diubah oleh siapapun)
   useEffect(() => {
     if (appRole === "CUSTOMER") setRole(Role.CUSTOMER);
     else if (appRole === "MERCHANT") setRole(Role.MERCHANT);
     else if (appRole === "DRIVER") setRole(Role.DRIVER);
   }, [appRole]);
 
-  // Saat locked, setRole adalah no-op (tidak bisa mengubah role)
   const safeSetRole = isLockedRole ? () => {} : setRole;
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-background">
-      {/* Animated background blobs */}
+      {/* Static gradient background (CSS-only, no JS animation) — performant */}
       <div className="pointer-events-none fixed inset-0">
-        <motion.div
-          animate={{ x: [0, 30, 0], y: [0, -20, 0] }}
-          transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
+        <div
           className="absolute -left-20 top-1/4 h-72 w-72 rounded-full opacity-20 blur-3xl"
           style={{ background: "#7C5BBF" }}
         />
-        <motion.div
-          animate={{ x: [0, -40, 0], y: [0, 30, 0] }}
-          transition={{ duration: 25, repeat: Infinity, ease: "easeInOut" }}
+        <div
           className="absolute -right-20 bottom-1/4 h-80 w-80 rounded-full opacity-15 blur-3xl"
           style={{ background: "#FF9F1C" }}
-        />
-        <motion.div
-          animate={{ x: [0, 20, 0], y: [0, -30, 0] }}
-          transition={{ duration: 30, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute left-1/2 top-0 h-64 w-64 -translate-x-1/2 rounded-full opacity-10 blur-3xl"
-          style={{ background: "#2D1B4E" }}
         />
       </div>
 
       {/* Centered content */}
       <div className="relative z-10 flex min-h-screen flex-col items-center justify-center px-4 py-8">
-        {/* Brand logo */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="mb-6"
-        >
+        {/* Brand logo — instant render, no motion delay */}
+        <div className="mb-5">
           <BrandLogo size="lg" />
-        </motion.div>
+        </div>
 
         {/* Tagline */}
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-          className="mb-6 max-w-md text-center text-sm text-muted-foreground"
-        >
+        <p className="mb-5 max-w-md text-center text-sm text-muted-foreground">
           {isLockedRole ? (
             role === Role.CUSTOMER ? "Pesan makanan favoritmu, antar sampai depan pintu."
             : role === Role.MERCHANT ? "Kelola restoran & pesanan masuk dengan mudah."
@@ -92,16 +72,11 @@ export function AuthShell({ showAdmin = false, appRole = null }: { showAdmin?: b
           ) : (
             "Satu ekosistem, empat peran — tanpa ribet."
           )}
-        </motion.p>
+        </p>
 
         {/* Role rail (if not locked) */}
         {!isLockedRole && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="mb-6 w-full max-w-md"
-          >
+          <div className="mb-5 w-full max-w-md">
             <RoleRail selected={role} onChange={safeSetRole} showAdmin={showAdmin} />
             {showAdmin && (
               <div className="mt-3 flex items-center gap-2 rounded-xl border border-rose/30 bg-rose/10 px-3 py-2 text-xs text-rose">
@@ -110,17 +85,12 @@ export function AuthShell({ showAdmin = false, appRole = null }: { showAdmin?: b
                 <span className="text-rose/80">Akses admin terverifikasi 2 lapis.</span>
               </div>
             )}
-          </motion.div>
+          </div>
         )}
 
         {/* Locked role badge */}
         {isLockedRole && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="mb-6 flex items-center gap-2.5 rounded-2xl border border-border bg-card/60 px-4 py-2.5 backdrop-blur-sm"
-          >
+          <div className="mb-5 flex items-center gap-2.5 rounded-2xl border border-border bg-card/60 px-4 py-2.5 backdrop-blur-sm">
             <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
               {role === Role.CUSTOMER && <UtensilsCrossed className="h-4 w-4" />}
               {role === Role.MERCHANT && <Store className="h-4 w-4" />}
@@ -138,14 +108,14 @@ export function AuthShell({ showAdmin = false, appRole = null }: { showAdmin?: b
                 {role === Role.DRIVER && "Antar pesanan dengan cepat"}
               </p>
             </div>
-          </motion.div>
+          </div>
         )}
 
-        {/* Glass form card */}
+        {/* Glass form card — single fade-in, no delay */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.2 }}
           className="glass-card w-full max-w-md rounded-3xl border border-border/60 p-6 shadow-premium-lg sm:p-8"
         >
           <AnimatePresence mode="wait">
@@ -162,7 +132,6 @@ export function AuthShell({ showAdmin = false, appRole = null }: { showAdmin?: b
           </AnimatePresence>
         </motion.div>
 
-        {/* Footer */}
         <p className="mt-6 text-xs text-muted-foreground/60">
           © {new Date().getFullYear()} RejoFood · v3.0
         </p>

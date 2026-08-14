@@ -47,10 +47,11 @@ export function LoginForm({
   const [showPwd, setShowPwd] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<LoginError | null>(null);
-  // Countdown lockout (detik). > 0 = tombol disabled.
   const [lockCountdown, setLockCountdown] = useState(0);
+  // Slow network detection — tampilkan pesan sabar kalau login > 2 detik
+  const [slowLogin, setSlowLogin] = useState(false);
 
-  // 2FA flow state: null = form login biasa, "setup" = first-time admin, "challenge" = admin dgn 2FA
+  // 2FA flow state
   const [twoFactorMode, setTwoFactorMode] = useState<null | "setup" | "challenge">(null);
   const [challengeToken, setChallengeToken] = useState<string | null>(null);
   const [challengeName, setChallengeName] = useState<string>("");
@@ -68,7 +69,12 @@ export function LoginForm({
     e.preventDefault();
     if (lockCountdown > 0) return;
     setError(null);
+    setSlowLogin(false);
     setLoading(true);
+
+    // Slow network detection — tampilkan pesan sabar kalau > 2 detik
+    const slowTimer = setTimeout(() => setSlowLogin(true), 2000);
+
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST",
@@ -88,7 +94,14 @@ export function LoginForm({
         };
         setError(err);
 
-        // Jika kena lockout, mulai countdown
+        // Special handling untuk email not verified — tampilkan resend option
+        if (data?.code === "EMAIL_NOT_VERIFIED") {
+          setError({
+            ...err,
+            message: data.error,
+          });
+        }
+
         if (data?.code === "LOCKED_OUT" && typeof data.retryAfterSeconds === "number") {
           setLockCountdown(data.retryAfterSeconds);
         }
@@ -114,8 +127,10 @@ export function LoginForm({
       setUser(data.user);
       toast.success(`Selamat datang, ${data.user.fullName}!`);
     } catch {
-      setError({ message: "Koneksi bermasalah. Coba lagi." });
+      setError({ message: "Koneksi bermasalah. Periksa internet Anda." });
     } finally {
+      clearTimeout(slowTimer);
+      setSlowLogin(false);
       setLoading(false);
     }
   }, [email, password, role, lockCountdown, setUser]);
@@ -313,14 +328,14 @@ export function LoginForm({
           disabled={loading || isLocked}
           className={cn(
             "accent-" + meta.accent,
-            "h-11 w-full rounded-xl bg-role text-role-fg hover:opacity-90",
+            "h-11 w-full rounded-xl bg-role text-role-fg hover:opacity-90 transition-premium active:scale-[0.98]",
             isLocked && "opacity-50 cursor-not-allowed",
           )}
         >
           {loading ? (
             <span className="flex items-center gap-2">
               <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-              Memproses…
+              {slowLogin ? "Memproses… (jaringan lambat)" : "Memproses…"}
             </span>
           ) : isLocked ? (
             <span className="flex items-center gap-2">
@@ -334,6 +349,18 @@ export function LoginForm({
             </span>
           )}
         </Button>
+
+        {/* Slow network indicator */}
+        {slowLogin && (
+          <motion.div
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center justify-center gap-1.5 rounded-xl bg-amber-50 p-2 text-xs text-amber-700 dark:bg-amber-950/30 dark:text-amber-300"
+          >
+            <span className="h-3 w-3 animate-spin rounded-full border-2 border-amber-500 border-t-transparent" />
+            Jaringan lambat — mohon tunggu sebentar…
+          </motion.div>
+        )}
 
         {/* Demo button — only show in web mode (not APK locked) */}
         {!isLockedRole && (
