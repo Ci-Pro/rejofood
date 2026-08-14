@@ -118,6 +118,10 @@ model Merchant {
   promoTag       String?
   /// Estimasi waktu masak (menit) — untuk ETA calculation
   prepTime       Int      @default(15)
+  /// Jam buka (format "HH:mm", mis. "08:00") — null = selalu buka
+  openHours      String?
+  /// Jam tutup (format "HH:mm", mis. "22:00") — null = selalu buka
+  closeHours     String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 

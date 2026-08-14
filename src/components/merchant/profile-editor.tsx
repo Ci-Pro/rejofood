@@ -23,6 +23,8 @@ interface MerchantInfo {
   logoUrl: string | null;
   promoTag: string | null;
   prepTime: number;
+  openHours: string | null;
+  closeHours: string | null;
   rating: number;
   isOpen: boolean;
 }
@@ -43,6 +45,8 @@ export function ProfileEditor({ info, onUpdated }: ProfileEditorProps) {
     cuisine: "",
     promoTag: "",
     prepTime: 15,
+    openHours: "",
+    closeHours: "",
   });
 
   useEffect(() => {
@@ -54,6 +58,8 @@ export function ProfileEditor({ info, onUpdated }: ProfileEditorProps) {
         cuisine: info.cuisine ?? "",
         promoTag: info.promoTag ?? "",
         prepTime: info.prepTime ?? 15,
+        openHours: info.openHours ?? "",
+        closeHours: info.closeHours ?? "",
       });
     }
   }, [info]);
@@ -96,6 +102,8 @@ export function ProfileEditor({ info, onUpdated }: ProfileEditorProps) {
         logoUrl: info?.logoUrl ?? null,
         promoTag: form.promoTag.trim() || null,
         prepTime: Number(form.prepTime) || 15,
+        openHours: form.openHours.trim() || null,
+        closeHours: form.closeHours.trim() || null,
       };
       const res = await fetch("/api/merchant/profile", {
         method: "PATCH",
@@ -273,6 +281,31 @@ export function ProfileEditor({ info, onUpdated }: ProfileEditorProps) {
                 className="h-10"
               />
               <p className="text-[0.65rem] text-muted-foreground">Untuk hitung ETA pesanan customer.</p>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="openHours" className="text-xs font-600 uppercase tracking-wide text-muted-foreground">
+                Jam Buka
+              </Label>
+              <Input
+                id="openHours"
+                type="time"
+                value={form.openHours}
+                onChange={(e) => setForm((f) => ({ ...f, openHours: e.target.value }))}
+                className="h-10"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="closeHours" className="text-xs font-600 uppercase tracking-wide text-muted-foreground">
+                Jam Tutup
+              </Label>
+              <Input
+                id="closeHours"
+                type="time"
+                value={form.closeHours}
+                onChange={(e) => setForm((f) => ({ ...f, closeHours: e.target.value }))}
+                className="h-10"
+              />
+              <p className="text-[0.65rem] text-muted-foreground">Kosongkan jika selalu buka 24 jam.</p>
             </div>
             <div className="space-y-1.5 sm:col-span-2">
               <Label htmlFor="description" className="text-xs font-600 uppercase tracking-wide text-muted-foreground">

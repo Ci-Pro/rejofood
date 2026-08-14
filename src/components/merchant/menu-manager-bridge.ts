@@ -9,6 +9,8 @@ export interface MerchantInfo {
   logoUrl: string | null;
   promoTag: string | null;
   prepTime: number;
+  openHours: string | null;
+  closeHours: string | null;
   rating: number;
   isOpen: boolean;
 }

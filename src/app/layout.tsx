@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/shared/theme-provider";
 import { ServiceWorkerRegistrar } from "@/components/shared/service-worker-registrar";
+import { PwaInstallPrompt } from "@/components/shared/pwa-install-prompt";
 
 const jakarta = Plus_Jakarta_Sans({
   variable: "--font-jakarta",
@@ -74,6 +75,7 @@ export default function RootLayout({
         >
           {children}
           <ServiceWorkerRegistrar />
+          <PwaInstallPrompt />
           <Toaster />
           <SonnerToaster richColors position="top-center" />
         </ThemeProvider>

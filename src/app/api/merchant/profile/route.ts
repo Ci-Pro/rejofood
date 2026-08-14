@@ -45,6 +45,12 @@ export async function PATCH(req: Request) {
       data.prepTime = pt;
     }
   }
+  if (body.openHours !== undefined) {
+    data.openHours = body.openHours ? String(body.openHours).trim() : null;
+  }
+  if (body.closeHours !== undefined) {
+    data.closeHours = body.closeHours ? String(body.closeHours).trim() : null;
+  }
   if (typeof body.isOpen === "boolean") {
     data.isOpen = body.isOpen;
   }
@@ -83,6 +89,8 @@ export async function PATCH(req: Request) {
       logoUrl: merchant.logoUrl,
       promoTag: merchant.promoTag,
       prepTime: merchant.prepTime,
+      openHours: merchant.openHours,
+      closeHours: merchant.closeHours,
       rating: merchant.rating,
       isOpen: merchant.isOpen,
     },
