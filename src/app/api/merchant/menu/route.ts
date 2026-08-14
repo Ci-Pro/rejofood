@@ -35,6 +35,8 @@ export async function GET() {
       address: merchant.address,
       cuisine: merchant.cuisine,
       logoUrl: merchant.logoUrl,
+      promoTag: merchant.promoTag,
+      prepTime: merchant.prepTime,
       rating: merchant.rating,
       isOpen: merchant.isOpen,
     },

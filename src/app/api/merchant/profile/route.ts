@@ -36,6 +36,15 @@ export async function PATCH(req: Request) {
   if (body.logoUrl !== undefined) {
     data.logoUrl = body.logoUrl ? String(body.logoUrl).trim() : null;
   }
+  if (body.promoTag !== undefined) {
+    data.promoTag = body.promoTag ? String(body.promoTag).trim().slice(0, 50) : null;
+  }
+  if (body.prepTime !== undefined) {
+    const pt = Number(body.prepTime);
+    if (Number.isInteger(pt) && pt >= 1 && pt <= 120) {
+      data.prepTime = pt;
+    }
+  }
   if (typeof body.isOpen === "boolean") {
     data.isOpen = body.isOpen;
   }
@@ -72,6 +81,8 @@ export async function PATCH(req: Request) {
       address: merchant.address,
       cuisine: merchant.cuisine,
       logoUrl: merchant.logoUrl,
+      promoTag: merchant.promoTag,
+      prepTime: merchant.prepTime,
       rating: merchant.rating,
       isOpen: merchant.isOpen,
     },

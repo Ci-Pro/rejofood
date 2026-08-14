@@ -21,6 +21,8 @@ interface MerchantInfo {
   address: string | null;
   cuisine: string | null;
   logoUrl: string | null;
+  promoTag: string | null;
+  prepTime: number;
   rating: number;
   isOpen: boolean;
 }
@@ -39,6 +41,8 @@ export function ProfileEditor({ info, onUpdated }: ProfileEditorProps) {
     description: "",
     address: "",
     cuisine: "",
+    promoTag: "",
+    prepTime: 15,
   });
 
   useEffect(() => {
@@ -48,6 +52,8 @@ export function ProfileEditor({ info, onUpdated }: ProfileEditorProps) {
         description: info.description ?? "",
         address: info.address ?? "",
         cuisine: info.cuisine ?? "",
+        promoTag: info.promoTag ?? "",
+        prepTime: info.prepTime ?? 15,
       });
     }
   }, [info]);
@@ -88,6 +94,8 @@ export function ProfileEditor({ info, onUpdated }: ProfileEditorProps) {
         address: form.address.trim() || null,
         cuisine: form.cuisine.trim() || null,
         logoUrl: info?.logoUrl ?? null,
+        promoTag: form.promoTag.trim() || null,
+        prepTime: Number(form.prepTime) || 15,
       };
       const res = await fetch("/api/merchant/profile", {
         method: "PATCH",
@@ -236,6 +244,35 @@ export function ProfileEditor({ info, onUpdated }: ProfileEditorProps) {
                 placeholder="Jl. Contoh No. 1, Jakarta"
                 className="h-10"
               />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="promoTag" className="text-xs font-600 uppercase tracking-wide text-muted-foreground">
+                Tag Promo <span className="text-muted-foreground/60">(opsional)</span>
+              </Label>
+              <Input
+                id="promoTag"
+                value={form.promoTag}
+                onChange={(e) => setForm((f) => ({ ...f, promoTag: e.target.value }))}
+                placeholder="Diskon 20%, Beli 1 Gratis 1, dll."
+                maxLength={50}
+                className="h-10"
+              />
+              <p className="text-[0.65rem] text-muted-foreground">Tampil di card restoran customer.</p>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="prepTime" className="text-xs font-600 uppercase tracking-wide text-muted-foreground">
+                Estimasi Masak (menit)
+              </Label>
+              <Input
+                id="prepTime"
+                type="number"
+                min={1}
+                max={120}
+                value={form.prepTime}
+                onChange={(e) => setForm((f) => ({ ...f, prepTime: Number(e.target.value) }))}
+                className="h-10"
+              />
+              <p className="text-[0.65rem] text-muted-foreground">Untuk hitung ETA pesanan customer.</p>
             </div>
             <div className="space-y-1.5 sm:col-span-2">
               <Label htmlFor="description" className="text-xs font-600 uppercase tracking-wide text-muted-foreground">

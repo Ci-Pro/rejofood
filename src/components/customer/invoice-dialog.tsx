@@ -20,6 +20,8 @@ interface InvoiceData {
   items: Array<{ name: string; quantity: number; price: number; subtotal: number }>;
   subtotal: number;
   deliveryFee: number;
+  discountAmount?: number;
+  promoCode?: string | null;
   total: number;
   deliveryAddress: string;
   notes: string | null;
@@ -137,6 +139,12 @@ export function InvoiceDialog({
                 <span>Ongkos antar</span>
                 <span className="tabular-nums">{formatRupiah(invoice.deliveryFee)}</span>
               </div>
+              {invoice.discountAmount && invoice.discountAmount > 0 && (
+                <div className="flex justify-between text-mint">
+                  <span>Diskon {invoice.promoCode}</span>
+                  <span className="tabular-nums">-{formatRupiah(invoice.discountAmount)}</span>
+                </div>
+              )}
               <div className="flex justify-between border-t border-border pt-1 font-700 text-foreground">
                 <span>Total</span>
                 <span className="tabular-nums">{formatRupiah(invoice.total)}</span>

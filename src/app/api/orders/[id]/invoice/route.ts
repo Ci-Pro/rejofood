@@ -73,6 +73,8 @@ export async function GET(
       })),
       subtotal: order.subtotal,
       deliveryFee: order.deliveryFee,
+      discountAmount: order.discountAmount,
+      promoCode: order.promoCode,
       total: order.total,
       deliveryAddress: order.deliveryAddress,
       notes: order.notes,

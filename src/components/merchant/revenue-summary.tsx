@@ -80,24 +80,26 @@ export function RevenueSummary() {
             key={card.label}
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: idx * 0.05 }}
+            transition={{ duration: 0.3, delay: idx * 0.05 }}
             className={cn(
               "accent-" + card.accent,
-              "rounded-2xl border border-border bg-card p-3.5 shadow-card",
+              "group relative overflow-hidden rounded-2xl border border-border bg-card p-4 transition-premium hover:shadow-card-hover",
             )}
           >
-            <div className="flex items-center justify-between">
-              <span className="text-[0.6rem] font-700 uppercase tracking-wider text-muted-foreground">
-                {card.label}
-              </span>
-              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-role-soft text-role">
-                <Icon className="h-3.5 w-3.5" strokeWidth={2.3} />
+            <div className="relative flex items-start justify-between">
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-600 uppercase tracking-wide text-muted-foreground">
+                  {card.label}
+                </p>
+                <p className="mt-2 font-display text-xl font-700 tracking-tight text-foreground sm:text-2xl">
+                  {card.value}
+                </p>
+                {card.hint && <p className="mt-0.5 text-[0.65rem] text-muted-foreground">{card.hint}</p>}
+              </div>
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-role-soft text-role transition-premium group-hover:scale-105">
+                <Icon className="h-4 w-4" strokeWidth={2.3} />
               </span>
             </div>
-            <p className="mt-2 font-display text-lg font-700 tracking-tight text-foreground sm:text-xl">
-              {card.value}
-            </p>
-            <p className="mt-0.5 text-[0.65rem] text-muted-foreground">{card.hint}</p>
           </motion.div>
         );
       })}

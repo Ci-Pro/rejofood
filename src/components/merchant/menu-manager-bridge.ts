@@ -7,6 +7,8 @@ export interface MerchantInfo {
   address: string | null;
   cuisine: string | null;
   logoUrl: string | null;
+  promoTag: string | null;
+  prepTime: number;
   rating: number;
   isOpen: boolean;
 }
