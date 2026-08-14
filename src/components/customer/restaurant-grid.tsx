@@ -148,8 +148,11 @@ export function RestaurantGrid() {
               placeholder={searchMode === "restaurants" ? "Cari restoran, masakan…" : "Cari menu (cth: nasi goreng)…"}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              className="h-10 rounded-xl bg-card pl-9"
+              className="h-10 rounded-xl bg-card pl-9 pr-9"
             />
+            {loading && query && (
+              <span className="absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 animate-spin rounded-full border-2 border-saffron border-t-transparent" />
+            )}
           </div>
           {/* Search mode toggle */}
           <div className="flex gap-1 rounded-xl border border-border bg-card p-0.5">

@@ -117,6 +117,23 @@ export function OrderQueue({ onPendingCountChange }: { onPendingCountChange?: (c
 
   async function updateStatus(orderId: string, status: string, reason?: string) {
     setUpdating(orderId);
+
+    // 🔥 Optimistic update — langsung update UI, jangan tunggu server
+    const originalOrders = orders;
+    setOrders((prev) =>
+      prev.map((o) =>
+        o.id === orderId
+          ? {
+              ...o,
+              status: status as typeof o.status,
+              acceptedAt: status === "ACCEPTED" ? new Date().toISOString() : o.acceptedAt,
+              readyAt: status === "READY" ? new Date().toISOString() : o.readyAt,
+              cancelledAt: status === "CANCELLED" ? new Date().toISOString() : o.cancelledAt,
+            }
+          : o,
+      ),
+    );
+
     try {
       const res = await fetch(`/api/merchant/orders/${orderId}/status`, {
         method: "PATCH",
@@ -125,7 +142,8 @@ export function OrderQueue({ onPendingCountChange }: { onPendingCountChange?: (c
       });
       const data = await res.json();
       if (!res.ok) {
-        // Show payment pending as info (not error)
+        // Rollback optimistic update
+        setOrders(originalOrders);
         if (data.code === "PAYMENT_PENDING" || data.code === "NO_PAYMENT") {
           toast.info(data.error, { duration: 5000 });
         } else {
@@ -134,8 +152,11 @@ export function OrderQueue({ onPendingCountChange }: { onPendingCountChange?: (c
         return;
       }
       toast.success(`Order ${status === "ACCEPTED" ? "diterima" : status === "PREPARING" ? "mulai diproses" : status === "READY" ? "siap dijemput" : status === "CANCELLED" ? "ditolak" : "diperbarui"}.`);
-      await fetchOrders();
+      // Fetch di background untuk sync data terbaru (tanpa loading state)
+      fetchOrders();
     } catch {
+      // Rollback
+      setOrders(originalOrders);
       toast.error("Koneksi bermasalah.");
     } finally {
       setUpdating(null);

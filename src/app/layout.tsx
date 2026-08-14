@@ -55,6 +55,14 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="id" suppressHydrationWarning>
+      <head>
+        {/* Preconnect ke Cloudinary untuk faster image loading */}
+        <link rel="preconnect" href="https://res.cloudinary.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://res.cloudinary.com" />
+        {/* Preconnect ke Vercel backend (untuk APK yang load dari Vercel) */}
+        <link rel="preconnect" href="https://rejofood.vercel.app" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://rejofood.vercel.app" />
+      </head>
       <body
         className={`${jakarta.variable} antialiased bg-background text-foreground`}
       >
