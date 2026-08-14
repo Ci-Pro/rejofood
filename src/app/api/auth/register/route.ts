@@ -11,11 +11,11 @@ import { hashPassword } from "@/lib/auth/password";
 import { generateToken, setSessionCookie } from "@/lib/auth/session";
 import { logAction, getRequestMeta } from "@/lib/auth/audit";
 import { computeAbsoluteExpiry } from "@/lib/auth/session-config";
+import { validatePassword } from "@/lib/auth/password-policy";
 import { Role } from "@prisma/client";
 import type { SafeUser } from "@/types/auth";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const MIN_PASSWORD = 6;
 
 export async function POST(req: Request) {
   const meta = getRequestMeta(req);
@@ -32,8 +32,12 @@ export async function POST(req: Request) {
     if (!EMAIL_RE.test(email)) {
       return NextResponse.json({ error: "Format email tidak valid." }, { status: 400 });
     }
-    if (password.length < MIN_PASSWORD) {
-      return NextResponse.json({ error: `Password minimal ${MIN_PASSWORD} karakter.` }, { status: 400 });
+    const pwdCheck = validatePassword(password);
+    if (!pwdCheck.valid) {
+      return NextResponse.json(
+        { error: pwdCheck.errors.join(" ") },
+        { status: 400 },
+      );
     }
     if (fullName.length < 2) {
       return NextResponse.json({ error: "Nama lengkap minimal 2 karakter." }, { status: 400 });

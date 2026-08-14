@@ -25,6 +25,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/context";
 import { logAction, getRequestMeta } from "@/lib/auth/audit";
+import { rateLimitResponse } from "@/lib/auth/api-rate-limiter";
 import { getOrCreateWallet } from "@/lib/wallet/wallet-service";
 import { WalletTxStatus } from "@prisma/client";
 
@@ -79,6 +80,10 @@ function methodLabel(method: string): string {
 }
 
 export async function POST(req: Request) {
+  // 🔒 Rate limit: 5 top-up per menit per IP (anti fraud)
+  const limited = rateLimitResponse(req, "wallet:topup", 5, 60_000);
+  if (limited) return limited;
+
   const me = await getCurrentUser();
   if (!me) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

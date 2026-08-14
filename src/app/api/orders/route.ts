@@ -16,6 +16,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireRole } from "@/lib/auth/context";
 import { logAction, getRequestMeta } from "@/lib/auth/audit";
+import { rateLimitResponse } from "@/lib/auth/api-rate-limiter";
 import { emitOrderCreated } from "@/lib/realtime/realtime-client";
 import { sendNewOrderPush } from "@/lib/push";
 import { estimateDeliveryFee } from "@/lib/delivery-fee";
@@ -29,6 +30,10 @@ function generateOrderCode(): string {
 }
 
 export async function POST(req: Request) {
+  // 🔒 Rate limit: 10 order per menit per IP (anti spam order)
+  const limited = rateLimitResponse(req, "orders:create", 10, 60_000);
+  if (limited) return limited;
+
   const me = await requireRole("CUSTOMER");
   if (!me) {
     return NextResponse.json({ error: "Forbidden. Hanya customer." }, { status: 403 });

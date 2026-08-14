@@ -262,6 +262,22 @@ export async function POST(req: Request) {
         ipAddress: ip,
       },
     });
+
+    // 🔒 Concurrent session limit: max 3 device per user
+    // Hapus session tertua kalau melebihi limit (FIFO eviction)
+    const MAX_SESSIONS = 3;
+    const userSessions = await db.session.findMany({
+      where: { userId: user.id, expiresAt: { gt: new Date() } },
+      orderBy: { lastActivityAt: "desc" },
+      select: { id: true },
+    });
+    if (userSessions.length > MAX_SESSIONS) {
+      const toRevoke = userSessions.slice(MAX_SESSIONS); // ambil session tertua (di luar top 3)
+      await db.session.deleteMany({
+        where: { id: { in: toRevoke.map((s) => s.id) } },
+      });
+    }
+
     await setSessionCookie(token);
 
     await logAction({

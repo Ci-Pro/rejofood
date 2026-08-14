@@ -9,9 +9,8 @@ import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/context";
 import { verifyPassword, hashPassword } from "@/lib/auth/password";
 import { logAction, getRequestMeta } from "@/lib/auth/audit";
+import { validatePassword } from "@/lib/auth/password-policy";
 import { Role } from "@prisma/client";
-
-const MIN_PASSWORD = 6;
 
 export async function PATCH(req: Request) {
   const me = await getCurrentUser();
@@ -47,10 +46,11 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: "Password lama salah." }, { status: 401 });
   }
 
-  // Validate new password
-  if (body.newPassword.length < MIN_PASSWORD) {
+  // Validate new password with strict policy
+  const pwdCheck = validatePassword(body.newPassword);
+  if (!pwdCheck.valid) {
     return NextResponse.json(
-      { error: `Password baru minimal ${MIN_PASSWORD} karakter.` },
+      { error: pwdCheck.errors.join(" ") },
       { status: 400 },
     );
   }

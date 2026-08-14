@@ -23,6 +23,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/context";
 import { logAction, getRequestMeta } from "@/lib/auth/audit";
+import { rateLimitResponse } from "@/lib/auth/api-rate-limiter";
 import { getOrCreateWallet, debitWallet } from "@/lib/wallet/wallet-service";
 
 const ALLOWED_BANKS = ["BCA", "BNI", "MANDIRI", "BRI", "PERMATA"] as const;
@@ -38,6 +39,10 @@ function generateTxCode(): string {
 }
 
 export async function POST(req: Request) {
+  // 🔒 Rate limit: 3 withdraw per menit per IP (anti fraud, dana sensitif)
+  const limited = rateLimitResponse(req, "wallet:withdraw", 3, 60_000);
+  if (limited) return limited;
+
   const me = await getCurrentUser();
   if (!me) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

@@ -22,6 +22,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireRole } from "@/lib/auth/context";
 import { logAction, getRequestMeta } from "@/lib/auth/audit";
+import { rateLimitResponse } from "@/lib/auth/api-rate-limiter";
 import { emitRealtime } from "@/lib/realtime/realtime-client";
 import { createPaymentCharge, isCOD, methodLabel } from "@/lib/payment/gateway";
 import { debitWallet } from "@/lib/wallet/wallet-service";
@@ -35,6 +36,10 @@ function generatePaymentCode(): string {
 }
 
 export async function POST(req: Request) {
+  // 🔒 Rate limit: 10 payment per menit per IP (anti fraud double-payment)
+  const limited = rateLimitResponse(req, "payment:create", 10, 60_000);
+  if (limited) return limited;
+
   const me = await requireRole("CUSTOMER");
   if (!me) {
     return NextResponse.json({ error: "Forbidden. Hanya customer." }, { status: 403 });
