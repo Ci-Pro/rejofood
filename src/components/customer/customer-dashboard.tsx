@@ -93,17 +93,17 @@ export function CustomerDashboard() {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -30 }}
                 transition={{ duration: 0.4 }}
-                className="relative flex items-center justify-between p-4 text-white"
+                className="relative flex flex-col p-4 text-white"
                 style={{ background: PROMO_BANNERS[bannerIdx].gradient }}
               >
-                <div className="relative z-10">
+                <div className="relative z-10 pr-12">
                   <div className="flex items-center gap-1.5">
-                    <Sparkles className="h-3.5 w-3.5" />
+                    <Sparkles className="h-3.5 w-3.5 shrink-0" />
                     <span className="text-[0.65rem] font-700 uppercase tracking-wider opacity-90">
                       Promo
                     </span>
                   </div>
-                  <p className="mt-1 font-display text-lg font-700">
+                  <p className="mt-1 font-display text-base font-700 sm:text-lg">
                     {PROMO_BANNERS[bannerIdx].title}
                   </p>
                   <p className="text-xs opacity-90">
@@ -129,7 +129,7 @@ export function CustomerDashboard() {
           </div>
 
           {/* Category chips — horizontal scroll, GoFood style */}
-          <div className="mb-5 -mx-4 px-4 overflow-x-auto scroll-slim">
+          <div className="mb-5 -mx-3 px-3 overflow-x-auto scroll-slim sm:-mx-6 sm:px-6">
             <div className="flex gap-2 pb-2">
               {CATEGORIES.map((cat) => {
                 const Icon = cat.icon;
