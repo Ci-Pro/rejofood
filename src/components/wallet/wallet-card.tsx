@@ -4,6 +4,8 @@ import { motion } from "framer-motion";
 import { Wallet, Plus, ArrowDownLeft, ArrowUpRight, Snowflake } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+type Accent = "saffron" | "lavender" | "mint" | "rose";
+
 interface WalletCardProps {
   balance: number;
   isFrozen?: boolean;
@@ -15,6 +17,8 @@ interface WalletCardProps {
   onTopUp?: () => void;
   onWithdraw?: () => void;
   loading?: boolean;
+  /** Role accent — konsisten dengan dashboard lainnya */
+  accent?: Accent;
 }
 
 function formatRupiah(n: number): string {
@@ -31,6 +35,7 @@ export function WalletCard({
   onTopUp,
   onWithdraw,
   loading = false,
+  accent = "saffron",
 }: WalletCardProps) {
   return (
     <motion.div
@@ -38,13 +43,16 @@ export function WalletCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
       className={cn(
-        "relative overflow-hidden rounded-3xl p-5 sm:p-6 shadow-premium",
-        "bg-gradient-to-br from-[#7C5BBF] via-[#6B4FB5] to-[#4C3A8E] text-white",
+        "accent-" + accent,
+        "relative overflow-hidden rounded-3xl p-5 sm:p-6 shadow-premium text-white",
       )}
+      style={{
+        background: "linear-gradient(135deg, #3D2364 0%, #2D1B4E 50%, #1C0E33 100%)",
+      }}
     >
-      {/* Background glow */}
-      <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/10 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-12 -left-8 h-44 w-44 rounded-full bg-[#FF9F1C]/15 blur-3xl" />
+      {/* Background glow — role accent color */}
+      <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full opacity-20 blur-3xl" style={{ background: "var(--role)" }} />
+      <div className="pointer-events-none absolute -bottom-12 -left-8 h-44 w-44 rounded-full opacity-15 blur-3xl" style={{ background: "var(--role)" }} />
 
       <div className="relative">
         {/* Header */}
@@ -89,7 +97,7 @@ export function WalletCard({
           <button
             onClick={onTopUp}
             disabled={isFrozen || loading}
-            className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl bg-white py-2.5 text-sm font-700 text-[#4C3A8E] shadow-premium transition-premium hover:bg-white/95 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl bg-white py-2.5 text-sm font-700 text-[#2D1B4E] shadow-premium transition-premium hover:bg-white/95 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Plus className="h-4 w-4" strokeWidth={2.5} />
             Top Up
@@ -111,13 +119,9 @@ export function WalletCard({
           <div>
             <div className="flex items-center gap-1 text-white/70">
               <ArrowDownLeft className="h-3 w-3" />
-              <span className="text-[0.6rem] font-600 uppercase tracking-wider">
-                {showEarning ? "Top Up" : "Top Up"}
-              </span>
+              <span className="text-[0.6rem] font-600 uppercase tracking-wider">Top Up</span>
             </div>
-            <p className="mt-0.5 text-sm font-700">
-              {formatRupiah(monthTopup)}
-            </p>
+            <p className="mt-0.5 text-sm font-700">{formatRupiah(monthTopup)}</p>
             <p className="text-[0.6rem] text-white/60">bulan ini</p>
           </div>
           {showEarning ? (
@@ -144,10 +148,7 @@ export function WalletCard({
               <Wallet className="h-3 w-3" />
               <span className="text-[0.6rem] font-600 uppercase tracking-wider">Total Tx</span>
             </div>
-            <p className="mt-0.5 text-sm font-700">
-              {/* Display total tx count from props or "-" if not provided */}
-              —
-            </p>
+            <p className="mt-0.5 text-sm font-700">—</p>
             <p className="text-[0.6rem] text-white/60">lifetime</p>
           </div>
         </div>

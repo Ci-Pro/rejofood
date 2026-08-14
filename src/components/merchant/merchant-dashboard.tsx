@@ -81,7 +81,7 @@ export function MerchantDashboard() {
             accent="lavender"
           />
           <ErrorBoundary>
-            <WalletPanel showWithdraw />
+            <WalletPanel showWithdraw accent="lavender" />
           </ErrorBoundary>
         </>
       )}

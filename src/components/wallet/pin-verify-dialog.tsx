@@ -18,9 +18,10 @@ interface PinVerifyDialogProps {
   context: string;
   /** Callback setelah PIN berhasil diverifikasi */
   onVerified: () => void;
+  accent?: "saffron" | "lavender" | "mint" | "rose";
 }
 
-export function PinVerifyDialog({ open, onClose, context, onVerified }: PinVerifyDialogProps) {
+export function PinVerifyDialog({ open, onClose, context, onVerified, accent = "saffron" }: PinVerifyDialogProps) {
   const [pin, setPin] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -78,10 +79,10 @@ export function PinVerifyDialog({ open, onClose, context, onVerified }: PinVerif
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && !loading && onClose()}>
-      <DialogContent className="max-w-sm">
+      <DialogContent className={cn("max-w-sm accent-" + accent)}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Lock className="h-5 w-5 text-[#7C5BBF]" />
+            <Lock className="h-5 w-5 text-role" />
             Masukkan PIN
           </DialogTitle>
           <DialogDescription>{context}</DialogDescription>
@@ -98,7 +99,7 @@ export function PinVerifyDialog({ open, onClose, context, onVerified }: PinVerif
                 className={cn(
                   "h-3 w-3 rounded-full transition-colors",
                   i < pin.length
-                    ? "bg-[#7C5BBF]"
+                    ? "bg-role"
                     : error
                       ? "bg-rose-200 border border-rose-400"
                       : "bg-muted border border-border",
@@ -152,7 +153,7 @@ export function PinVerifyDialog({ open, onClose, context, onVerified }: PinVerif
           <Button
             onClick={verify}
             disabled={loading || pin.length !== 6 || !!locked}
-            className="bg-[#7C5BBF] text-white hover:bg-[#6B4FB5]"
+            className="bg-role text-white hover:opacity-90"
           >
             {loading
               ? <><Loader2 className="mr-1 h-4 w-4 animate-spin" /> Verifikasi…</>

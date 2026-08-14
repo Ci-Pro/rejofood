@@ -15,11 +15,12 @@ interface PinSetDialogProps {
   open: boolean;
   onClose: () => void;
   onSuccess?: () => void;
+  accent?: "saffron" | "lavender" | "mint" | "rose";
 }
 
 type Step = "enter" | "confirm" | "success";
 
-export function PinSetDialog({ open, onClose, onSuccess }: PinSetDialogProps) {
+export function PinSetDialog({ open, onClose, onSuccess, accent = "saffron" }: PinSetDialogProps) {
   const [step, setStep] = useState<Step>("enter");
   const [firstPin, setFirstPin] = useState("");
   const [confirmPin, setConfirmPin] = useState("");
@@ -108,10 +109,10 @@ export function PinSetDialog({ open, onClose, onSuccess }: PinSetDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && !loading && onClose()}>
-      <DialogContent className="max-w-sm">
+      <DialogContent className={cn("max-w-sm accent-" + accent)}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <ShieldCheck className="h-5 w-5 text-[#7C5BBF]" />
+            <ShieldCheck className="h-5 w-5 text-role" />
             Set PIN RejoPay
           </DialogTitle>
           <DialogDescription>
@@ -162,7 +163,7 @@ export function PinSetDialog({ open, onClose, onSuccess }: PinSetDialogProps) {
                     className={cn(
                       "h-3 w-3 rounded-full transition-colors",
                       i < currentPin.length
-                        ? "bg-[#7C5BBF]"
+                        ? "bg-role"
                         : "bg-muted border border-border",
                     )}
                   />
@@ -229,7 +230,7 @@ export function PinSetDialog({ open, onClose, onSuccess }: PinSetDialogProps) {
             <Button
               onClick={submit}
               disabled={loading || currentPin.length !== 6}
-              className="bg-[#7C5BBF] text-white hover:bg-[#6B4FB5]"
+              className="bg-role text-white hover:opacity-90"
             >
               {loading
                 ? <><Loader2 className="mr-1 h-4 w-4 animate-spin" /> Menyimpan…</>

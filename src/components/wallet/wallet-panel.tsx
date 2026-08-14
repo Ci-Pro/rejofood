@@ -38,9 +38,11 @@ interface WalletData {
 interface WalletPanelProps {
   /** Untuk driver/merchant: tampilkan tombol withdraw */
   showWithdraw?: boolean;
+  /** Role accent — konsisten dengan dashboard */
+  accent?: "saffron" | "lavender" | "mint" | "rose";
 }
 
-export function WalletPanel({ showWithdraw = false }: WalletPanelProps) {
+export function WalletPanel({ showWithdraw = false, accent = "saffron" }: WalletPanelProps) {
   const [data, setData] = useState<WalletData | null>(null);
   const [loading, setLoading] = useState(true);
   const [topUpOpen, setTopUpOpen] = useState(false);
@@ -78,6 +80,7 @@ export function WalletPanel({ showWithdraw = false }: WalletPanelProps) {
         onTopUp={() => setTopUpOpen(true)}
         onWithdraw={() => setWithdrawOpen(true)}
         loading={loading}
+        accent={accent}
       />
 
       {/* PIN status banner */}
@@ -148,7 +151,7 @@ export function WalletPanel({ showWithdraw = false }: WalletPanelProps) {
             <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
           </div>
         ) : (
-          <WalletTransactionsList />
+          <WalletTransactionsList accent={accent} />
         )}
       </div>
 
@@ -156,6 +159,7 @@ export function WalletPanel({ showWithdraw = false }: WalletPanelProps) {
         open={topUpOpen}
         onClose={() => setTopUpOpen(false)}
         onSuccess={() => load()}
+        accent={accent}
       />
 
       {showWithdraw && (
@@ -165,6 +169,7 @@ export function WalletPanel({ showWithdraw = false }: WalletPanelProps) {
           currentBalance={data?.wallet?.balance ?? 0}
           hasPin={hasPin}
           onSuccess={() => load()}
+          accent={accent}
         />
       )}
 
@@ -172,6 +177,7 @@ export function WalletPanel({ showWithdraw = false }: WalletPanelProps) {
         open={pinSetOpen}
         onClose={() => setPinSetOpen(false)}
         onSuccess={() => load()}
+        accent={accent}
       />
     </div>
   );

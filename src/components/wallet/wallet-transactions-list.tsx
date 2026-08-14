@@ -31,6 +31,7 @@ interface WalletTransactionsListProps {
   /** Filter by type (null = all) */
   filterType?: WalletTxType | null;
   compact?: boolean;
+  accent?: "saffron" | "lavender" | "mint" | "rose";
 }
 
 function formatRupiah(n: number): string {
@@ -102,6 +103,7 @@ const FILTER_TABS: { value: WalletTxType | null; label: string }[] = [
 export function WalletTransactionsList({
   filterType: initialFilter = null,
   compact = false,
+  accent = "saffron",
 }: WalletTransactionsListProps) {
   const [filter, setFilter] = useState<WalletTxType | null>(initialFilter);
   const [items, setItems] = useState<WalletTransaction[]>([]);
@@ -143,7 +145,7 @@ export function WalletTransactionsList({
   }
 
   return (
-    <div className="space-y-3">
+    <div className={cn("space-y-3 accent-" + accent)}>
       {/* Filter tabs */}
       {!compact && (
         <div className="flex gap-1 overflow-x-auto pb-1">
@@ -154,7 +156,7 @@ export function WalletTransactionsList({
               className={cn(
                 "whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-600 transition-premium",
                 filter === tab.value
-                  ? "bg-[#7C5BBF] text-white"
+                  ? "bg-role text-white"
                   : "bg-muted text-muted-foreground hover:bg-muted/70",
               )}
             >

@@ -42,7 +42,7 @@ export function DriverDashboard() {
             accent="mint"
           />
           <ErrorBoundary>
-            <WalletPanel showWithdraw />
+            <WalletPanel showWithdraw accent="mint" />
           </ErrorBoundary>
         </>
       )}

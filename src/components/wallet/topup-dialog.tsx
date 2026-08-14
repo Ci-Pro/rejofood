@@ -54,9 +54,10 @@ interface TopUpDialogProps {
   open: boolean;
   onClose: () => void;
   onSuccess?: (newBalance: number) => void;
+  accent?: "saffron" | "lavender" | "mint" | "rose";
 }
 
-export function TopUpDialog({ open, onClose, onSuccess }: TopUpDialogProps) {
+export function TopUpDialog({ open, onClose, onSuccess, accent = "saffron" }: TopUpDialogProps) {
   const [step, setStep] = useState<"amount" | "method" | "instruction" | "success">("amount");
   const [amount, setAmount] = useState<number>(50000);
   const [customAmount, setCustomAmount] = useState<string>("");
@@ -151,10 +152,10 @@ export function TopUpDialog({ open, onClose, onSuccess }: TopUpDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && handleClose()}>
-      <DialogContent className="max-w-md">
+      <DialogContent className={cn("max-w-md accent-" + accent)}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Wallet className="h-5 w-5 text-lavender" />
+            <Wallet className="h-5 w-5 text-role" />
             Top Up RejoPay
           </DialogTitle>
           <DialogDescription>
@@ -182,8 +183,8 @@ export function TopUpDialog({ open, onClose, onSuccess }: TopUpDialogProps) {
                     className={cn(
                       "rounded-2xl border-2 px-3 py-3 text-center transition-premium",
                       amount === preset && !customAmount
-                        ? "border-[#7C5BBF] bg-[#7C5BBF]/10 text-[#7C5BBF]"
-                        : "border-border hover:border-[#7C5BBF]/50",
+                        ? "border-role bg-role/10 text-role"
+                        : "border-border hover:border-role/50",
                     )}
                   >
                     <p className="text-sm font-700">{formatRupiah(preset).replace("Rp ", "")}</p>
@@ -208,7 +209,7 @@ export function TopUpDialog({ open, onClose, onSuccess }: TopUpDialogProps) {
 
               <Button
                 onClick={proceedToMethod}
-                className="w-full bg-[#7C5BBF] text-white hover:bg-[#6B4FB5]"
+                className="w-full bg-role text-white hover:opacity-90"
               >
                 Lanjut <ArrowRight className="ml-1 h-4 w-4" />
               </Button>
@@ -235,13 +236,13 @@ export function TopUpDialog({ open, onClose, onSuccess }: TopUpDialogProps) {
                   className={cn(
                     "flex w-full items-center gap-3 rounded-2xl border-2 px-4 py-3 text-left transition-premium",
                     method === m.value
-                      ? "border-[#7C5BBF] bg-[#7C5BBF]/5"
-                      : "border-border hover:border-[#7C5BBF]/40",
+                      ? "border-role bg-role/5"
+                      : "border-border hover:border-role/40",
                   )}
                 >
                   <div className={cn(
                     "flex h-9 w-9 items-center justify-center rounded-xl",
-                    method === m.value ? "bg-[#7C5BBF] text-white" : "bg-muted text-muted-foreground",
+                    method === m.value ? "bg-role text-white" : "bg-muted text-muted-foreground",
                   )}>
                     {m.icon}
                   </div>
@@ -249,7 +250,7 @@ export function TopUpDialog({ open, onClose, onSuccess }: TopUpDialogProps) {
                     <p className="text-sm font-700">{m.label}</p>
                     <p className="text-xs text-muted-foreground">{m.desc}</p>
                   </div>
-                  {method === m.value && <CheckCircle2 className="h-4 w-4 text-[#7C5BBF]" />}
+                  {method === m.value && <CheckCircle2 className="h-4 w-4 text-role" />}
                 </button>
               ))}
 
@@ -260,7 +261,7 @@ export function TopUpDialog({ open, onClose, onSuccess }: TopUpDialogProps) {
                 <Button
                   onClick={createTopup}
                   disabled={creating}
-                  className="flex-1 bg-[#7C5BBF] text-white hover:bg-[#6B4FB5]"
+                  className="flex-1 bg-role text-white hover:opacity-90"
                 >
                   {creating ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : null}
                   Bayar {formatRupiah(amount)}
@@ -304,13 +305,13 @@ export function TopUpDialog({ open, onClose, onSuccess }: TopUpDialogProps) {
               </div>
 
               {result.vaNumber && (
-                <div className="rounded-2xl border-2 border-dashed border-[#7C5BBF]/30 bg-[#7C5BBF]/5 p-4">
+                <div className="rounded-2xl border-2 border-dashed border-role/30 bg-role/5 p-4">
                   <p className="text-xs text-muted-foreground">Nomor Virtual Account</p>
                   <div className="mt-1 flex items-center justify-between">
                     <p className="font-mono text-lg font-700 tracking-wider">{result.vaNumber}</p>
                     <button
                       onClick={copyVaNumber}
-                      className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-[#7C5BBF] shadow-sm transition-premium hover:scale-105"
+                      className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-role shadow-sm transition-premium hover:scale-105"
                     >
                       {copied ? <CheckCircle2 className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                     </button>
@@ -322,9 +323,9 @@ export function TopUpDialog({ open, onClose, onSuccess }: TopUpDialogProps) {
               )}
 
               {result.method === "QRIS" && (
-                <div className="rounded-2xl border-2 border-dashed border-[#7C5BBF]/30 bg-[#7C5BBF]/5 p-4 text-center">
+                <div className="rounded-2xl border-2 border-dashed border-role/30 bg-role/5 p-4 text-center">
                   <div className="mx-auto flex h-32 w-32 items-center justify-center rounded-2xl bg-white">
-                    <QrCode className="h-24 w-24 text-[#7C5BBF]" />
+                    <QrCode className="h-24 w-24 text-role" />
                   </div>
                   <p className="mt-2 text-xs text-muted-foreground">
                     Scan QR dengan e-wallet atau m-banking apapun.
@@ -333,7 +334,7 @@ export function TopUpDialog({ open, onClose, onSuccess }: TopUpDialogProps) {
               )}
 
               {result.method.startsWith("EWALLET_") && (
-                <div className="rounded-2xl border-2 border-dashed border-[#7C5BBF]/30 bg-[#7C5BBF]/5 p-4 text-center">
+                <div className="rounded-2xl border-2 border-dashed border-role/30 bg-role/5 p-4 text-center">
                   <p className="text-sm font-600">Bayar via {result.methodLabel}</p>
                   <p className="mt-1 text-xs text-muted-foreground">
                     Buka aplikasi {result.methodLabel}, scan QR atau bayar via deeplink.
@@ -353,7 +354,7 @@ export function TopUpDialog({ open, onClose, onSuccess }: TopUpDialogProps) {
                 <Button
                   onClick={confirmPayment}
                   disabled={confirming}
-                  className="flex-1 bg-[#7C5BBF] text-white hover:bg-[#6B4FB5]"
+                  className="flex-1 bg-role text-white hover:opacity-90"
                 >
                   {confirming ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <CheckCircle2 className="mr-1 h-4 w-4" />}
                   Saya Sudah Bayar
@@ -381,7 +382,7 @@ export function TopUpDialog({ open, onClose, onSuccess }: TopUpDialogProps) {
               <p className="mt-1 text-sm text-muted-foreground">
                 Saldo RejoPay bertambah
               </p>
-              <p className="mt-2 font-display text-2xl font-700 text-[#7C5BBF]">
+              <p className="mt-2 font-display text-2xl font-700 text-role">
                 {formatRupiah(result?.amount ?? 0)}
               </p>
               <div className="mt-4 w-full rounded-xl bg-muted p-3">
@@ -394,7 +395,7 @@ export function TopUpDialog({ open, onClose, onSuccess }: TopUpDialogProps) {
                   <span className="font-mono">{result?.txCode}</span>
                 </div>
               </div>
-              <Button onClick={handleClose} className="mt-4 w-full bg-[#7C5BBF] text-white hover:bg-[#6B4FB5]">
+              <Button onClick={handleClose} className="mt-4 w-full bg-role text-white hover:opacity-90">
                 Selesai
               </Button>
             </motion.div>

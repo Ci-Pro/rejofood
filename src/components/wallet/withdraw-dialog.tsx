@@ -25,6 +25,7 @@ interface WithdrawDialogProps {
   /** Jika user sudah set PIN, withdraw butuh verifikasi */
   hasPin?: boolean;
   onSuccess?: (amount: number) => void;
+  accent?: "saffron" | "lavender" | "mint" | "rose";
 }
 
 const BANKS = [
@@ -39,7 +40,7 @@ function formatRupiah(n: number): string {
   return "Rp " + n.toLocaleString("id-ID");
 }
 
-export function WithdrawDialog({ open, onClose, currentBalance, hasPin = false, onSuccess }: WithdrawDialogProps) {
+export function WithdrawDialog({ open, onClose, currentBalance, hasPin = false, onSuccess, accent = "saffron" }: WithdrawDialogProps) {
   const [amount, setAmount] = useState<string>("");
   const [bankCode, setBankCode] = useState<string>("BCA");
   const [accountNumber, setAccountNumber] = useState<string>("");
@@ -123,10 +124,10 @@ export function WithdrawDialog({ open, onClose, currentBalance, hasPin = false, 
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && handleClose()}>
-      <DialogContent className="max-w-md">
+      <DialogContent className={cn("max-w-md accent-" + accent)}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Banknote className="h-5 w-5 text-[#7C5BBF]" />
+            <Banknote className="h-5 w-5 text-role" />
             Tarik Saldo
           </DialogTitle>
           <DialogDescription>
@@ -166,14 +167,14 @@ export function WithdrawDialog({ open, onClose, currentBalance, hasPin = false, 
                     <button
                       key={preset}
                       onClick={() => setAmount(String(preset))}
-                      className="rounded-lg border border-border bg-card px-2 py-1 text-xs font-600 hover:border-[#7C5BBF]/40"
+                      className="rounded-lg border border-border bg-card px-2 py-1 text-xs font-600 hover:border-role/40"
                     >
                       {preset >= 1000 ? `${preset / 1000}k` : preset}
                     </button>
                   ))}
                   <button
                     onClick={() => setAmount(String(currentBalance))}
-                    className="rounded-lg border border-border bg-card px-2 py-1 text-xs font-600 hover:border-[#7C5BBF]/40"
+                    className="rounded-lg border border-border bg-card px-2 py-1 text-xs font-600 hover:border-role/40"
                   >
                     Maks
                   </button>
@@ -228,7 +229,7 @@ export function WithdrawDialog({ open, onClose, currentBalance, hasPin = false, 
               <Button
                 onClick={handleSubmitClick}
                 disabled={submitting}
-                className="w-full bg-[#7C5BBF] text-white hover:bg-[#6B4FB5]"
+                className="w-full bg-role text-white hover:opacity-90"
               >
                 {submitting ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : null}
                 Tarik {amount ? formatRupiah(Number(amount)) : "Saldo"}
@@ -263,7 +264,7 @@ export function WithdrawDialog({ open, onClose, currentBalance, hasPin = false, 
                   <span className="font-600">1×24 jam</span>
                 </div>
               </div>
-              <Button onClick={handleClose} className="mt-4 w-full bg-[#7C5BBF] text-white hover:bg-[#6B4FB5]">
+              <Button onClick={handleClose} className="mt-4 w-full bg-role text-white hover:opacity-90">
                 Selesai
               </Button>
             </motion.div>

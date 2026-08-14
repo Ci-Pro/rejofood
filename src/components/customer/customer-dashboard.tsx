@@ -69,7 +69,7 @@ export function CustomerDashboard() {
             accent="saffron"
           />
           <ErrorBoundary>
-            <WalletPanel />
+            <WalletPanel accent="saffron" />
           </ErrorBoundary>
         </>
       )}
