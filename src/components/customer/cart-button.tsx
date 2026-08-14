@@ -73,31 +73,41 @@ export function CartButton() {
               exit={{ x: "100%" }}
               transition={{ type: "spring", stiffness: 320, damping: 34 }}
             >
-              {/* Header */}
-              <div className="flex items-center justify-between border-b border-border bg-card p-4">
-                <div>
-                  <h2 className="font-display text-lg font-700 text-foreground">Keranjang</h2>
-                  {restaurantName && (
-                    <p className="text-xs text-muted-foreground">{restaurantName}</p>
-                  )}
+              {/* Header — modern with drag handle */}
+              <div className="shrink-0 border-b border-border bg-card">
+                {/* Drag handle indicator (visual only) */}
+                <div className="flex justify-center pt-2.5 pb-1">
+                  <div className="h-1 w-10 rounded-full bg-border" />
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setOpen(false)}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted text-muted-foreground hover:bg-muted/70"
-                  aria-label="Tutup"
-                >
-                  <X className="h-4 w-4" />
-                </button>
+                <div className="flex items-center justify-between p-4 pt-2">
+                  <div>
+                    <h2 className="font-display text-lg font-700 text-foreground">Keranjang</h2>
+                    {restaurantName && (
+                      <p className="text-xs text-muted-foreground">{restaurantName}</p>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setOpen(false)}
+                    className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary text-muted-foreground transition-premium hover:bg-muted active:scale-95"
+                    aria-label="Tutup"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
 
               {/* Items */}
               <div className="flex-1 overflow-y-auto scroll-slim p-4">
                 {items.length === 0 ? (
-                  <div className="py-12 text-center text-sm text-muted-foreground">
-                    <ShoppingBag className="mx-auto h-8 w-8" />
-                    <p className="mt-2 font-600">Keranjang kosong</p>
-                    <p className="mt-1 text-xs">Tambahkan menu dari restoran untuk memesan.</p>
+                  <div className="flex flex-col items-center justify-center py-16 text-center">
+                    <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-secondary">
+                      <ShoppingBag className="h-9 w-9 text-muted-foreground" />
+                    </div>
+                    <p className="mt-4 font-display text-lg font-700 text-foreground">Keranjang kosong</p>
+                    <p className="mt-1 max-w-xs text-sm text-muted-foreground">
+                      Tambahkan menu dari restoran untuk memesan.
+                    </p>
                   </div>
                 ) : (
                   <div className="space-y-2">
@@ -105,7 +115,11 @@ export function CartButton() {
                       <motion.div
                         key={item.menuItemId}
                         layout
-                        className="rounded-xl border border-border bg-card p-3"
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, x: -20 }}
+                        transition={{ duration: 0.2 }}
+                        className="rounded-2xl border border-border bg-card p-3"
                       >
                         <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0 flex-1">
@@ -115,18 +129,19 @@ export function CartButton() {
                           <button
                             type="button"
                             onClick={() => removeItem(item.menuItemId)}
-                            className="text-muted-foreground hover:text-destructive"
+                            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-premium hover:bg-destructive/10 hover:text-destructive"
                             aria-label={`Hapus ${item.name}`}
                           >
                             <Trash2 className="h-3.5 w-3.5" />
                           </button>
                         </div>
-                        <div className="mt-2 flex items-center justify-between">
-                          <div className="flex items-center gap-1">
+                        <div className="mt-2.5 flex items-center justify-between">
+                          {/* Quantity stepper — modern native style */}
+                          <div className="flex items-center gap-1 rounded-full border border-border bg-background p-0.5">
                             <button
                               type="button"
                               onClick={() => updateQuantity(item.menuItemId, item.quantity - 1)}
-                              className="press-feedback flex h-7 w-7 items-center justify-center rounded-full bg-muted text-muted-foreground transition-tap hover:bg-rose/10 hover:text-rose"
+                              className="flex h-7 w-7 items-center justify-center rounded-full bg-secondary text-muted-foreground transition-premium hover:bg-muted active:scale-90"
                               aria-label="Kurangi"
                             >
                               <Minus className="h-3 w-3" />
@@ -135,13 +150,13 @@ export function CartButton() {
                             <button
                               type="button"
                               onClick={() => updateQuantity(item.menuItemId, item.quantity + 1)}
-                              className="press-feedback flex h-7 w-7 items-center justify-center rounded-full bg-saffron/15 text-saffron transition-tap hover:bg-saffron/30"
+                              className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground transition-premium hover:bg-primary/90 active:scale-90"
                               aria-label="Tambah"
                             >
                               <Plus className="h-3 w-3" />
                             </button>
                           </div>
-                          <p className="font-display text-sm font-700 text-saffron">
+                          <p className="font-display text-base font-700 text-primary">
                             {formatRupiah(item.price * item.quantity)}
                           </p>
                         </div>
@@ -151,27 +166,27 @@ export function CartButton() {
                 )}
               </div>
 
-              {/* Footer */}
+              {/* Footer — modern summary */}
               {items.length > 0 && (
-                <div className="shrink-0 space-y-3 border-t border-border bg-card p-4">
-                  <div className="space-y-1 text-sm">
+                <div className="shrink-0 space-y-3 border-t border-border bg-card p-4 pb-6">
+                  <div className="space-y-1.5 text-sm">
                     <div className="flex justify-between text-muted-foreground">
-                      <span>Subtotal</span>
+                      <span>Subtotal ({items.length} item)</span>
                       <span className="tabular-nums">{formatRupiah(subtotal)}</span>
                     </div>
                     <div className="flex justify-between text-muted-foreground">
                       <span>Ongkos antar</span>
                       <span className="tabular-nums">{formatRupiah(deliveryFee)}</span>
                     </div>
-                    <div className="flex justify-between border-t border-border pt-1 font-700 text-foreground">
-                      <span>Total</span>
-                      <span className="font-display tabular-nums">{formatRupiah(total)}</span>
+                    <div className="flex items-center justify-between border-t border-border pt-2">
+                      <span className="font-700 text-foreground">Total</span>
+                      <span className="font-display text-lg font-700 tabular-nums text-foreground">{formatRupiah(total)}</span>
                     </div>
                   </div>
                   <Button
                     type="button"
                     onClick={() => setCheckoutOpen(true)}
-                    className="accent-saffron h-12 w-full rounded-xl bg-role text-role-fg shadow-fab press-feedback hover:opacity-90"
+                    className="accent-saffron h-12 w-full rounded-2xl bg-role text-role-fg shadow-fab transition-premium hover:opacity-90 active:scale-[0.98]"
                   >
                     <ShoppingBag className="h-4 w-4" />
                     Checkout · {formatRupiah(total)}
@@ -179,7 +194,7 @@ export function CartButton() {
                   <button
                     type="button"
                     onClick={clearCart}
-                    className="w-full text-center text-xs text-muted-foreground hover:text-destructive"
+                    className="w-full text-center text-xs font-600 text-muted-foreground transition-premium hover:text-destructive"
                   >
                     Kosongkan keranjang
                   </button>

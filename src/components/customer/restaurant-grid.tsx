@@ -2,12 +2,13 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Search, Star, MapPin, Clock, UtensilsCrossed, ChevronRight, Heart, Coffee, Tag } from "lucide-react";
+import { Search, Star, MapPin, Clock, UtensilsCrossed, ChevronRight, Heart, Coffee, Tag, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { RestaurantDetailDialog } from "./restaurant-detail-dialog";
 import { useFavorites } from "@/hooks/use-favorites";
+import { useRecentSearches } from "@/hooks/use-recent-searches";
 import { cn } from "@/lib/utils";
 
 interface RestaurantListItem {
@@ -83,7 +84,9 @@ export function RestaurantGrid({ cuisineFilter }: { cuisineFilter?: string }) {
   const [query, setQuery] = useState("");
   const [openOnly, setOpenOnly] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [showRecent, setShowRecent] = useState(false);
   const { isFavorited, toggle } = useFavorites();
+  const { searches, addSearch, clearSearches, removeSearch } = useRecentSearches();
 
   const fetchRestaurants = useCallback(async () => {
     setLoading(true);
@@ -132,7 +135,9 @@ export function RestaurantGrid({ cuisineFilter }: { cuisineFilter?: string }) {
       return () => clearTimeout(t);
     } else if (searchMode === "menu" && query.length >= 2) {
       const t = setTimeout(() => fetchMenuItems(query), 300);
-      return () => clearTimeout(t);
+      // Save ke recent search (debounced)
+      const saveTimer = setTimeout(() => addSearch(query, "menu"), 1500);
+      return () => { clearTimeout(t); clearTimeout(saveTimer); };
     } else {
       setMenuResults([]);
       setLoading(false);
@@ -151,10 +156,61 @@ export function RestaurantGrid({ cuisineFilter }: { cuisineFilter?: string }) {
               placeholder={searchMode === "restaurants" ? "Cari restoran, masakan…" : "Cari menu (cth: nasi goreng)…"}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
+              onFocus={() => setShowRecent(true)}
+              onBlur={() => setTimeout(() => setShowRecent(false), 200)}
               className="h-10 rounded-xl bg-card pl-9 pr-9"
             />
             {loading && query && (
               <span className="absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 animate-spin rounded-full border-2 border-saffron border-t-transparent" />
+            )}
+
+            {/* Recent search dropdown */}
+            {showRecent && !query && searches.length > 0 && (
+              <div className="absolute left-0 right-0 top-full z-20 mt-1 overflow-hidden rounded-xl border border-border bg-popover shadow-premium-lg">
+                <div className="flex items-center justify-between px-3 py-2 border-b border-border">
+                  <span className="text-[0.65rem] font-700 uppercase tracking-wider text-muted-foreground">
+                    Pencarian terakhir
+                  </span>
+                  <button
+                    type="button"
+                    onMouseDown={(e) => { e.preventDefault(); clearSearches(); }}
+                    className="text-[0.65rem] font-600 text-muted-foreground hover:text-foreground"
+                  >
+                    Hapus semua
+                  </button>
+                </div>
+                <div className="max-h-64 overflow-y-auto scroll-slim">
+                  {searches
+                    .filter((s) => s.mode === searchMode)
+                    .map((s, i) => (
+                      <button
+                        key={`${s.query}-${i}`}
+                        type="button"
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          setQuery(s.query);
+                          setShowRecent(false);
+                        }}
+                        className="flex w-full items-center gap-2.5 px-3 py-2 text-left transition-premium hover:bg-muted"
+                      >
+                        <Clock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                        <span className="min-w-0 flex-1 truncate text-sm text-foreground">{s.query}</span>
+                        <span
+                          role="button"
+                          tabIndex={0}
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            removeSearch(s.query, s.mode);
+                          }}
+                          className="shrink-0 rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+                        >
+                          <X className="h-3 w-3" />
+                        </span>
+                      </button>
+                    ))}
+                </div>
+              </div>
             )}
           </div>
           {/* Search mode toggle */}
